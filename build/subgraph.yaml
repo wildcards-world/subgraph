@@ -1,6 +1,6 @@
 specVersion: 0.0.2
 schema:
-  file: ./schema.graphql
+  file: schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Steward
@@ -21,7 +21,7 @@ dataSources:
         - AddToken
       abis:
         - name: Steward
-          file: ./abis/Steward.json
+          file: Steward/abis/Steward.json
       eventHandlers:
         - event: LogBuy(indexed address,indexed uint256)
           handler: handleLogBuy
@@ -35,8 +35,7 @@ dataSources:
           handler: handleLogRemainingDepositUpdate
         - event: AddToken(indexed uint256,uint256)
           handler: handleAddToken
-      file: ./src/steward.ts
-
+      file: Steward/Steward.wasm
   - kind: ethereum/contract
     name: Token
     network: mainnet
@@ -55,7 +54,7 @@ dataSources:
         - ApprovalForAll
       abis:
         - name: Token
-          file: ./abis/Token.json
+          file: Token/abis/Token.json
       eventHandlers:
         - event: MinterAdded(indexed address)
           handler: handleMinterAdded
@@ -67,4 +66,4 @@ dataSources:
           handler: handleApproval
         - event: ApprovalForAll(indexed address,indexed address,bool)
           handler: handleApprovalForAll
-      file: ./src/token.ts
+      file: Token/Token.wasm
