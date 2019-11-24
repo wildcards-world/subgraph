@@ -1,3 +1,12 @@
+type Wildcard @entity {
+  id: ID! # Just the tokenId
+  tokenId: BigInt!
+  price: BigInt!
+  owner: Bytes! # address
+  patronageNumerator: BigInt!
+  timeAcquired: BigInt!
+}
+
 type Patron @entity {
   id: ID! # Just the address
   address: Bytes! # address
@@ -7,13 +16,7 @@ type Patron @entity {
 
 type Tester @entity {
   id: ID!
-  random: BigInt!
-}
-
-type Wildcard @entity {
-  id: ID! # Just the tokenId
-  tokenId: BigInt!
-  price: BigInt!
-  owner: Bytes! # address
-  patronageNumerator: BigInt!
+  eventTimeStamp: BigInt!
+  timeAcquired0: BigInt!
+  timeAcquired1: BigInt!
 }

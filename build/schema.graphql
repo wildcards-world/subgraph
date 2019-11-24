@@ -1,13 +1,8 @@
-type Patron @entity {
-  id: ID! # Just the address
-  address: Bytes! # address
-  tokens: [Wildcard!]
-  deposit: BigInt!
-}
-
 type Tester @entity {
   id: ID!
-  random: BigInt!
+  eventTimeStamp: BigInt!
+  timeAcquired0: BigInt!
+  timeAcquired1: BigInt!
 }
 
 type Wildcard @entity {
@@ -16,4 +11,12 @@ type Wildcard @entity {
   price: BigInt!
   owner: Bytes! # address
   patronageNumerator: BigInt!
+  timeAcquired: BigInt!
+}
+
+type Patron @entity {
+  id: ID! # Just the address
+  address: Bytes! # address
+  tokens: [Wildcard!]
+  deposit: BigInt!
 }
