@@ -51,22 +51,30 @@ export class Wildcard extends Entity {
     this.set("tokenId", Value.fromBigInt(value));
   }
 
-  get price(): BigInt {
+  get price(): string {
     let value = this.get("price");
-    return value.toBigInt();
+    return value.toString();
   }
 
-  set price(value: BigInt) {
-    this.set("price", Value.fromBigInt(value));
+  set price(value: string) {
+    this.set("price", Value.fromString(value));
   }
 
-  get owner(): Bytes {
+  get owner(): string | null {
     let value = this.get("owner");
-    return value.toBytes();
+    if (value === null) {
+      return null;
+    } else {
+      return value.toString();
+    }
   }
 
-  set owner(value: Bytes) {
-    this.set("owner", Value.fromBytes(value));
+  set owner(value: string | null) {
+    if (value === null) {
+      this.unset("owner");
+    } else {
+      this.set("owner", Value.fromString(value as string));
+    }
   }
 
   get patronageNumerator(): BigInt {
@@ -101,6 +109,23 @@ export class Wildcard extends Entity {
       this.unset("previousOwners");
     } else {
       this.set("previousOwners", Value.fromStringArray(value as Array<string>));
+    }
+  }
+
+  get priceHistory(): Array<string> | null {
+    let value = this.get("priceHistory");
+    if (value === null) {
+      return null;
+    } else {
+      return value.toStringArray();
+    }
+  }
+
+  set priceHistory(value: Array<string> | null) {
+    if (value === null) {
+      this.unset("priceHistory");
+    } else {
+      this.set("priceHistory", Value.fromStringArray(value as Array<string>));
     }
   }
 }
@@ -249,5 +274,34 @@ export class Patron extends Entity {
 
   set address(value: Bytes) {
     this.set("address", Value.fromBytes(value));
+  }
+
+  get lastUpdated(): BigInt {
+    let value = this.get("lastUpdated");
+    return value.toBigInt();
+  }
+
+  set lastUpdated(value: BigInt) {
+    this.set("lastUpdated", Value.fromBigInt(value));
+  }
+
+  get previouslyOwnedTokens(): Array<string> | null {
+    let value = this.get("previouslyOwnedTokens");
+    if (value === null) {
+      return null;
+    } else {
+      return value.toStringArray();
+    }
+  }
+
+  set previouslyOwnedTokens(value: Array<string> | null) {
+    if (value === null) {
+      this.unset("previouslyOwnedTokens");
+    } else {
+      this.set(
+        "previouslyOwnedTokens",
+        Value.fromStringArray(value as Array<string>)
+      );
+    }
   }
 }

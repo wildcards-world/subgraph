@@ -1,12 +1,12 @@
 type Wildcard @entity {
   id: ID! # Just the tokenId
   tokenId: BigInt!
-  price: BigInt!
-  owner: Bytes! # address
+  price: Price!
+  owner: Patron # address
   patronageNumerator: BigInt!
   timeAcquired: BigInt!
   previousOwners: [PreviousPatron!]
-  # priceHistory: [Price!]
+  priceHistory: [Price!]
 }
 
 type Price @entity {
@@ -25,25 +25,10 @@ type PreviousPatron @entity {
 type Patron @entity {
   id: ID! # Just the address
   address: Bytes! # address
+  lastUpdated: BigInt!
+  previouslyOwnedTokens: [Wildcard!]
   # tokens: [Wildcard!]
   # deposit: BigInt!
   # totalContributed: BigInt!
   # totalTimeHeld: BigInt!
 }
-
-enum LinkOrderByInput {
-  value_ASC
-  value_DESC
-}
-# #Testing only:
-# type Holder @entity {
-#   id: ID!
-#   # testArray: [Tester!]
-#   testArray (orderBy: LinkOrderByInput): [Tester!]
-# }
-
-
-# type Tester @entity {
-#   id: ID!
-#   value: Int!
-# }

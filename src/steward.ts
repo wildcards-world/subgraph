@@ -8,13 +8,13 @@ import {
   LogRemainingDepositUpdate,
   AddToken
 } from "../generated/Steward/Steward"
-import { Wildcard, Patron, PreviousPatron } from "../generated/schema"
+import { Wildcard, Patron, PreviousPatron, Price } from "../generated/schema"
 // import { doTest } from "./testing"
 
+// TODO:: check on every block header if there are any foreclosures or do other updates to data. See how feasible this is.
 export function handleLogBuy(event: LogBuy): void {
-  let price = event.params.price
   let owner = event.params.owner
-
+  let ownerString = owner.toHexString()
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -34,32 +34,40 @@ export function handleLogBuy(event: LogBuy): void {
   // Entity fields can be set using simple assignments
   wildcard.tokenId = BigInt.fromI32(tokenId)
 
-  if (!Address.fromString("0x0000000000000000000000000000000000000000").equals(wildcard.owner)) {
-    let patron = Patron.load(owner.toString())
-    if (patron == null) {
-      patron = new Patron(owner.toString())
-      patron.address = owner
-      patron.save()
-    }
+  wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price])
 
-    let previousPatron = new PreviousPatron(owner.toString())
+  let patron = Patron.load(ownerString)
+  if (patron == null) {
+    patron = new Patron(ownerString)
+    patron.address = owner
+    patron.lastUpdated = event.block.number
+    patron.save()
+  }
+
+  if (wildcard.owner !== "NO_OWNER") {
+    let previousPatron = new PreviousPatron(ownerString)
     previousPatron.patron = patron.id;
     previousPatron.timeAcquired = wildcard.timeAcquired;
     previousPatron.timeSold = event.block.timestamp;
+    previousPatron.save()
 
-    wildcard.previousOwners = wildcard.previousOwners.concat([wildcard.owner.toString()])
+    wildcard.previousOwners = wildcard.previousOwners.concat([previousPatron.id])
   }
 
-  wildcard.price = price
-  wildcard.owner = owner
+  let price = new Price(event.transaction.hash.toHexString())
+  price.price = event.params.price
+  price.timeSet = event.block.timestamp
+  price.save()
+
+  wildcard.price = price.id
+
+  wildcard.owner = patron.id
   wildcard.timeAcquired = event.block.timestamp
 
   wildcard.save()
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
-  let price = event.params.newPrice
-
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
@@ -77,7 +85,13 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   // Entity fields can be set using simple assignments
   wildcard.tokenId = BigInt.fromI32(tokenId)
-  wildcard.price = price
+
+  let price = new Price(event.transaction.hash.toHexString())
+  price.price = event.params.newPrice
+  price.timeSet = event.block.timestamp
+  price.save()
+
+  wildcard.price = price.id
 
   wildcard.save()
 }
@@ -102,8 +116,22 @@ export function handleAddToken(event: AddToken): void {
 
   // Entity fields can be set using simple assignments
   wildcard.tokenId = tokenId
-  wildcard.price = new BigInt(0)
-  wildcard.owner = Address.fromString("0x0000000000000000000000000000000000000000")
+
+  let price = new Price(event.transaction.hash.toHexString())
+  price.price = BigInt.fromI32(0)
+  price.timeSet = event.block.timestamp
+  price.save()
+
+  let patron = Patron.load("NO_OWNER")
+  if (patron == null) {
+    patron = new Patron("NO_OWNER")
+    patron.address = Address.fromString("0x0000000000000000000000000000000000000000")
+    patron.lastUpdated = event.block.number
+    patron.save()
+  }
+
+  wildcard.price = price.id
+  wildcard.owner = patron.id
   wildcard.patronageNumerator = patronageNumerator
   wildcard.timeAcquired = event.block.timestamp
   wildcard.previousOwners = []
