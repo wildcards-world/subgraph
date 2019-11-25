@@ -8,11 +8,13 @@ import {
   LogRemainingDepositUpdate,
   AddToken
 } from "../generated/Steward/Steward"
-import { Wildcard, Tester } from "../generated/schema"
+import { Wildcard, Patron, PreviousPatron } from "../generated/schema"
+// import { doTest } from "./testing"
 
 export function handleLogBuy(event: LogBuy): void {
   let price = event.params.price
   let owner = event.params.owner
+
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -31,6 +33,23 @@ export function handleLogBuy(event: LogBuy): void {
 
   // Entity fields can be set using simple assignments
   wildcard.tokenId = BigInt.fromI32(tokenId)
+
+  if (!Address.fromString("0x0000000000000000000000000000000000000000").equals(wildcard.owner)) {
+    let patron = Patron.load(owner.toString())
+    if (patron == null) {
+      patron = new Patron(owner.toString())
+      patron.address = owner
+      patron.save()
+    }
+
+    let previousPatron = new PreviousPatron(owner.toString())
+    previousPatron.patron = patron.id;
+    previousPatron.timeAcquired = wildcard.timeAcquired;
+    previousPatron.timeSold = event.block.timestamp;
+
+    wildcard.previousOwners = wildcard.previousOwners.concat([wildcard.owner.toString()])
+  }
+
   wildcard.price = price
   wildcard.owner = owner
   wildcard.timeAcquired = event.block.timestamp
@@ -87,6 +106,7 @@ export function handleAddToken(event: AddToken): void {
   wildcard.owner = Address.fromString("0x0000000000000000000000000000000000000000")
   wildcard.patronageNumerator = patronageNumerator
   wildcard.timeAcquired = event.block.timestamp
+  wildcard.previousOwners = []
 
   wildcard.save()
 }

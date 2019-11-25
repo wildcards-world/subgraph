@@ -12,64 +12,6 @@ import {
   BigDecimal
 } from "@graphprotocol/graph-ts";
 
-export class Tester extends Entity {
-  constructor(id: string) {
-    super();
-    this.set("id", Value.fromString(id));
-  }
-
-  save(): void {
-    let id = this.get("id");
-    assert(id !== null, "Cannot save Tester entity without an ID");
-    assert(
-      id.kind == ValueKind.STRING,
-      "Cannot save Tester entity with non-string ID. " +
-        'Considering using .toHex() to convert the "id" to a string.'
-    );
-    store.set("Tester", id.toString(), this);
-  }
-
-  static load(id: string): Tester | null {
-    return store.get("Tester", id) as Tester | null;
-  }
-
-  get id(): string {
-    let value = this.get("id");
-    return value.toString();
-  }
-
-  set id(value: string) {
-    this.set("id", Value.fromString(value));
-  }
-
-  get eventTimeStamp(): BigInt {
-    let value = this.get("eventTimeStamp");
-    return value.toBigInt();
-  }
-
-  set eventTimeStamp(value: BigInt) {
-    this.set("eventTimeStamp", Value.fromBigInt(value));
-  }
-
-  get timeAcquired0(): BigInt {
-    let value = this.get("timeAcquired0");
-    return value.toBigInt();
-  }
-
-  set timeAcquired0(value: BigInt) {
-    this.set("timeAcquired0", Value.fromBigInt(value));
-  }
-
-  get timeAcquired1(): BigInt {
-    let value = this.get("timeAcquired1");
-    return value.toBigInt();
-  }
-
-  set timeAcquired1(value: BigInt) {
-    this.set("timeAcquired1", Value.fromBigInt(value));
-  }
-}
-
 export class Wildcard extends Entity {
   constructor(id: string) {
     super();
@@ -144,6 +86,130 @@ export class Wildcard extends Entity {
   set timeAcquired(value: BigInt) {
     this.set("timeAcquired", Value.fromBigInt(value));
   }
+
+  get previousOwners(): Array<string> | null {
+    let value = this.get("previousOwners");
+    if (value === null) {
+      return null;
+    } else {
+      return value.toStringArray();
+    }
+  }
+
+  set previousOwners(value: Array<string> | null) {
+    if (value === null) {
+      this.unset("previousOwners");
+    } else {
+      this.set("previousOwners", Value.fromStringArray(value as Array<string>));
+    }
+  }
+}
+
+export class Price extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save Price entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save Price entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("Price", id.toString(), this);
+  }
+
+  static load(id: string): Price | null {
+    return store.get("Price", id) as Price | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get price(): BigInt {
+    let value = this.get("price");
+    return value.toBigInt();
+  }
+
+  set price(value: BigInt) {
+    this.set("price", Value.fromBigInt(value));
+  }
+
+  get timeSet(): BigInt {
+    let value = this.get("timeSet");
+    return value.toBigInt();
+  }
+
+  set timeSet(value: BigInt) {
+    this.set("timeSet", Value.fromBigInt(value));
+  }
+}
+
+export class PreviousPatron extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save PreviousPatron entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save PreviousPatron entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("PreviousPatron", id.toString(), this);
+  }
+
+  static load(id: string): PreviousPatron | null {
+    return store.get("PreviousPatron", id) as PreviousPatron | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get patron(): string {
+    let value = this.get("patron");
+    return value.toString();
+  }
+
+  set patron(value: string) {
+    this.set("patron", Value.fromString(value));
+  }
+
+  get timeAcquired(): BigInt {
+    let value = this.get("timeAcquired");
+    return value.toBigInt();
+  }
+
+  set timeAcquired(value: BigInt) {
+    this.set("timeAcquired", Value.fromBigInt(value));
+  }
+
+  get timeSold(): BigInt {
+    let value = this.get("timeSold");
+    return value.toBigInt();
+  }
+
+  set timeSold(value: BigInt) {
+    this.set("timeSold", Value.fromBigInt(value));
+  }
 }
 
 export class Patron extends Entity {
@@ -183,31 +249,5 @@ export class Patron extends Entity {
 
   set address(value: Bytes) {
     this.set("address", Value.fromBytes(value));
-  }
-
-  get tokens(): Array<string> | null {
-    let value = this.get("tokens");
-    if (value === null) {
-      return null;
-    } else {
-      return value.toStringArray();
-    }
-  }
-
-  set tokens(value: Array<string> | null) {
-    if (value === null) {
-      this.unset("tokens");
-    } else {
-      this.set("tokens", Value.fromStringArray(value as Array<string>));
-    }
-  }
-
-  get deposit(): BigInt {
-    let value = this.get("deposit");
-    return value.toBigInt();
-  }
-
-  set deposit(value: BigInt) {
-    this.set("deposit", Value.fromBigInt(value));
   }
 }
