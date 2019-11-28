@@ -2,11 +2,12 @@ type Wildcard @entity {
   id: ID! # Just the tokenId
   tokenId: BigInt!
   price: Price!
-  owner: Patron # address
+  owner: Patron! # address
   patronageNumerator: BigInt!
   timeAcquired: BigInt!
   previousOwners: [PreviousPatron!]
   priceHistory: [Price!]
+  # foreclosureTime: BigInt!
 }
 
 type Price @entity {
@@ -27,7 +28,7 @@ type Patron @entity {
   address: Bytes! # address
   lastUpdated: BigInt!
   previouslyOwnedTokens: [Wildcard!]
-  # tokens: [Wildcard!]
+  tokens: [Wildcard!]
   # deposit: BigInt!
   # totalContributed: BigInt!
   # totalTimeHeld: BigInt!

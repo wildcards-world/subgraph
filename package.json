@@ -5,6 +5,8 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ jasoons/wildcards",
+    "build-goerli": "graph build ./subgraph.goerli.yaml",
+    "deploy-goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ jasoons/wildcards-goerli ./subgraph.goerli.yaml",
     "create-local": "graph create --node http://localhost:8020/ wild-cards/subgraph",
     "remove-local": "graph remove --node http://localhost:8020/ wild-cards/subgraph",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wild-cards/subgraph"

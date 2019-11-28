@@ -60,21 +60,13 @@ export class Wildcard extends Entity {
     this.set("price", Value.fromString(value));
   }
 
-  get owner(): string | null {
+  get owner(): string {
     let value = this.get("owner");
-    if (value === null) {
-      return null;
-    } else {
-      return value.toString();
-    }
+    return value.toString();
   }
 
-  set owner(value: string | null) {
-    if (value === null) {
-      this.unset("owner");
-    } else {
-      this.set("owner", Value.fromString(value as string));
-    }
+  set owner(value: string) {
+    this.set("owner", Value.fromString(value));
   }
 
   get patronageNumerator(): BigInt {
@@ -302,6 +294,23 @@ export class Patron extends Entity {
         "previouslyOwnedTokens",
         Value.fromStringArray(value as Array<string>)
       );
+    }
+  }
+
+  get tokens(): Array<string> | null {
+    let value = this.get("tokens");
+    if (value === null) {
+      return null;
+    } else {
+      return value.toStringArray();
+    }
+  }
+
+  set tokens(value: Array<string> | null) {
+    if (value === null) {
+      this.unset("tokens");
+    } else {
+      this.set("tokens", Value.fromStringArray(value as Array<string>));
     }
   }
 }

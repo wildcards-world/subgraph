@@ -68,3 +68,61 @@ dataSources:
         - event: ApprovalForAll(indexed address,indexed address,bool)
           handler: handleApprovalForAll
       file: ./src/token.ts
+
+  - kind: ethereum/contract
+    name: VitalikStewardLegacy
+    network: mainnet
+    source:
+      address: "0x803445597c2a42114A527b0b6191936bC61b492f"
+      abi: VitalikStewardLegacy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - LogBuy
+        - LogPriceChange
+        - LogForeclosure
+        - LogCollection
+      abis:
+        - name: VitalikStewardLegacy
+          file: ./abis/VitalikStewardLegacy.json
+      eventHandlers:
+        - event: LogBuy(indexed address,indexed uint256)
+          handler: handleLogBuy
+        - event: LogPriceChange(indexed uint256)
+          handler: handleLogPriceChange
+        - event: LogForeclosure(indexed address)
+          handler: handleLogForeclosure
+        - event: LogCollection(indexed uint256)
+          handler: handleLogCollection
+      file: ./src/vitalikStewardLegacy.ts
+
+  - kind: ethereum/contract
+    name: VitalikTokenLegacy
+    network: mainnet
+    source:
+      address: "0x231570F1ea43DE41adb3Ee04188CE18c8d10dEED"
+      abi: VitalikTokenLegacy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+        - Approval
+        - ApprovalForAll
+      abis:
+        - name: VitalikTokenLegacy
+          file: ./abis/VitalikTokenLegacy.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+      # callHandlers:
+      #   - function: setup()
+      #     handler: handleSetupVitalk
+      file: ./src/vitalikTokenLegacy.ts

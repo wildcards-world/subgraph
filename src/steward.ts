@@ -1,4 +1,4 @@
-import { BigInt, Address } from "@graphprotocol/graph-ts"
+import { BigInt, Address, EthereumBlock } from "@graphprotocol/graph-ts"
 import {
   Steward,
   LogBuy,
@@ -36,13 +36,31 @@ export function handleLogBuy(event: LogBuy): void {
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price])
 
+  // let patron = Patron.load(ownerString)
+  // if (patron == null) {
+  //   patron = new Patron(ownerString)
+  //   patron.address = owner
+  //   patron.lastUpdated = event.block.number
+  //   patron.save()
+  // }
   let patron = Patron.load(ownerString)
+  let patronOld = Patron.load(wildcard.owner)
   if (patron == null) {
     patron = new Patron(ownerString)
     patron.address = owner
     patron.lastUpdated = event.block.number
-    patron.save()
   }
+
+  // Add to previouslyOwnedTokens if not already there
+  patron.previouslyOwnedTokens = patron.previouslyOwnedTokens.indexOf(wildcard.id) === -1 ?
+    patron.previouslyOwnedTokens.concat([wildcard.id]) : patron.previouslyOwnedTokens
+  // Add token to the patrons currently held tokens
+  patron.tokens = patron.tokens.concat([wildcard.id])
+  let itemIndex = patronOld.tokens.indexOf(wildcard.id)
+  // Remove token to the previous patron's tokens
+  patronOld.tokens = patronOld.tokens.slice(0, itemIndex).concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length))
+  patron.save()
+  patronOld.save()
 
   if (wildcard.owner !== "NO_OWNER") {
     let previousPatron = new PreviousPatron(ownerString)
