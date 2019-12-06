@@ -10,57 +10,101 @@ import {
 } from "../generated/Steward/Steward"
 import { Wildcard, Patron, PreviousPatron, Price, TokenUri } from "../generated/schema"
 import { Token } from "../generated/Token/Token"
-import { create } from "domain"
 // import { doTest } from "./testing"
 
 // A token would need to be set to the same price
-function getTokenIdFromTxTimestampAndTokenPrice(steward: Steward, txTimestamp: BigInt, tokenPrice: BigInt): i32 {
+function getTokenIdFromTxTokenPrice(steward: Steward, tokenPrice: BigInt, owner: Address): i32 {
   // NOTE: not currently matching on price also - hacky code, but as long as it isn't a problem.
-  if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(0)))) {
+  if (tokenPrice.equals(steward.price(BigInt.fromI32(0)))) {
     return 0
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(1)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(1)))) {
     return 1
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(2)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(2)))) {
     return 2
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(3)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(3)))) {
     return 3
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(4)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(4)))) {
     return 4
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(5)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(5)))) {
     return 5
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(6)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(6)))) {
     return 6
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(7)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(7)))) {
     return 7
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(8)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(8)))) {
     return 8
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(9)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(9)))) {
     return 9
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(10)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(10)))) {
     return 10
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(11)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(11)))) {
     return 11
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(12)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(12)))) {
     return 12
   }
-  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(42)))) {
+  else if (tokenPrice.equals(steward.price(BigInt.fromI32(42)))) {
     return 42
   }
   else {
     return 55 // a random non-released token
   }
+  // if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(0))) && owner.equals(steward.currentPatron(BigInt.fromI32(0)))) {
+  //   return 0
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(1))) && owner.equals(steward.currentPatron(BigInt.fromI32(1)))) {
+  //   return 1
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(2))) && owner.equals(steward.currentPatron(BigInt.fromI32(2)))) {
+  //   return 2
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(3))) && owner.equals(steward.currentPatron(BigInt.fromI32(3)))) {
+  //   return 3
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(4))) && owner.equals(steward.currentPatron(BigInt.fromI32(4)))) {
+  //   return 4
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(5))) && owner.equals(steward.currentPatron(BigInt.fromI32(5)))) {
+  //   return 5
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(6))) && owner.equals(steward.currentPatron(BigInt.fromI32(6)))) {
+  //   return 6
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(7))) && owner.equals(steward.currentPatron(BigInt.fromI32(7)))) {
+  //   return 7
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(8))) && owner.equals(steward.currentPatron(BigInt.fromI32(8)))) {
+  //   return 8
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(9))) && owner.equals(steward.currentPatron(BigInt.fromI32(9)))) {
+  //   return 9
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(10))) && owner.equals(steward.currentPatron(BigInt.fromI32(10)))) {
+  //   return 10
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(11))) && owner.equals(steward.currentPatron(BigInt.fromI32(11)))) {
+  //   return 11
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(12))) && owner.equals(steward.currentPatron(BigInt.fromI32(12)))) {
+  //   return 12
+  // }
+  // else if (tokenPrice.equals(steward.timeAcquired(BigInt.fromI32(42))) && owner.equals(steward.currentPatron(BigInt.fromI32(42)))) {
+  //   return 42
+  // }
+  // else {
+  //   return 55 // a random non-released token
+  // }
 }
 
 function createWildcardIfDoesntExist(steward: Steward, tokenId: BigInt): Wildcard {
@@ -88,7 +132,7 @@ export function handleLogBuy(event: LogBuy): void {
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
-  let tokenId = getTokenIdFromTxTimestampAndTokenPrice(steward, event.block.timestamp, event.params.price)
+  let tokenId = getTokenIdFromTxTokenPrice(steward, event.params.price, owner)
   if (tokenId == 42) return //Temporarily before token is migrated
   let tokenIdString = tokenId.toString()
   let tokenIdBigInt = BigInt.fromI32(tokenId)
@@ -106,13 +150,6 @@ export function handleLogBuy(event: LogBuy): void {
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price])
 
-  // let patron = Patron.load(ownerString)
-  // if (patron == null) {
-  //   patron = new Patron(ownerString)
-  //   patron.address = owner
-  //   patron.lastUpdated = event.block.number
-  //   patron.save()
-  // }
   let patron = Patron.load(ownerString)
   let patronOld = Patron.load(wildcard.owner)
   if (patron == null) {
@@ -159,14 +196,17 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
-  let tokenId = getTokenIdFromTxTimestampAndTokenPrice(steward, event.block.timestamp, event.params.newPrice)
+  let txOrigin = event.transaction.from
+  let tokenId = getTokenIdFromTxTokenPrice(steward, event.params.newPrice, txOrigin)
+
+  if (tokenId == 42) return //Temporarily before token is migrated
   let tokenIdString = tokenId.toString()
   let tokenIdBigInt = BigInt.fromI32(tokenId)
 
   let wildcard = Wildcard.load(tokenIdString)
 
-  // // Entities only exist after they have been saved to the store;
-  // // `null` checks allow to create entities on demand
+  // Entities only exist after they have been saved to the store;
+  // `null` checks allow to create entities on demand
   if (wildcard == null) {
     wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt)
   }
