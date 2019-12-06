@@ -6,7 +6,7 @@ import {
   ApprovalForAll,
   SetupCall
 } from "../generated/VitalikTokenLegacy"
-import { Wildcard, Patron, Price } from "../generated/schema"
+import { Wildcard, Patron, Price, TokenUri } from "../generated/schema"
 
 // NOTE: I commented out the below code since it is VEEERY slow (it has to scan each transaction for the `setup` function)
 //       AND call handlers aren't supported by the graph on goerli testnet
@@ -25,6 +25,12 @@ export function handleTransfer(event: Transfer): void {
 
     // Entity fields can be set using simple assignments
     wildcard.tokenId = tokenId
+
+    let tokenUri = new TokenUri(tokenId.toString())
+    tokenUri.uriString = "{\"artist\":\"Matty Fraser\",\"name\":\"Vitalik\",\"ipfs\":\"QmXGMcZPxVVsbiHngN5hb79wyVEEx3CT4j8HUivvqpHMMV\",\"type\":\"Gorilla\"}"
+    tokenUri.save()
+
+    wildcard.tokenUri = tokenUri.id
 
     let price = new Price(event.transaction.hash.toHexString())
     price.price = BigInt.fromI32(0)

@@ -120,6 +120,55 @@ export class Wildcard extends Entity {
       this.set("priceHistory", Value.fromStringArray(value as Array<string>));
     }
   }
+
+  get tokenUri(): string {
+    let value = this.get("tokenUri");
+    return value.toString();
+  }
+
+  set tokenUri(value: string) {
+    this.set("tokenUri", Value.fromString(value));
+  }
+}
+
+export class TokenUri extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id !== null, "Cannot save TokenUri entity without an ID");
+    assert(
+      id.kind == ValueKind.STRING,
+      "Cannot save TokenUri entity with non-string ID. " +
+        'Considering using .toHex() to convert the "id" to a string.'
+    );
+    store.set("TokenUri", id.toString(), this);
+  }
+
+  static load(id: string): TokenUri | null {
+    return store.get("TokenUri", id) as TokenUri | null;
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get uriString(): string {
+    let value = this.get("uriString");
+    return value.toString();
+  }
+
+  set uriString(value: string) {
+    this.set("uriString", Value.fromString(value));
+  }
 }
 
 export class Price extends Entity {

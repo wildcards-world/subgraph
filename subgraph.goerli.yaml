@@ -22,6 +22,8 @@ dataSources:
       abis:
         - name: Steward
           file: ./abis/Steward.json
+        - name: Token
+          file: ./abis/Token.json
       eventHandlers:
         - event: LogBuy(indexed address,indexed uint256)
           handler: handleLogBuy

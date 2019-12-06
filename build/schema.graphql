@@ -7,7 +7,18 @@ type Wildcard @entity {
   timeAcquired: BigInt!
   previousOwners: [PreviousPatron!]
   priceHistory: [Price!]
+  tokenUri: TokenUri!
   # foreclosureTime: BigInt!
+}
+
+type TokenUri @entity {
+  id: ID!
+  uriString: String!
+  # -- parsing of this needs to be done on the client-side. JSON parsing still seems difficult in assemblyscript: https://github.com/AssemblyScript/assemblyscript/issues/292
+  # artist: String!
+  # name: String!
+  # type: String!
+  # ipfs: String!
 }
 
 type Price @entity {

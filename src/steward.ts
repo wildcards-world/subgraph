@@ -8,8 +8,77 @@ import {
   LogRemainingDepositUpdate,
   AddToken
 } from "../generated/Steward/Steward"
-import { Wildcard, Patron, PreviousPatron, Price } from "../generated/schema"
+import { Wildcard, Patron, PreviousPatron, Price, TokenUri } from "../generated/schema"
+import { Token } from "../generated/Token/Token"
+import { create } from "domain"
 // import { doTest } from "./testing"
+
+// A token would need to be set to the same price
+function getTokenIdFromTxTimestampAndTokenPrice(steward: Steward, txTimestamp: BigInt, tokenPrice: BigInt): i32 {
+  // NOTE: not currently matching on price also - hacky code, but as long as it isn't a problem.
+  if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(0)))) {
+    return 0
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(1)))) {
+    return 1
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(2)))) {
+    return 2
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(3)))) {
+    return 3
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(4)))) {
+    return 4
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(5)))) {
+    return 5
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(6)))) {
+    return 6
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(7)))) {
+    return 7
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(8)))) {
+    return 8
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(9)))) {
+    return 9
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(10)))) {
+    return 10
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(11)))) {
+    return 11
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(12)))) {
+    return 12
+  }
+  else if (txTimestamp.equals(steward.timeAcquired(BigInt.fromI32(42)))) {
+    return 42
+  }
+  else {
+    return 55 // a random non-released token
+  }
+}
+
+function createWildcardIfDoesntExist(steward: Steward, tokenId: BigInt): Wildcard {
+  let wildcard = new Wildcard(tokenId.toString())
+
+  let tokenAddress = steward.assetToken()
+  let erc721 = Token.bind(tokenAddress)
+
+  let tokenInfo = erc721.tokenURI(tokenId)
+
+  // Entity fields can be set using simple assignments
+  let tokenUri = new TokenUri(tokenId.toString())
+  tokenUri.uriString = tokenInfo
+  tokenUri.save()
+
+  wildcard.tokenUri = tokenUri.id
+  return wildcard
+}
 
 // TODO:: check on every block header if there are any foreclosures or do other updates to data. See how feasible this is.
 export function handleLogBuy(event: LogBuy): void {
@@ -19,16 +88,17 @@ export function handleLogBuy(event: LogBuy): void {
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
-  let timeAcquiredToken0 = steward.timeAcquired(BigInt.fromI32(0))
-  let tokenId = (timeAcquiredToken0.equals(event.block.timestamp)) ? 0 : 1
+  let tokenId = getTokenIdFromTxTimestampAndTokenPrice(steward, event.block.timestamp, event.params.price)
+  if (tokenId == 42) return //Temporarily before token is migrated
   let tokenIdString = tokenId.toString()
+  let tokenIdBigInt = BigInt.fromI32(tokenId)
 
   let wildcard = Wildcard.load(tokenIdString)
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (wildcard == null) {
-    wildcard = new Wildcard(tokenIdString)
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt)
   }
 
   // Entity fields can be set using simple assignments
@@ -89,20 +159,20 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
-  let timeAcquiredToken0 = steward.timeAcquired(BigInt.fromI32(0))
-  let tokenId = (timeAcquiredToken0.equals(event.block.timestamp)) ? 0 : 1
+  let tokenId = getTokenIdFromTxTimestampAndTokenPrice(steward, event.block.timestamp, event.params.newPrice)
   let tokenIdString = tokenId.toString()
+  let tokenIdBigInt = BigInt.fromI32(tokenId)
 
   let wildcard = Wildcard.load(tokenIdString)
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (wildcard == null) {
-    wildcard = new Wildcard(tokenIdString)
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt)
   }
 
   // Entity fields can be set using simple assignments
-  wildcard.tokenId = BigInt.fromI32(tokenId)
+  wildcard.tokenId = tokenIdBigInt
 
   let price = new Price(event.transaction.hash.toHexString())
   price.price = event.params.newPrice
@@ -132,7 +202,19 @@ export function handleAddToken(event: AddToken): void {
 
   let wildcard = new Wildcard(tokenId.toString())
 
+  let steward = Steward.bind(event.address)
+
+  let tokenAddress = steward.assetToken()
+  let erc721 = Token.bind(tokenAddress)
+
+  let tokenInfo = erc721.tokenURI(tokenId)
+
   // Entity fields can be set using simple assignments
+  let tokenUri = new TokenUri(tokenId.toString())
+  tokenUri.uriString = tokenInfo
+  tokenUri.save()
+
+  wildcard.tokenUri = tokenUri.id
   wildcard.tokenId = tokenId
 
   let price = new Price(event.transaction.hash.toHexString())
