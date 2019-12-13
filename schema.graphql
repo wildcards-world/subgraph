@@ -1,3 +1,16 @@
+# The idea with event counters is that a backend (or anywhere) service can watch for changes in the number of events, and respond to that.
+type EventCounter @entity {
+  id: ID! # this will have a fixed id of '1' since there will only be one place to count events.
+  buyEventCount: BigInt!
+  changePriceEventCount: BigInt
+}
+
+type Global @entity {
+  id:ID! # will just be '1' since only one global namespace
+  totalCollected: BigInt!
+  # totalAmountCollectedOrDue: BigInt!
+}
+
 type Wildcard @entity {
   id: ID! # Just the tokenId
   tokenId: BigInt!
@@ -8,6 +21,7 @@ type Wildcard @entity {
   previousOwners: [PreviousPatron!]
   priceHistory: [Price!]
   tokenUri: TokenUri!
+  totalCollected: BigInt!
   # foreclosureTime: BigInt!
 }
 
@@ -44,3 +58,19 @@ type Patron @entity {
   # totalContributed: BigInt!
   # totalTimeHeld: BigInt!
 }
+
+type BuyEvent @entity {
+  id: ID! # tx id
+  token: Wildcard!
+  price: Price!
+  newOwner: Patron!
+  timestamp: BigInt!
+}
+
+type ChangePriceEvent @entity {
+  id: ID! # tx id
+  token: Wildcard!
+  price: Price!
+  timestamp: BigInt!
+}
+

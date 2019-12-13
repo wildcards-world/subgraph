@@ -5,10 +5,15 @@ import {
   LogPriceChange,
   LogForeclosure,
   LogCollection
-} from "../generated/VitalikStewardLegacy"
-import { Wildcard, Patron, PreviousPatron, Price } from "../generated/schema"
+} from "../generated/VitalikStewardLegacy/VitalikStewardLegacy"
+import { Wildcard, Patron, PreviousPatron, Price, Global } from "../generated/schema"
+
+function returnIfNewVitalik(blockNumber: BigInt): boolean {
+  return blockNumber.gt(BigInt.fromI32(9077271)) // block 9077272 is the block that Vitalik was "exit"ed from the old contract.
+}
 
 export function handleLogBuy(event: LogBuy): void {
+  if (returnIfNewVitalik(event.block.number)) { return }
   let owner = event.params.owner
   let ownerString = owner.toHexString()
 
@@ -51,7 +56,6 @@ export function handleLogBuy(event: LogBuy): void {
     wildcard.previousOwners = wildcard.previousOwners.concat([previousPatron.id])
   }
 
-
   let price = new Price(event.transaction.hash.toHexString())
   price.price = event.params.price
   price.timeSet = event.block.timestamp
@@ -66,6 +70,7 @@ export function handleLogBuy(event: LogBuy): void {
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
+  if (returnIfNewVitalik(event.block.number)) { return }
   let tokenId = 42
   let tokenIdString = tokenId.toString()
 
@@ -75,6 +80,16 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   // // `null` checks allow to create entities on demand
   if (wildcard == null) {
     wildcard = new Wildcard(tokenIdString)
+    wildcard.totalCollected = BigInt.fromI32(0)
+  }
+
+  let globalState = Global.load("1")
+
+  // // Entities only exist after they have been saved to the store;
+  // // `null` checks allow to create entities on demand
+  if (globalState == null) {
+    globalState = new Global("1")
+    globalState.totalCollected = BigInt.fromI32(0)
   }
 
   // Entity fields can be set using simple assignments
@@ -86,10 +101,28 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   price.save()
 
   wildcard.price = price.id
+  let steward = VitalikStewardLegacy.bind(event.address)
+  wildcard.totalCollected = steward.totalCollected()
 
   wildcard.save()
+
+  globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
+  globalState.save()
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void { }
 
-export function handleLogCollection(event: LogCollection): void { }
+export function handleLogCollection(event: LogCollection): void {
+  let globalState = Global.load("1")
+
+  let steward = VitalikStewardLegacy.bind(event.address)
+
+  let tokenIdString = "42"
+
+  let wildcard = Wildcard.load(tokenIdString)
+
+  wildcard.totalCollected = steward.totalCollected()
+
+  globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
+  globalState.save()
+}

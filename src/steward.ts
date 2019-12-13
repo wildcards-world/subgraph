@@ -6,61 +6,125 @@ import {
   LogForeclosure,
   LogCollection,
   LogRemainingDepositUpdate,
-  AddToken
+  AddToken,
+  BuyCall
 } from "../generated/Steward/Steward"
-import { Wildcard, Patron, PreviousPatron, Price, TokenUri } from "../generated/schema"
+import { Wildcard, Patron, PreviousPatron, Price, TokenUri, BuyEvent, EventCounter, ChangePriceEvent, Global, TestWillRun } from "../generated/schema"
 import { Token } from "../generated/Token/Token"
-// import { doTest } from "./testing"
+import { log } from '@graphprotocol/graph-ts'
 
 // A token would need to be set to the same price
-function getTokenIdFromTxTokenPrice(steward: Steward, tokenPrice: BigInt, owner: Address): i32 {
-  if (tokenPrice.equals(steward.price(BigInt.fromI32(0))) && owner.equals(steward.currentPatron(BigInt.fromI32(0)))) {
+function getTokenIdFromTxTokenPrice(steward: Steward, tokenPrice: BigInt, owner: Address, timestamp: BigInt): i32 {
+  if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(0))) && tokenPrice.equals(steward.price(BigInt.fromI32(0))) && owner.equals(steward.currentPatron(BigInt.fromI32(0)))) {
     return 0
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(1))) && owner.equals(steward.currentPatron(BigInt.fromI32(1)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(1))) && tokenPrice.equals(steward.price(BigInt.fromI32(1))) && owner.equals(steward.currentPatron(BigInt.fromI32(1)))) {
     return 1
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(2))) && owner.equals(steward.currentPatron(BigInt.fromI32(2)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(2))) && tokenPrice.equals(steward.price(BigInt.fromI32(2))) && owner.equals(steward.currentPatron(BigInt.fromI32(2)))) {
     return 2
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(3))) && owner.equals(steward.currentPatron(BigInt.fromI32(3)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(3))) && tokenPrice.equals(steward.price(BigInt.fromI32(3))) && owner.equals(steward.currentPatron(BigInt.fromI32(3)))) {
     return 3
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(4))) && owner.equals(steward.currentPatron(BigInt.fromI32(4)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(4))) && tokenPrice.equals(steward.price(BigInt.fromI32(4))) && owner.equals(steward.currentPatron(BigInt.fromI32(4)))) {
     return 4
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(5))) && owner.equals(steward.currentPatron(BigInt.fromI32(5)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(5))) && tokenPrice.equals(steward.price(BigInt.fromI32(5))) && owner.equals(steward.currentPatron(BigInt.fromI32(5)))) {
     return 5
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(6))) && owner.equals(steward.currentPatron(BigInt.fromI32(6)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(6))) && tokenPrice.equals(steward.price(BigInt.fromI32(6))) && owner.equals(steward.currentPatron(BigInt.fromI32(6)))) {
     return 6
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(7))) && owner.equals(steward.currentPatron(BigInt.fromI32(7)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(7))) && tokenPrice.equals(steward.price(BigInt.fromI32(7))) && owner.equals(steward.currentPatron(BigInt.fromI32(7)))) {
     return 7
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(8))) && owner.equals(steward.currentPatron(BigInt.fromI32(8)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(8))) && tokenPrice.equals(steward.price(BigInt.fromI32(8))) && owner.equals(steward.currentPatron(BigInt.fromI32(8)))) {
     return 8
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(9))) && owner.equals(steward.currentPatron(BigInt.fromI32(9)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(9))) && tokenPrice.equals(steward.price(BigInt.fromI32(9))) && owner.equals(steward.currentPatron(BigInt.fromI32(9)))) {
     return 9
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(10))) && owner.equals(steward.currentPatron(BigInt.fromI32(10)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(10))) && tokenPrice.equals(steward.price(BigInt.fromI32(10))) && owner.equals(steward.currentPatron(BigInt.fromI32(10)))) {
     return 10
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(11))) && owner.equals(steward.currentPatron(BigInt.fromI32(11)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(11))) && tokenPrice.equals(steward.price(BigInt.fromI32(11))) && owner.equals(steward.currentPatron(BigInt.fromI32(11)))) {
     return 11
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(12))) && owner.equals(steward.currentPatron(BigInt.fromI32(12)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(12))) && tokenPrice.equals(steward.price(BigInt.fromI32(12))) && owner.equals(steward.currentPatron(BigInt.fromI32(12)))) {
     return 12
   }
-  else if (tokenPrice.equals(steward.price(BigInt.fromI32(42))) && owner.equals(steward.currentPatron(BigInt.fromI32(42)))) {
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(42))) && tokenPrice.equals(steward.price(BigInt.fromI32(42))) && owner.equals(steward.currentPatron(BigInt.fromI32(42)))) {
     return 42
   }
   else {
-    return 55 // a random non-released token
+    return -1 // a random non-released token -- this normally means the token was foreclosed or something like that
+  }
+}
+// A token would need to be set to the same price
+function getTokenIdFromTimestamp(steward: Steward, timestamp: BigInt): i32 {
+  if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(0)))) {
+    return 0
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(1)))) {
+    return 1
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(2)))) {
+    return 2
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(3)))) {
+    return 3
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(4)))) {
+    return 4
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(5)))) {
+    return 5
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(6)))) {
+    return 6
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(7)))) {
+    return 7
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(8)))) {
+    return 8
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(9)))) {
+    return 9
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(10)))) {
+    return 10
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(11)))) {
+    return 11
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(12)))) {
+    return 12
+  }
+  else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(42)))) {
+    return 42
+  }
+  else {
+    return -1 // a random non-released token -- this normally means the token was foreclosed or something like that
   }
 }
 
+function isVintageVitalik(tokenId: BigInt, blockNumber: BigInt): boolean {
+  return (tokenId.equals(BigInt.fromI32(42)) && blockNumber.lt(BigInt.fromI32(9077429))); // block 9077422 is the block that Vitalik was mined at.
+}
+
+function createCounterIfDoesntExist(): void {
+  let eventCounter = EventCounter.load("1")
+  if (eventCounter != null) {
+    // if eventCounter has already been created return it
+    return
+  }
+  eventCounter = new EventCounter("1")
+  eventCounter.buyEventCount = BigInt.fromI32(0)
+  eventCounter.changePriceEventCount = BigInt.fromI32(0)
+  eventCounter.save()
+}
 function createWildcardIfDoesntExist(steward: Steward, tokenId: BigInt): Wildcard {
   let wildcard = new Wildcard(tokenId.toString())
 
@@ -87,12 +151,17 @@ export function handleLogBuy(event: LogBuy): void {
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
-  let tokenId = getTokenIdFromTxTokenPrice(steward, event.params.price, owner)
+  let tokenId = getTokenIdFromTxTokenPrice(steward, event.params.price, owner, event.block.timestamp)
+
+  if (tokenId == -1) { return } // Normal ly this means a foreclosed token was bought. Will need to fix in future versions of the smart contracts!
+
   // Don't re-add the 'vintage' Vitalik...
   // TODO:: this should be before a given block number - get this block number from when simon buys it!
-  if (tokenId == 42) return //Temporarily before token is migrated
   let tokenIdString = tokenId.toString()
   let tokenIdBigInt = BigInt.fromI32(tokenId)
+
+  // tokenId.equals(BigInt.fromI32(42)) && blockNumber.lt(BigInt.fromI32(9077429))
+  if (isVintageVitalik(tokenIdBigInt, event.block.number)) { return } //Temporarily before token is migrated
 
   let wildcard = Wildcard.load(tokenIdString)
 
@@ -147,6 +216,17 @@ export function handleLogBuy(event: LogBuy): void {
   wildcard.timeAcquired = event.block.timestamp
 
   wildcard.save()
+
+  let buyEvent = new BuyEvent(event.transaction.hash.toHexString())
+  buyEvent.newOwner = patron.id
+  buyEvent.price = price.id
+  buyEvent.token = wildcard.id
+  buyEvent.timestamp = event.block.timestamp
+  buyEvent.save()
+
+  let eventCounter = EventCounter.load("1")
+  eventCounter.buyEventCount = eventCounter.buyEventCount.plus(BigInt.fromI32(1))
+  eventCounter.save()
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
@@ -154,13 +234,15 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address)
   let txOrigin = event.transaction.from
-  let tokenId = getTokenIdFromTxTokenPrice(steward, event.params.newPrice, txOrigin)
+  let tokenId = getTokenIdFromTxTokenPrice(steward, event.params.newPrice, txOrigin, event.block.timestamp)
+  if (tokenId == -1) { return } // Normally this means a foreclosed token was bought. Will need to fix in future versions!
 
   // Don't re-add the 'vintage' Vitalik...
   // TODO:: this should be before a given block number - get this block number from when simon buys it!
-  if (tokenId == 42) return //Temporarily before token is migrated
   let tokenIdString = tokenId.toString()
   let tokenIdBigInt = BigInt.fromI32(tokenId)
+
+  if (isVintageVitalik(tokenIdBigInt, event.block.number)) { return } // only continue if it is past the blocknumber that vitalik was migrated to the new smartcontract
 
   let wildcard = Wildcard.load(tokenIdString)
 
@@ -181,6 +263,16 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   wildcard.price = price.id
 
   wildcard.save()
+
+  let priceChange = new ChangePriceEvent(event.transaction.hash.toHexString())
+  priceChange.price = price.id
+  priceChange.token = wildcard.id
+  priceChange.timestamp = event.block.timestamp
+  priceChange.save()
+
+  let eventCounter = EventCounter.load("1")
+  eventCounter.changePriceEventCount = eventCounter.changePriceEventCount.plus(BigInt.fromI32(1))
+  eventCounter.save()
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
@@ -188,7 +280,27 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 }
 
 export function handleLogCollection(event: LogCollection): void {
+  let globalState = Global.load("1")
 
+  let steward = Steward.bind(event.address)
+
+  let tokenId = getTokenIdFromTimestamp(steward, event.block.timestamp)
+  let tokenIdString = tokenId.toString()
+  let tokenIdBigInt = BigInt.fromI32(tokenId)
+  if (isVintageVitalik(tokenIdBigInt, event.block.number)) { return } // only continue if it is past the blocknumber that vitalik was migrated to the new smartcontract
+
+  let wildcard = Wildcard.load(tokenIdString)
+
+  // Entities only exist after they have been saved to the store;
+  // `null` checks allow to create entities on demand
+  if (wildcard == null) {
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt)
+  }
+  wildcard.totalCollected = steward.totalCollected(tokenIdBigInt)
+
+  globalState.totalCollected = globalState.totalCollected.plus(event.params.collected)
+
+  globalState.save()
 }
 
 export function handleLogRemainingDepositUpdate(
@@ -196,11 +308,12 @@ export function handleLogRemainingDepositUpdate(
 ): void { }
 
 export function handleAddToken(event: AddToken): void {
+  createCounterIfDoesntExist()
+
   let tokenId = event.params.tokenId
   // Don't re-add the 'vintage' Vitalik...
-  if (tokenId.equals(BigInt.fromI32(42))) {
-    return
-  }
+  isVintageVitalik(tokenId, event.block.number) //Temporarily before token is migrated
+
   let patronageNumerator = event.params.patronageNumerator
 
   let wildcard = new Wildcard(tokenId.toString())
@@ -219,6 +332,7 @@ export function handleAddToken(event: AddToken): void {
 
   wildcard.tokenUri = tokenUri.id
   wildcard.tokenId = tokenId
+  wildcard.totalCollected = BigInt.fromI32(0)
 
   let price = new Price(event.transaction.hash.toHexString())
   price.price = BigInt.fromI32(0)
@@ -240,4 +354,15 @@ export function handleAddToken(event: AddToken): void {
   wildcard.previousOwners = []
 
   wildcard.save()
+
+
+  let globalState = Global.load("1")
+
+  // // Entities only exist after they have been saved to the store;
+  // // `null` checks allow to create entities on demand
+  if (globalState == null) {
+    globalState = new Global("1")
+    globalState.totalCollected = BigInt.fromI32(0)
+    globalState.save()
+  }
 }

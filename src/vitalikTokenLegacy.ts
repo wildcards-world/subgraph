@@ -1,12 +1,10 @@
 import { BigInt, EthereumCall, Address } from "@graphprotocol/graph-ts"
 import {
-  Contract,
   Transfer,
   Approval,
   ApprovalForAll,
-  SetupCall
-} from "../generated/VitalikTokenLegacy"
-import { Wildcard, Patron, Price, TokenUri } from "../generated/schema"
+} from "../generated/VitalikTokenLegacy/VitalikTokenLegacy"
+import { Wildcard, Patron, Price, TokenUri, Global } from "../generated/schema"
 
 // NOTE: I commented out the below code since it is VEEERY slow (it has to scan each transaction for the `setup` function)
 //       AND call handlers aren't supported by the graph on goerli testnet
@@ -50,8 +48,19 @@ export function handleTransfer(event: Transfer): void {
     wildcard.patronageNumerator = patronageNumerator
     wildcard.timeAcquired = event.block.timestamp
     wildcard.previousOwners = []
+    wildcard.totalCollected = BigInt.fromI32(0)
 
     wildcard.save()
+
+    let globalState = Global.load("1")
+
+    // // Entities only exist after they have been saved to the store;
+    // // `null` checks allow to create entities on demand
+    if (globalState == null) {
+      globalState = new Global("1")
+      globalState.totalCollected = BigInt.fromI32(0)
+      globalState.save()
+    }
   }
 }
 
