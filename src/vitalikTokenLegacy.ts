@@ -52,15 +52,17 @@ export function handleTransfer(event: Transfer): void {
 
     wildcard.save()
 
-    let globalState = Global.load("1")
+    // // Decided not to deal with this global state for Vintage Vitalik.
+    // let globalState = Global.load("1")
 
-    // // Entities only exist after they have been saved to the store;
-    // // `null` checks allow to create entities on demand
-    if (globalState == null) {
-      globalState = new Global("1")
-      globalState.totalCollected = BigInt.fromI32(0)
-      globalState.save()
-    }
+    // // // Entities only exist after they have been saved to the store;
+    // // // `null` checks allow to create entities on demand
+    // if (globalState == null) {
+    //   globalState = new Global("1")
+    //   globalState.totalCollected = BigInt.fromI32(0)
+    //   globalState.totalCollected = BigInt.fromI32(0)
+    //   globalState.save()
+    // }
   }
 }
 

@@ -1,4 +1,4 @@
-import { BigInt, Address, EthereumBlock } from "@graphprotocol/graph-ts"
+import { BigInt, Address, EthereumBlock, Bytes } from "@graphprotocol/graph-ts"
 import {
   Steward,
   LogBuy,
@@ -9,13 +9,17 @@ import {
   AddToken,
   BuyCall
 } from "../generated/Steward/Steward"
-import { Wildcard, Patron, PreviousPatron, Price, TokenUri, BuyEvent, EventCounter, ChangePriceEvent, Global, TestWillRun } from "../generated/schema"
+import { Wildcard, Patron, PreviousPatron, Price, TokenUri, BuyEvent, EventCounter, ChangePriceEvent, Global } from "../generated/schema"
 import { Token } from "../generated/Token/Token"
 import { log } from '@graphprotocol/graph-ts'
+
+const NUM_SECONDS_IN_YEAR = 31536000
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(steward: Steward, tokenPrice: BigInt, owner: Address, timestamp: BigInt): i32 {
   if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(0))) && tokenPrice.equals(steward.price(BigInt.fromI32(0))) && owner.equals(steward.currentPatron(BigInt.fromI32(0)))) {
+    log.warning("We have found a token 1 trade",
+      [])
     return 0
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(1))) && tokenPrice.equals(steward.price(BigInt.fromI32(1))) && owner.equals(steward.currentPatron(BigInt.fromI32(1)))) {
@@ -64,45 +68,59 @@ function getTokenIdFromTxTokenPrice(steward: Steward, tokenPrice: BigInt, owner:
 // A token would need to be set to the same price
 function getTokenIdFromTimestamp(steward: Steward, timestamp: BigInt): i32 {
   if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(0)))) {
+    log.warning("0 - was just collected", [])
     return 0
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(1)))) {
+    log.warning("1 - was just collected", [])
     return 1
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(2)))) {
+    log.warning("2 - was just collected", [])
     return 2
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(3)))) {
+    log.warning("3 - was just collected", [])
     return 3
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(4)))) {
+    log.warning("4 - was just collected", [])
     return 4
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(5)))) {
+    log.warning("5 - was just collected", [])
     return 5
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(6)))) {
+    log.warning("6 - was just collected", [])
     return 6
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(7)))) {
+    log.warning("7 - was just collected", [])
     return 7
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(8)))) {
+    log.warning("8 - was just collected", [])
     return 8
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(9)))) {
+    log.warning("9 - was just collected", [])
     return 9
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(10)))) {
+    log.warning("10 - was just collected", [])
     return 10
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(11)))) {
+    log.warning("11 - was just collected", [])
     return 11
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(12)))) {
+    log.warning("12 - was just collected", [])
     return 12
   }
   else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(42)))) {
+    log.warning("42 - was just collected", [])
     return 42
   }
   else {
@@ -205,6 +223,19 @@ export function handleLogBuy(event: LogBuy): void {
     wildcard.previousOwners = wildcard.previousOwners.concat([previousPatron.id])
   }
 
+  let previousPrice = Price.load(wildcard.price)
+
+  let globalState = Global.load("1")
+
+  let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt)
+  let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
+  globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
+    .plus(event.params.price.times(tokenPatronageNumerator))
+    .minus(previousPrice.price.times(tokenPatronageNumerator))
+  log.warning("#{} the previous price {} new price {}, prev globalState total cost numerator {}, new global state {}",
+    [tokenIdString, previousPrice.price.toString(), event.params.price.toString(), totalTokenCostScaledNumerator.toString(), globalState.totalTokenCostScaledNumerator.toString()])
+  globalState.save()
+
   let price = new Price(event.transaction.hash.toHexString())
   price.price = event.params.price
   price.timeSet = event.block.timestamp
@@ -281,13 +312,22 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 
 export function handleLogCollection(event: LogCollection): void {
   let globalState = Global.load("1")
+  let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
 
   let steward = Steward.bind(event.address)
-
   let tokenId = getTokenIdFromTimestamp(steward, event.block.timestamp)
   let tokenIdString = tokenId.toString()
   let tokenIdBigInt = BigInt.fromI32(tokenId)
-  if (isVintageVitalik(tokenIdBigInt, event.block.number)) { return } // only continue if it is past the blocknumber that vitalik was migrated to the new smartcontract
+  if (isVintageVitalik(tokenIdBigInt, event.block.number)) { // only continue if it is past the blocknumber that vitalik was migrated to the new smartcontract
+    log.info("This TX is pre Vitalik {}", [event.transaction.hash.toHexString()]);
+    if (event.transaction.hash.toHexString() == "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90") {
+      log.info("Vitalik was just upgraded to the new smart contract", []);
+      globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
+        .plus(steward.price(BigInt.fromI32(42)).times(BigInt.fromI32(300).times(BigInt.fromI32(1000000000))/*steward.patronageNumerator(BigInt.fromI32(42))*/))
+    } else {
+      return
+    }
+  }
 
   let wildcard = Wildcard.load(tokenIdString)
 
@@ -297,8 +337,15 @@ export function handleLogCollection(event: LogCollection): void {
     wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt)
   }
   wildcard.totalCollected = steward.totalCollected(tokenIdBigInt)
+  wildcard.save()
 
   globalState.totalCollected = globalState.totalCollected.plus(event.params.collected)
+  let now = event.block.timestamp
+  globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
+    (totalTokenCostScaledNumerator.times(now.minus(globalState.timeLastCollected)))
+      .div(steward.patronageDenominator().times(BigInt.fromI32(NUM_SECONDS_IN_YEAR)))
+  );
+  globalState.timeLastCollected = event.block.timestamp
 
   globalState.save()
 }
@@ -312,7 +359,7 @@ export function handleAddToken(event: AddToken): void {
 
   let tokenId = event.params.tokenId
   // Don't re-add the 'vintage' Vitalik...
-  isVintageVitalik(tokenId, event.block.number) //Temporarily before token is migrated
+  if (isVintageVitalik(tokenId, event.block.number)) { return } //Temporarily before token is migrated
 
   let patronageNumerator = event.params.patronageNumerator
 
@@ -355,14 +402,23 @@ export function handleAddToken(event: AddToken): void {
 
   wildcard.save()
 
-
   let globalState = Global.load("1")
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (globalState == null) {
     globalState = new Global("1")
-    globalState.totalCollected = BigInt.fromI32(0)
+    // NOTE: using the bytes string wasn't working well, so this is how we convert 2697680747781582948 into a BigInt
+    // 2697680747781582948
+    // 2000000000 * 1000000000
+    //  697680747 * 1000000000
+    //           781582948
+    let billion = BigInt.fromI32(1000000000)
+    globalState.timeLastCollected = event.block.timestamp
+    globalState.totalCollected = (BigInt.fromI32(2000000000).times(billion)).plus(BigInt.fromI32(697680747).times(billion)).plus(BigInt.fromI32(781582948))
+    log.warning("setting global state {} {}", [globalState.totalCollected.toString(), event.transaction.hash.toHexString()])
+    globalState.totalCollectedOrDue = globalState.totalCollected
+    globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0)
     globalState.save()
   }
 }

@@ -9,6 +9,9 @@ type Global @entity {
   id:ID! # will just be '1' since only one global namespace
   totalCollected: BigInt!
   # totalAmountCollectedOrDue: BigInt!
+  timeLastCollected: BigInt!
+  totalCollectedOrDue: BigInt!
+  totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
 }
 
 type Wildcard @entity {

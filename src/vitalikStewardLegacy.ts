@@ -83,14 +83,14 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     wildcard.totalCollected = BigInt.fromI32(0)
   }
 
-  let globalState = Global.load("1")
+  // let globalState = Global.load("1")
 
-  // // Entities only exist after they have been saved to the store;
-  // // `null` checks allow to create entities on demand
-  if (globalState == null) {
-    globalState = new Global("1")
-    globalState.totalCollected = BigInt.fromI32(0)
-  }
+  // // // Entities only exist after they have been saved to the store;
+  // // // `null` checks allow to create entities on demand
+  // if (globalState == null) {
+  //   globalState = new Global("1")
+  //   globalState.totalCollected = BigInt.fromI32(0)
+  // }
 
   // Entity fields can be set using simple assignments
   wildcard.tokenId = BigInt.fromI32(tokenId)
@@ -106,14 +106,14 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   wildcard.save()
 
-  globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
-  globalState.save()
+  // globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
+  // globalState.save()
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void { }
 
 export function handleLogCollection(event: LogCollection): void {
-  let globalState = Global.load("1")
+  // let globalState = Global.load("1")
 
   let steward = VitalikStewardLegacy.bind(event.address)
 
@@ -123,6 +123,6 @@ export function handleLogCollection(event: LogCollection): void {
 
   wildcard.totalCollected = steward.totalCollected()
 
-  globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
-  globalState.save()
+  // globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
+  // globalState.save()
 }
