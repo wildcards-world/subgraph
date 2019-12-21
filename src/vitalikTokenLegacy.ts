@@ -40,6 +40,9 @@ export function handleTransfer(event: Transfer): void {
       patron = new Patron("NO_OWNER")
       patron.address = Address.fromString("0x0000000000000000000000000000000000000000")
       patron.lastUpdated = event.block.number
+      patron.availableDeposit = BigInt.fromI32(0)
+      patron.patronTokenCostScaledNumerator = BigInt.fromI32(0)
+      patron.foreclosureTime = BigInt.fromI32(0)
       patron.save()
     }
 
@@ -47,8 +50,10 @@ export function handleTransfer(event: Transfer): void {
     wildcard.owner = patron.id
     wildcard.patronageNumerator = patronageNumerator
     wildcard.timeAcquired = event.block.timestamp
+    wildcard.timeCollected = event.block.timestamp
     wildcard.previousOwners = []
     wildcard.totalCollected = BigInt.fromI32(0)
+    wildcard.pledgeRateNumerator = patronageNumerator = BigInt.fromI32(300).times(BigInt.fromI32(1000000000))
 
     wildcard.save()
 

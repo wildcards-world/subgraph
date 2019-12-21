@@ -40,6 +40,10 @@ export function handleLogBuy(event: LogBuy): void {
     patron.previouslyOwnedTokens.concat([wildcard.id]) : patron.previouslyOwnedTokens
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id])
+  let steward = VitalikStewardLegacy.bind(event.address)
+  patron.availableDeposit = steward.depositAbleToWithdraw()
+  patron.patronTokenCostScaledNumerator = BigInt.fromI32(0)// Just don't set this value on vintage vitalik
+  patron.foreclosureTime = BigInt.fromI32(0)//steward.foreclosureTime() // this gives an error: but we could apparently use `try_foreclosureTime`
   let itemIndex = patronOld.tokens.indexOf(wildcard.id)
   // Remove token to the previous patron's tokens
   patronOld.tokens = patronOld.tokens.slice(0, itemIndex).concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length))
