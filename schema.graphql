@@ -22,13 +22,13 @@ type Wildcard @entity {
   price: Price!
   owner: Patron! # address
   patronageNumerator: BigInt!
+  patronageNumeratorPriceScaled: BigInt!
   timeAcquired: BigInt!
   previousOwners: [PreviousPatron!]
   priceHistory: [Price!]
   tokenUri: TokenUri!
   totalCollected: BigInt!
   timeCollected: BigInt!
-  pledgeRateNumerator: BigInt!
 }
 
 type TokenUri @entity {

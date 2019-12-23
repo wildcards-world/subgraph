@@ -26,15 +26,15 @@ import { log } from "@graphprotocol/graph-ts";
 // TODO: make a file for constants.
 const NUM_SECONDS_IN_YEAR = 31536000;
 // NOTE: using the bytes string wasn't working well, so this is how we convert 2697680747781582948 into a BigInt
-// 2697680747781582948
+// 2697680747781582948-243264269406392694(the refund given back to Simon due to mistake in smart contract) = 2454416478375190254
 // 2000000000 * 1000000000
-//  697680747 * 1000000000
-//           781582948
+//  454416478 * 1000000000
+//           375190254
 let BILLION = BigInt.fromI32(1000000000);
 const AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT = BigInt.fromI32(2000000000)
   .times(BILLION)
-  .plus(BigInt.fromI32(697680747).times(BILLION))
-  .plus(BigInt.fromI32(781582948));
+  .plus(BigInt.fromI32(454416478).times(BILLION))
+  .plus(BigInt.fromI32(375190254));
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(
@@ -346,6 +346,20 @@ export function handleLogBuy(event: LogBuy): void {
 
   // tokenId.equals(BigInt.fromI32(42)) && blockNumber.lt(BigInt.fromI32(9077429))
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
+    // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
+    if (
+      event.transaction.hash.toHexString() ==
+      "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
+    ) {
+      let patron = Patron.load(ownerString);
+      patron.availableDeposit = steward.depositAbleToWithdraw(owner);
+      patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+        owner
+      );
+      patron.foreclosureTime = steward.foreclosureTimePatron(owner);
+      patron.lastUpdated = event.block.timestamp;
+      patron.save();
+    }
     return;
   } //Temporarily before token is migrated
 
@@ -367,8 +381,8 @@ export function handleLogBuy(event: LogBuy): void {
   if (patron == null) {
     patron = new Patron(ownerString);
     patron.address = owner;
-    patron.lastUpdated = event.block.number;
   }
+  patron.lastUpdated = event.block.timestamp;
 
   // Add to previouslyOwnedTokens if not already there
   patron.previouslyOwnedTokens =
@@ -407,20 +421,9 @@ export function handleLogBuy(event: LogBuy): void {
   let globalState = Global.load("1");
 
   let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
-  let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator;
   globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
     .plus(event.params.price.times(tokenPatronageNumerator))
     .minus(previousPrice.price.times(tokenPatronageNumerator));
-  log.warning(
-    "#{} the previous price {} new price {}, prev globalState total cost numerator {}, new global state {}",
-    [
-      tokenIdString,
-      previousPrice.price.toString(),
-      event.params.price.toString(),
-      totalTokenCostScaledNumerator.toString(),
-      globalState.totalTokenCostScaledNumerator.toString()
-    ]
-  );
   globalState.save();
 
   let price = new Price(event.transaction.hash.toHexString());
@@ -429,6 +432,9 @@ export function handleLogBuy(event: LogBuy): void {
   price.save();
 
   wildcard.price = price.id;
+  wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
+    price.price
+  );
 
   wildcard.owner = patron.id;
   wildcard.timeAcquired = event.block.timestamp;
@@ -448,7 +454,8 @@ export function handleLogBuy(event: LogBuy): void {
   wildcardAtTx.tokenUri = wildcard.tokenUri;
   wildcardAtTx.totalCollected = wildcard.totalCollected;
   wildcardAtTx.timeCollected = wildcard.timeCollected;
-  wildcardAtTx.pledgeRateNumerator = wildcard.pledgeRateNumerator;
+  wildcardAtTx.patronageNumeratorPriceScaled =
+    wildcard.patronageNumeratorPriceScaled;
   wildcardAtTx.save();
 
   buyEvent.newOwner = patron.id;
@@ -505,7 +512,9 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   price.save();
 
   wildcard.price = price.id;
-
+  wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
+    price.price
+  );
   wildcard.save();
 
   let patron = Patron.load(wildcard.owner);
@@ -520,6 +529,8 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   patron.foreclosureTime = steward.foreclosureTimePatron(
     patron.address as Address
   );
+  patron.lastUpdated = event.block.timestamp;
+  patron.save();
 
   let priceChange = new ChangePriceEvent(event.transaction.hash.toHexString());
   priceChange.price = price.id;
@@ -547,17 +558,12 @@ export function handleLogCollection(event: LogCollection): void {
   }
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
-  log.info("this tx is {}", [event.transaction.hash.toHexString()]);
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
     // only continue if it is past the blocknumber that vitalik was migrated to the new smartcontract
-    log.info("This TX is pre Vitalik {}", [
-      event.transaction.hash.toHexString()
-    ]);
     if (
       event.transaction.hash.toHexString() ==
       "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
     ) {
-      log.info("Vitalik was just upgraded to the new smart contract", []);
       globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator.plus(
         steward
           .price(BigInt.fromI32(42))
@@ -567,11 +573,19 @@ export function handleLogCollection(event: LogCollection): void {
             ) /*steward.patronageNumerator(BigInt.fromI32(42))*/
           )
       );
+    } // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
+    else if (
+      event.transaction.hash.toHexString() ==
+      "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
+    ) {
+      let wildcard = Wildcard.load(tokenIdString);
+      wildcard.totalCollected = steward.totalCollected(tokenIdBigInt);
+      wildcard.timeCollected = event.block.timestamp;
+      wildcard.save();
     } else {
       return;
     }
   }
-  log.warning("running more 1 for: {}", [tokenIdString]);
 
   let wildcard = Wildcard.load(tokenIdString);
 
@@ -580,30 +594,21 @@ export function handleLogCollection(event: LogCollection): void {
   if (wildcard == null) {
     wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
   }
-  log.warning("running more 2", []);
   wildcard.totalCollected = steward.totalCollected(tokenIdBigInt);
-  log.warning("running more 2", []);
   wildcard.timeCollected = event.block.timestamp;
-  log.warning("running more 3", []);
   wildcard.save();
-  log.warning("running more 4", []);
 
   globalState.totalCollected = globalState.totalCollected.plus(
     event.params.collected
   );
-  log.warning("running more 5", []);
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
-  log.warning("running more 6", []);
   globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
   );
-  log.warning("running more 7", []);
   let totalOwed = getTotalOwedAccurate(steward);
-  log.warning("running more 8", []);
   globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
     totalOwed
   );
-  log.warning("running more 9", []);
 
   let now = event.block.timestamp;
   globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
@@ -615,9 +620,7 @@ export function handleLogCollection(event: LogCollection): void {
           .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
       )
   );
-  log.warning("running more 10", []);
   globalState.timeLastCollected = event.block.timestamp;
-  log.warning("running more 11", []);
 
   globalState.save();
 }
@@ -676,8 +679,8 @@ export function handleAddToken(event: AddToken): void {
 
   wildcard.price = price.id;
   wildcard.owner = patron.id;
-  wildcard.pledgeRateNumerator = patronageNumerator;
   wildcard.patronageNumerator = patronageNumerator;
+  wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = event.block.timestamp;
   wildcard.previousOwners = [];
 

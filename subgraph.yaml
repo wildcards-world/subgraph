@@ -1,4 +1,6 @@
 specVersion: 0.0.2
+description: A subgraph for wildcards.world smart contracts.
+repository: https://github.com/wildcards/subgraph
 schema:
   file: ./schema.graphql
 dataSources:
