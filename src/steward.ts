@@ -455,24 +455,9 @@ export function handleLogBuy(event: LogBuy): void {
 
   let buyEvent = new BuyEvent(event.transaction.hash.toHexString());
 
-  let wildcardAtTx = new Wildcard(event.transaction.hash.toHexString());
-  wildcardAtTx.tokenId = wildcard.tokenId;
-  wildcardAtTx.price = wildcard.price;
-  wildcardAtTx.owner = wildcard.owner;
-  wildcardAtTx.patronageNumerator = wildcard.patronageNumerator;
-  wildcardAtTx.timeAcquired = wildcard.timeAcquired;
-  wildcardAtTx.previousOwners = wildcard.previousOwners;
-  wildcardAtTx.priceHistory = wildcard.priceHistory;
-  wildcardAtTx.tokenUri = wildcard.tokenUri;
-  wildcardAtTx.totalCollected = wildcard.totalCollected;
-  wildcardAtTx.timeCollected = wildcard.timeCollected;
-  wildcardAtTx.patronageNumeratorPriceScaled =
-    wildcard.patronageNumeratorPriceScaled;
-  wildcardAtTx.save();
-
   buyEvent.newOwner = patron.id;
   buyEvent.price = price.id;
-  buyEvent.token = wildcardAtTx.id;
+  buyEvent.token = wildcard.id;
   buyEvent.timestamp = event.block.timestamp;
   buyEvent.save();
 
