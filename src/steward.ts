@@ -376,8 +376,10 @@ export function handleLogBuy(event: LogBuy): void {
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
 
+  let previousTokenOwnerString = wildcard.owner;
+
   let patron = Patron.load(ownerString);
-  let patronOld = Patron.load(wildcard.owner);
+  let patronOld = Patron.load(previousTokenOwnerString);
   if (patron == null) {
     patron = new Patron(ownerString);
     patron.address = owner;
@@ -401,6 +403,15 @@ export function handleLogBuy(event: LogBuy): void {
   patronOld.tokens = patronOld.tokens
     .slice(0, itemIndex)
     .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  if (patronOld.id != "NO_OWNER") {
+    patronOld.availableDeposit = steward.depositAbleToWithdraw(
+      patronOld.address as Address
+    );
+    patronOld.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+      patronOld.address as Address
+    );
+  }
+
   patron.save();
   patronOld.save();
 
@@ -408,9 +419,10 @@ export function handleLogBuy(event: LogBuy): void {
     let previousPatron = new PreviousPatron(ownerString);
     previousPatron.patron = patron.id;
     previousPatron.timeAcquired = wildcard.timeAcquired;
-    previousPatron.timeSold = event.block.timestamp;
+    previousPatron.timeSold = BigInt.fromI32(-1); //event.block.timestamp;
     previousPatron.save();
 
+    // TODO: update the `timeSold` of the previous token.
     wildcard.previousOwners = wildcard.previousOwners.concat([
       previousPatron.id
     ]);
