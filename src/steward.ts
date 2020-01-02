@@ -7,7 +7,12 @@ import {
   LogCollection,
   LogRemainingDepositUpdate,
   AddToken,
-  BuyCall
+  BuyCall,
+  Buy,
+  PriceChange,
+  Foreclosure,
+  RemainingDepositUpdate,
+  CollectPatronage
 } from "../generated/Steward/Steward";
 import {
   Wildcard,
@@ -707,3 +712,11 @@ export function handleAddToken(event: AddToken): void {
     globalState.save();
   }
 }
+
+export function handleBuy(event: Buy): void {}
+export function handlePriceChange(event: PriceChange): void {}
+export function handleForeclosure(event: Foreclosure): void {}
+export function handleRemainingDepositUpdate(
+  event: RemainingDepositUpdate
+): void {}
+export function handleCollectPatronage(event: CollectPatronage): void {}
