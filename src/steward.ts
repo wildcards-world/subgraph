@@ -624,7 +624,14 @@ export function handleLogCollection(event: LogCollection): void {
 
 export function handleLogRemainingDepositUpdate(
   event: LogRemainingDepositUpdate
-): void {}
+): void {
+  let patron = Patron.load(event.params.tokenPatron.toHexString());
+  if (patron == null) {
+  } else {
+    patron.availableDeposit = event.params.remainingDeposit;
+    patron.save();
+  }
+}
 
 export function handleAddToken(event: AddToken): void {
   createCounterIfDoesntExist();
