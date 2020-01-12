@@ -4,6 +4,23 @@ import { Patron } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
 import { ZERO_ADDRESS } from "../CONSTANTS";
 
+export function initialiseDefaultPatronIfNull(
+  steward: Steward,
+  patronAddress: Address,
+  currentTimestamp: BigInt
+): void {
+  let patronId = patronAddress.toHexString();
+  let patron = new Patron(patronId);
+  patron.address = patronAddress;
+  patron.lastUpdated = currentTimestamp;
+  patron.availableDeposit = steward.depositAbleToWithdraw(patronAddress);
+  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    patronAddress
+  );
+  patron.foreclosureTime = steward.foreclosureTimePatron(patronAddress);
+  patron.save();
+}
+
 export function updateAvailableDepositAndForeclosureTime(
   steward: Steward,
   tokenPatron: Address,
@@ -24,10 +41,11 @@ export function updateAvailableDepositAndForeclosureTime(
   let patron = Patron.load(tokenPatronStr);
 
   if (patron == null) {
-    log.critical(
-      'a patron is null when remaining deposit is updated, there is a critical bug! patron address: "{}"',
-      [tokenPatronStr]
-    );
+    log.info('Created a new patron entity! patron address: "{}"', [
+      tokenPatronStr
+    ]);
+    initialiseDefaultPatronIfNull(steward, tokenPatron, currentTimestamp);
+    return;
   }
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
