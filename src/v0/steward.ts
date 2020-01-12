@@ -197,6 +197,7 @@ function createCounterIfDoesntExist(): void {
   eventCounter = new EventCounter("1");
   eventCounter.buyEventCount = BigInt.fromI32(0);
   eventCounter.changePriceEventCount = BigInt.fromI32(0);
+  eventCounter.buyEvents = [];
   eventCounter.save();
 }
 function createWildcardIfDoesntExist(
@@ -464,6 +465,7 @@ export function handleLogBuy(event: LogBuy): void {
   eventCounter.buyEventCount = eventCounter.buyEventCount.plus(
     BigInt.fromI32(1)
   );
+  eventCounter.buyEvents = eventCounter.buyEvents.concat([buyEvent.id]);
   eventCounter.save();
 }
 
@@ -541,7 +543,9 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   eventCounter.save();
 }
 
-export function handleLogForeclosure(event: LogForeclosure): void {}
+export function handleLogForeclosure(event: LogForeclosure): void {
+  // TODO!
+}
 
 export function handleLogCollection(event: LogCollection): void {
   let globalState = Global.load("1");

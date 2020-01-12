@@ -53,7 +53,7 @@ export function handleLogBuy(event: LogBuy): void {
   let steward = VitalikStewardLegacy.bind(event.address);
   patron.availableDeposit = steward.depositAbleToWithdraw();
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0); // Just don't set this value on vintage vitalik
-  patron.foreclosureTime = BigInt.fromI32(0); //steward.foreclosureTime() // this gives an error: but we could apparently use `try_foreclosureTime`
+  patron.foreclosureTime = steward.foreclosureTime(); // this gives an error: but we could apparently use `try_foreclosureTime`
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   // Remove token to the previous patron's tokens
   patronOld.tokens = patronOld.tokens

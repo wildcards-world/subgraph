@@ -1,4 +1,3 @@
-import { BigInt, Address, EthereumBlock, Bytes } from "@graphprotocol/graph-ts";
 import {
   LogBuy,
   LogPriceChange,
