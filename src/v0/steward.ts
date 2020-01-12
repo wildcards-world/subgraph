@@ -21,19 +21,11 @@ import {
 } from "../../generated/schema";
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
-
-// TODO: make a file for constants.
-const NUM_SECONDS_IN_YEAR = 31536000;
-// NOTE: using the bytes string wasn't working well, so this is how we convert 2697680747781582948 into a BigInt
-// 2697680747781582948-243264269406392694(the refund given back to Simon due to mistake in smart contract) = 2454416478375190254
-// 2000000000 * 1000000000
-//  454416478 * 1000000000
-//           375190254
-let BILLION = BigInt.fromI32(1000000000);
-const AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT = BigInt.fromI32(2000000000)
-  .times(BILLION)
-  .plus(BigInt.fromI32(454416478).times(BILLION))
-  .plus(BigInt.fromI32(375190254));
+import {
+  ZERO_ADDRESS,
+  NUM_SECONDS_IN_YEAR,
+  AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT
+} from "../CONSTANTS";
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(
@@ -674,9 +666,7 @@ export function handleAddToken(event: AddToken): void {
   let patron = Patron.load("NO_OWNER");
   if (patron == null) {
     patron = new Patron("NO_OWNER");
-    patron.address = Address.fromString(
-      "0x0000000000000000000000000000000000000000"
-    );
+    patron.address = ZERO_ADDRESS;
     patron.lastUpdated = BigInt.fromI32(0);
     patron.availableDeposit = BigInt.fromI32(0);
     patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);

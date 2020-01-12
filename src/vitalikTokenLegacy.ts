@@ -5,6 +5,7 @@ import {
   ApprovalForAll
 } from "../generated/VitalikTokenLegacy/VitalikTokenLegacy";
 import { Wildcard, Patron, Price, TokenUri, Global } from "../generated/schema";
+import { ZERO_ADDRESS } from "./CONSTANTS";
 
 // NOTE: I commented out the below code since it is VEEERY slow (it has to scan each transaction for the `setup` function)
 //       AND call handlers aren't supported by the graph on goerli testnet
@@ -41,9 +42,7 @@ export function handleTransfer(event: Transfer): void {
     let patron = Patron.load("NO_OWNER");
     if (patron == null) {
       patron = new Patron("NO_OWNER");
-      patron.address = Address.fromString(
-        "0x0000000000000000000000000000000000000000"
-      );
+      patron.address = ZERO_ADDRESS;
       patron.lastUpdated = event.block.timestamp;
       patron.availableDeposit = BigInt.fromI32(0);
       patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
