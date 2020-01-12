@@ -28,6 +28,7 @@ import {
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
 import * as V0 from "../v0/steward";
+import { updateAvailableDepositAndForeclosureTime } from "../util";
 
 export function handleAddToken(event: AddToken): void {
   // No changes from v0:
@@ -205,8 +206,38 @@ export function handlePriceChange(event: PriceChange): void {
   );
   eventCounter.save();
 }
-export function handleForeclosure(event: Foreclosure): void {}
+export function handleForeclosure(event: Foreclosure): void {
+  let steward = Steward.bind(event.address);
+  let tokenPatron = event.params.prevOwner;
+  let currentTimestamp = event.block.timestamp;
+
+  updateAvailableDepositAndForeclosureTime(
+    steward,
+    tokenPatron,
+    currentTimestamp
+  );
+}
 export function handleRemainingDepositUpdate(
   event: RemainingDepositUpdate
-): void {}
-export function handleCollectPatronage(event: CollectPatronage): void {}
+): void {
+  let steward = Steward.bind(event.address);
+  let tokenPatron = event.params.tokenPatron;
+  let currentTimestamp = event.block.timestamp;
+
+  updateAvailableDepositAndForeclosureTime(
+    steward,
+    tokenPatron,
+    currentTimestamp
+  );
+}
+export function handleCollectPatronage(event: CollectPatronage): void {
+  let steward = Steward.bind(event.address);
+  let tokenPatron = event.params.patron;
+  let currentTimestamp = event.block.timestamp;
+
+  updateAvailableDepositAndForeclosureTime(
+    steward,
+    tokenPatron,
+    currentTimestamp
+  );
+}
