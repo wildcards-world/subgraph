@@ -20,6 +20,11 @@ export function updateAvailableDepositAndForeclosureTime(
   }
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
-  patron.foreclosureTime = steward.foreclosureTimePatron(tokenPatron);
+  let tryForeclosureTime = steward.try_foreclosureTimePatron(tokenPatron); // this call can error if the combined price of the patrons token is zero (divide by zero error)!
+  if (tryForeclosureTime.reverted) {
+    patron.foreclosureTime = BigInt.fromI32(0);
+  } else {
+    patron.foreclosureTime = tryForeclosureTime.value;
+  }
   patron.lastUpdated = currentTimestamp;
 }

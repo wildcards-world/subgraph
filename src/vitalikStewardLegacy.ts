@@ -53,7 +53,12 @@ export function handleLogBuy(event: LogBuy): void {
   let steward = VitalikStewardLegacy.bind(event.address);
   patron.availableDeposit = steward.depositAbleToWithdraw();
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0); // Just don't set this value on vintage vitalik
-  patron.foreclosureTime = steward.foreclosureTime(); // this gives an error: but we could apparently use `try_foreclosureTime`
+  let tryForeclosureTime = steward.try_foreclosureTime(); // this call can error if the price is zero!! (divide by zero error: https://github.com/wild-cards/dapp/blob/master/contracts/VitalikSteward.sol#L112)
+  if (tryForeclosureTime.reverted) {
+    patron.foreclosureTime = BigInt.fromI32(0);
+  } else {
+    patron.foreclosureTime = tryForeclosureTime.value;
+  }
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   // Remove token to the previous patron's tokens
   patronOld.tokens = patronOld.tokens
