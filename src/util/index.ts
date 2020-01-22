@@ -8,7 +8,7 @@ export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
   currentTimestamp: BigInt
-): void {
+): Patron {
   let patronId = patronAddress.toHexString();
   let patron = new Patron(patronId);
   patron.address = patronAddress;
@@ -19,6 +19,7 @@ export function initialiseDefaultPatronIfNull(
   );
   patron.foreclosureTime = steward.foreclosureTimePatron(patronAddress);
   patron.save();
+  return patron;
 }
 
 export function updateAvailableDepositAndForeclosureTime(
@@ -44,7 +45,11 @@ export function updateAvailableDepositAndForeclosureTime(
     log.info('Created a new patron entity! patron address: "{}"', [
       tokenPatronStr
     ]);
-    initialiseDefaultPatronIfNull(steward, tokenPatron, currentTimestamp);
+    patron = initialiseDefaultPatronIfNull(
+      steward,
+      tokenPatron,
+      currentTimestamp
+    );
     return;
   }
 
