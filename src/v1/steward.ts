@@ -90,6 +90,9 @@ export function handleBuy(event: Buy): void {
     patronOld.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
       patronOld.address as Address
     );
+    patronOld.foreclosureTime = steward.foreclosureTimePatron(
+      patronOld.address as Address
+    );
   }
 
   patron.save();
