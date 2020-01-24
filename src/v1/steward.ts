@@ -28,7 +28,10 @@ import {
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
 import * as V0 from "../v0/steward";
-import { updateAvailableDepositAndForeclosureTime } from "../util";
+import {
+  updateAvailableDepositAndForeclosureTime,
+  getForeclosureTimeSafe
+} from "../util";
 
 export function handleAddToken(event: AddToken): void {
   // No changes from v0:
@@ -36,6 +39,7 @@ export function handleAddToken(event: AddToken): void {
 }
 
 export function handleBuy(event: Buy): void {
+  log.warning("HANDLE BUY!!!", []);
   let owner = event.params.owner;
   let tokenIdBigInt = event.params.tokenId;
   let tokenIdString = tokenIdBigInt.toString();
@@ -75,7 +79,7 @@ export function handleBuy(event: Buy): void {
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     owner
   );
-  patron.foreclosureTime = steward.foreclosureTimePatron(owner);
+  patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
@@ -90,7 +94,8 @@ export function handleBuy(event: Buy): void {
     patronOld.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
       patronOld.address as Address
     );
-    patronOld.foreclosureTime = steward.foreclosureTimePatron(
+    patronOld.foreclosureTime = getForeclosureTimeSafe(
+      steward,
       patronOld.address as Address
     );
   }
@@ -191,7 +196,8 @@ export function handlePriceChange(event: PriceChange): void {
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
-  patron.foreclosureTime = steward.foreclosureTimePatron(
+  patron.foreclosureTime = getForeclosureTimeSafe(
+    steward,
     patron.address as Address
   );
   patron.lastUpdated = event.block.timestamp;

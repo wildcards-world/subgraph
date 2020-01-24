@@ -4,6 +4,26 @@ import { Patron } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
 import { ZERO_ADDRESS } from "../CONSTANTS";
 
+export function getForeclosureTimeSafe(
+  steward: Steward,
+  tokenPatron: Address
+): BigInt {
+  let tryForeclosureTime = steward.try_foreclosureTimePatron(tokenPatron); // this call can error if the combined price of the patrons token is zero (divide by zero error)!
+  if (tryForeclosureTime.reverted) {
+    return BigInt.fromI32(0);
+  } else {
+    const patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+      tokenPatron
+    );
+    if (patronTokenCostScaledNumerator.equals(BigInt.fromI32(0))) {
+      // NOTE: this case is logically impossible, but just added for extra safety...
+      return BigInt.fromI32(0);
+    } else {
+      return tryForeclosureTime.value;
+    }
+  }
+}
+
 export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
@@ -17,7 +37,7 @@ export function initialiseDefaultPatronIfNull(
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patronAddress
   );
-  patron.foreclosureTime = steward.foreclosureTimePatron(patronAddress);
+  patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
   patron.save();
   return patron;
 }
@@ -54,12 +74,7 @@ export function updateAvailableDepositAndForeclosureTime(
   }
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
-  let tryForeclosureTime = steward.try_foreclosureTimePatron(tokenPatron); // this call can error if the combined price of the patrons token is zero (divide by zero error)!
-  if (tryForeclosureTime.reverted) {
-    patron.foreclosureTime = BigInt.fromI32(0);
-  } else {
-    patron.foreclosureTime = tryForeclosureTime.value;
-  }
+  patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
   patron.lastUpdated = currentTimestamp;
   patron.save();
 }

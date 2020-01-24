@@ -26,6 +26,7 @@ import {
   NUM_SECONDS_IN_YEAR,
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT
 } from "../CONSTANTS";
+import { getForeclosureTimeSafe } from "../util";
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(
@@ -348,7 +349,7 @@ export function handleLogBuy(event: LogBuy): void {
       patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
         owner
       );
-      patron.foreclosureTime = steward.foreclosureTimePatron(owner);
+      patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
       patron.lastUpdated = event.block.timestamp;
       patron.save();
     }
@@ -387,7 +388,7 @@ export function handleLogBuy(event: LogBuy): void {
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     owner
   );
-  patron.foreclosureTime = steward.foreclosureTimePatron(owner);
+  patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
@@ -402,7 +403,8 @@ export function handleLogBuy(event: LogBuy): void {
     patronOld.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
       patronOld.address as Address
     );
-    patronOld.foreclosureTime = steward.foreclosureTimePatron(
+    patronOld.foreclosureTime = getForeclosureTimeSafe(
+      steward,
       patronOld.address as Address
     );
   }
@@ -519,7 +521,8 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
-  patron.foreclosureTime = steward.foreclosureTimePatron(
+  patron.foreclosureTime = getForeclosureTimeSafe(
+    steward,
     patron.address as Address
   );
   patron.lastUpdated = event.block.timestamp;
