@@ -75,6 +75,9 @@ export function updateAvailableDepositAndForeclosureTime(
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    tokenPatron
+  );
   patron.lastUpdated = currentTimestamp;
   patron.save();
 }

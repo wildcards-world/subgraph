@@ -19,12 +19,14 @@ function returnIfNewVitalik(blockNumber: BigInt): boolean {
 }
 
 export function getForeclosureTimeSafe(steward: VitalikStewardLegacy): BigInt {
-  let tryForeclosureTime = steward.try_foreclosureTime(); // this call can error if the combined price of the patrons token is zero (divide by zero error)!
-  if (tryForeclosureTime.reverted) {
-    return BigInt.fromI32(0);
-  } else {
-    return tryForeclosureTime.value;
-  }
+  // NOTE:: since this contract is deprecated, always return 0 here, to avoid causing conflicts with the new contracts
+  // let tryForeclosureTime = steward.try_foreclosureTime(); // this call can error if the combined price of the patrons token is zero (divide by zero error)!
+  // if (tryForeclosureTime.reverted) {
+  //   return BigInt.fromI32(0);
+  // } else {
+  //   return tryForeclosureTime.value;
+  // }
+  return BigInt.fromI32(0);
 }
 
 export function handleLogBuy(event: LogBuy): void {
@@ -76,8 +78,6 @@ export function handleLogBuy(event: LogBuy): void {
     patronOld.foreclosureTime = getForeclosureTimeSafe(steward);
   }
 
-  patron.save();
-  patronOld.save();
   patron.save();
   patronOld.save();
 
