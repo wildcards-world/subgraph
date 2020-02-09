@@ -198,6 +198,7 @@ function createCounterIfDoesntExist(): void {
   eventCounter.buyEventCount = BigInt.fromI32(0);
   eventCounter.changePriceEventCount = BigInt.fromI32(0);
   eventCounter.buyEvents = [];
+  eventCounter.stateChanges = [];
   eventCounter.save();
 }
 function createWildcardIfDoesntExist(

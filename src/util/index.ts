@@ -1,6 +1,6 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
-import { Patron } from "../../generated/schema";
+import { Patron, StateChange } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
 import { ZERO_ADDRESS } from "../CONSTANTS";
 
@@ -80,4 +80,19 @@ export function updateAvailableDepositAndForeclosureTime(
   );
   patron.lastUpdated = currentTimestamp;
   patron.save();
+}
+
+// NOTE: it is impossible for this code to return null, the compiler is just retarded!
+export function getOrInitialiseStateChange(txId: string): StateChange | null {
+  let stateChange = StateChange.load(txId);
+
+  if (stateChange == null) {
+    stateChange = new StateChange(txId);
+    stateChange.changes = [];
+    stateChange.patronChanges = [];
+    stateChange.wildcardChange = [];
+    return stateChange;
+  } else {
+    return stateChange;
+  }
 }

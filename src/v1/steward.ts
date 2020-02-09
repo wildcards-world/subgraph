@@ -30,7 +30,8 @@ import { log } from "@graphprotocol/graph-ts";
 import * as V0 from "../v0/steward";
 import {
   updateAvailableDepositAndForeclosureTime,
-  getForeclosureTimeSafe
+  getForeclosureTimeSafe,
+  getOrInitialiseStateChange
 } from "../util";
 
 export function handleAddToken(event: AddToken): void {
@@ -39,11 +40,11 @@ export function handleAddToken(event: AddToken): void {
 }
 
 export function handleBuy(event: Buy): void {
-  log.warning("HANDLE BUY!!!", []);
   let owner = event.params.owner;
   let tokenIdBigInt = event.params.tokenId;
   let tokenIdString = tokenIdBigInt.toString();
   let ownerString = owner.toHexString();
+  let txHashString = event.transaction.hash.toHexString();
 
   let steward = Steward.bind(event.address);
 
@@ -126,7 +127,7 @@ export function handleBuy(event: Buy): void {
     .minus(previousPrice.price.times(tokenPatronageNumerator));
   globalState.save();
 
-  let price = new Price(event.transaction.hash.toHexString());
+  let price = new Price(txHashString);
   price.price = event.params.price;
   price.timeSet = event.block.timestamp;
   price.save();
@@ -141,7 +142,7 @@ export function handleBuy(event: Buy): void {
 
   wildcard.save();
 
-  let buyEvent = new BuyEvent(event.transaction.hash.toHexString());
+  let buyEvent = new BuyEvent(txHashString);
 
   buyEvent.newOwner = patron.id;
   buyEvent.price = price.id;
@@ -149,12 +150,23 @@ export function handleBuy(event: Buy): void {
   buyEvent.timestamp = event.block.timestamp;
   buyEvent.save();
 
+  let stateChange = getOrInitialiseStateChange(txHashString);
+  stateChange.changes = stateChange.changes.concat(["handleLogBuy"]);
+  stateChange.patronChanges = stateChange.patronChanges.concat([
+    patronOld.id,
+    patron.id
+  ]);
+  stateChange.wildcardChange = stateChange.wildcardChange.concat([wildcard.id]);
+  stateChange.save();
+
   let eventCounter = EventCounter.load("1");
   eventCounter.buyEventCount = eventCounter.buyEventCount.plus(
     BigInt.fromI32(1)
   );
   eventCounter.buyEvents = eventCounter.buyEvents.concat([buyEvent.id]);
-  eventCounter.save();
+  eventCounter.stateChanges = eventCounter.stateChanges.concat([
+    stateChange.id
+  ]);
   eventCounter.save();
 }
 export function handlePriceChange(event: PriceChange): void {
