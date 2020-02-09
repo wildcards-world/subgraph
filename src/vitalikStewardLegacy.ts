@@ -1,4 +1,4 @@
-import { BigInt, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Address, log } from "@graphprotocol/graph-ts";
 import {
   VitalikStewardLegacy,
   LogBuy,
@@ -16,6 +16,17 @@ import {
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
   return blockNumber.gt(BigInt.fromI32(9077271)); // block 9077272 is the block that Vitalik was "exit"ed from the old contract.
+}
+
+export function getForeclosureTimeSafe(steward: VitalikStewardLegacy): BigInt {
+  // NOTE:: since this contract is deprecated, always return 0 here, to avoid causing conflicts with the new contracts
+  // let tryForeclosureTime = steward.try_foreclosureTime(); // this call can error if the combined price of the patrons token is zero (divide by zero error)!
+  // if (tryForeclosureTime.reverted) {
+  //   return BigInt.fromI32(0);
+  // } else {
+  //   return tryForeclosureTime.value;
+  // }
+  return BigInt.fromI32(0);
 }
 
 export function handleLogBuy(event: LogBuy): void {
@@ -53,12 +64,20 @@ export function handleLogBuy(event: LogBuy): void {
   let steward = VitalikStewardLegacy.bind(event.address);
   patron.availableDeposit = steward.depositAbleToWithdraw();
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0); // Just don't set this value on vintage vitalik
-  patron.foreclosureTime = BigInt.fromI32(0); //steward.foreclosureTime() // this gives an error: but we could apparently use `try_foreclosureTime`
+  patron.foreclosureTime = getForeclosureTimeSafe(steward);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   // Remove token to the previous patron's tokens
   patronOld.tokens = patronOld.tokens
     .slice(0, itemIndex)
     .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  patronOld.tokens = patronOld.tokens
+    .slice(0, itemIndex)
+    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  if (patronOld.id != "NO_OWNER") {
+    patronOld.availableDeposit = steward.depositAbleToWithdraw();
+    patronOld.foreclosureTime = getForeclosureTimeSafe(steward);
+  }
+
   patron.save();
   patronOld.save();
 

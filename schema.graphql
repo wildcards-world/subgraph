@@ -2,6 +2,7 @@
 type EventCounter @entity {
   id: ID! # this will have a fixed id of '1' since there will only be one place to count events.
   buyEventCount: BigInt!
+  buyEvents: [BuyEvent!]
   changePriceEventCount: BigInt
 }
 

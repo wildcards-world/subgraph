@@ -27,6 +27,7 @@ dataSources:
         - name: Token
           file: ./abis/Token.json
       eventHandlers:
+        # v0 events
         - event: LogBuy(indexed address,indexed uint256)
           handler: handleLogBuy
         - event: LogPriceChange(indexed uint256)
@@ -37,8 +38,20 @@ dataSources:
           handler: handleLogCollection
         - event: LogRemainingDepositUpdate(indexed address,indexed uint256)
           handler: handleLogRemainingDepositUpdate
+        # v0 and v1 events
         - event: AddToken(indexed uint256,uint256)
           handler: handleAddToken
+        # v1 events
+        - event: Buy(indexed uint256,indexed address,uint256)
+          handler: handleBuy
+        - event: PriceChange(indexed uint256,uint256)
+          handler: handlePriceChange
+        - event: Foreclosure(indexed address)
+          handler: handleForeclosure
+        - event: RemainingDepositUpdate(indexed address,uint256)
+          handler: handleRemainingDepositUpdate
+        - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
+          handler: handleCollectPatronage
       file: ./src/steward.ts
 
   - kind: ethereum/contract
