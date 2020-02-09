@@ -156,6 +156,7 @@ export function handleBuy(event: Buy): void {
     patronOld.id,
     patron.id
   ]);
+  stateChange.timestamp = event.block.timestamp;
   stateChange.wildcardChange = stateChange.wildcardChange.concat([wildcard.id]);
   stateChange.save();
 

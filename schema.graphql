@@ -81,6 +81,7 @@ type BuyEvent @entity {
 # For every transaction, list the changes, and stat
 type StateChange @entity {
   id: ID! # tx
+  timestamp: BigInt!
   changes: [String!]!
   patronChanges: [Patron]!
   wildcardChange: [Wildcard]!
