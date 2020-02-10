@@ -2,7 +2,11 @@ import { Steward } from "../../generated/Steward/Steward";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 import { Patron, StateChange, EventCounter } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
-import { ZERO_ADDRESS } from "../CONSTANTS";
+import {
+  ZERO_ADDRESS,
+  GLOBAL_PATRONAGE_DENOMINATOR,
+  NUM_SECONDS_IN_YEAR_BIG_INT
+} from "../CONSTANTS";
 
 export function getForeclosureTimeSafe(
   steward: Steward,
@@ -38,6 +42,7 @@ export function initialiseDefaultPatronIfNull(
     patronAddress
   );
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
+  patron.totalContributed = BigInt.fromI32(0);
   patron.save();
   return patron;
 }
@@ -75,8 +80,14 @@ export function updateAvailableDepositAndForeclosureTime(
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  patron.totalContributed = patron.totalContributed.plus(
+    patron.patronTokenCostScaledNumerator
+      .times(currentTimestamp.minus(patron.lastUpdated))
+      .div(GLOBAL_PATRONAGE_DENOMINATOR)
+      .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+  );
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    tokenPatron
+    patron.address as Address
   );
   patron.lastUpdated = currentTimestamp;
   patron.save();

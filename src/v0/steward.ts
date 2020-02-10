@@ -26,14 +26,12 @@ import {
   NUM_SECONDS_IN_YEAR,
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
   NUM_SECONDS_IN_YEAR_BIG_INT,
-  BILLION
+  BILLION,
+  VITALIK_PATRONAGE_NUMERATOR,
+  VITALIK_PATRONAGE_DENOMINATOR,
+  GLOBAL_PATRONAGE_DENOMINATOR
 } from "../CONSTANTS";
 import { getForeclosureTimeSafe } from "../util";
-
-// NOTE: BigInt.fromI32(300000000000) errors since '300000000000' is too big for i32
-//       similarly for the patronage denominator.
-const VITALIK_PATRONAGE_NUMERATOR = BigInt.fromI32(300).times(BILLION);
-const VITALIK_PATRONAGE_DENOMINATOR = BigInt.fromI32(1000).times(BILLION);
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(
@@ -356,6 +354,12 @@ export function handleLogBuy(event: LogBuy): void {
       const VITALIK_PRICE = steward.price(tokenIdBigInt);
       let patron = Patron.load(ownerString);
       patron.availableDeposit = steward.depositAbleToWithdraw(owner);
+      patron.totalContributed = patron.totalContributed = patron.totalContributed.plus(
+        patron.patronTokenCostScaledNumerator
+          .times(txTimestamp.minus(patron.lastUpdated))
+          .div(VITALIK_PATRONAGE_DENOMINATOR)
+          .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+      );
       patron.patronTokenCostScaledNumerator = VITALIK_PATRONAGE_NUMERATOR;
 
       const patronagePerSecond = VITALIK_PRICE.times(
@@ -368,6 +372,7 @@ export function handleLogBuy(event: LogBuy): void {
         patron.availableDeposit.div(patronagePerSecond)
       );
       patron.lastUpdated = txTimestamp;
+      patron.totalContributed = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
       patron.save();
     }
     return;
@@ -394,6 +399,15 @@ export function handleLogBuy(event: LogBuy): void {
     patron = new Patron(ownerString);
     patron.address = owner;
   }
+  patron.totalContributed = patron.totalContributed.plus(
+    patron.patronTokenCostScaledNumerator
+      .times(txTimestamp.minus(patron.lastUpdated))
+      .div(GLOBAL_PATRONAGE_DENOMINATOR)
+      .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+  );
+  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
   patron.lastUpdated = txTimestamp;
 
   // Add to previouslyOwnedTokens if not already there
@@ -402,9 +416,6 @@ export function handleLogBuy(event: LogBuy): void {
       ? patron.previouslyOwnedTokens.concat([wildcard.id])
       : patron.previouslyOwnedTokens;
   patron.availableDeposit = steward.depositAbleToWithdraw(owner);
-  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    owner
-  );
   patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id]);
@@ -417,6 +428,13 @@ export function handleLogBuy(event: LogBuy): void {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
     );
+    patronOld.totalContributed = patronOld.totalContributed.plus(
+      patronOld.patronTokenCostScaledNumerator
+        .times(txTimestamp.minus(patron.lastUpdated))
+        .div(GLOBAL_PATRONAGE_DENOMINATOR)
+        .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+    );
+    patronOld.lastUpdated = txTimestamp;
     patronOld.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
       patronOld.address as Address
     );
@@ -537,11 +555,17 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   patron.availableDeposit = steward.depositAbleToWithdraw(
     patron.address as Address
   );
-  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    patron.address as Address
-  );
   patron.foreclosureTime = getForeclosureTimeSafe(
     steward,
+    patron.address as Address
+  );
+  patron.totalContributed = patron.totalContributed.plus(
+    patron.patronTokenCostScaledNumerator
+      .times(txTimestamp.minus(patron.lastUpdated))
+      .div(GLOBAL_PATRONAGE_DENOMINATOR)
+      .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+  );
+  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
   patron.lastUpdated = txTimestamp;

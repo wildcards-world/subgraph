@@ -66,8 +66,8 @@ type Patron @entity {
   patronTokenCostScaledNumerator: BigInt!
   foreclosureTime: BigInt!
   # deposit: BigInt!
-  # totalContributed: BigInt!
-  # totalTimeHeld: BigInt!
+  totalContributed: BigInt!
+  totalTimeHeld: BigInt!
 }
 
 type BuyEvent @entity {
