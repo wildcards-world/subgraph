@@ -50,7 +50,7 @@ export function initialiseDefaultPatronIfNull(
 export function updateAvailableDepositAndForeclosureTime(
   steward: Steward,
   tokenPatron: Address,
-  currentTimestamp: BigInt
+  txTimestamp: BigInt
 ): void {
   // if the token patron is the zero address, return! (for example it will be the zero address if the token is foreclosed and )
   if (tokenPatron.equals(ZERO_ADDRESS)) {
@@ -70,26 +70,23 @@ export function updateAvailableDepositAndForeclosureTime(
     log.info('Created a new patron entity! patron address: "{}"', [
       tokenPatronStr
     ]);
-    patron = initialiseDefaultPatronIfNull(
-      steward,
-      tokenPatron,
-      currentTimestamp
-    );
+    patron = initialiseDefaultPatronIfNull(steward, tokenPatron, txTimestamp);
     return;
   }
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
-      .times(currentTimestamp.minus(patron.lastUpdated))
+      .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
-  patron.lastUpdated = currentTimestamp;
+  patron.lastUpdated = txTimestamp;
   patron.save();
 }
 

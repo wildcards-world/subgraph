@@ -354,9 +354,13 @@ export function handleLogBuy(event: LogBuy): void {
       const VITALIK_PRICE = steward.price(tokenIdBigInt);
       let patron = Patron.load(ownerString);
       patron.availableDeposit = steward.depositAbleToWithdraw(owner);
-      patron.totalContributed = patron.totalContributed = patron.totalContributed.plus(
+      let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+      patron.totalTimeHeld = patron.totalTimeHeld.plus(
+        timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
+      );
+      patron.totalContributed = patron.totalContributed.plus(
         patron.patronTokenCostScaledNumerator
-          .times(txTimestamp.minus(patron.lastUpdated))
+          .times(timeSinceLastUpdate)
           .div(VITALIK_PATRONAGE_DENOMINATOR)
           .div(NUM_SECONDS_IN_YEAR_BIG_INT)
       );
@@ -372,7 +376,6 @@ export function handleLogBuy(event: LogBuy): void {
         patron.availableDeposit.div(patronagePerSecond)
       );
       patron.lastUpdated = txTimestamp;
-      patron.totalContributed = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
       patron.save();
     }
     return;
@@ -399,9 +402,13 @@ export function handleLogBuy(event: LogBuy): void {
     patron = new Patron(ownerString);
     patron.address = owner;
   }
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  patron.totalTimeHeld = patron.totalTimeHeld.plus(
+    timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
+  );
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
-      .times(txTimestamp.minus(patron.lastUpdated))
+      .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
@@ -420,17 +427,20 @@ export function handleLogBuy(event: LogBuy): void {
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
   if (patronOld.id != "NO_OWNER") {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
     );
+    let timeSinceLastUpdateOldPatron = txTimestamp.minus(patronOld.lastUpdated);
+    patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
+      timeSinceLastUpdateOldPatron.times(
+        BigInt.fromI32(patronOld.tokens.length)
+      )
+    );
+
     patronOld.totalContributed = patronOld.totalContributed.plus(
       patronOld.patronTokenCostScaledNumerator
-        .times(txTimestamp.minus(patron.lastUpdated))
+        .times(timeSinceLastUpdateOldPatron)
         .div(GLOBAL_PATRONAGE_DENOMINATOR)
         .div(NUM_SECONDS_IN_YEAR_BIG_INT)
     );
@@ -443,6 +453,10 @@ export function handleLogBuy(event: LogBuy): void {
       patronOld.address as Address
     );
   }
+  // Remove token to the previous patron's tokens
+  patronOld.tokens = patronOld.tokens
+    .slice(0, itemIndex)
+    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
 
   patron.save();
   patronOld.save();
@@ -559,9 +573,10 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     steward,
     patron.address as Address
   );
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
-      .times(txTimestamp.minus(patron.lastUpdated))
+      .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );

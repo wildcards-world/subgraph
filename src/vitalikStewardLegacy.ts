@@ -39,7 +39,7 @@ export function handleLogBuy(event: LogBuy): void {
   }
   let owner = event.params.owner;
   let newPrice = event.params.price;
-  let timestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
   let ownerString = owner.toHexString();
 
   let tokenId = 42;
@@ -67,33 +67,37 @@ export function handleLogBuy(event: LogBuy): void {
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id]);
   let steward = VitalikStewardLegacy.bind(event.address);
-  patron.lastUpdated = timestamp;
+  patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw();
   patron.patronTokenCostScaledNumerator = newPrice.times(
     wildcard.patronageNumerator
   );
   patron.foreclosureTime = getForeclosureTimeSafe(steward);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
   if (patronOld.id != "NO_OWNER") {
     patronOld.availableDeposit = steward.depositAbleToWithdraw();
     patronOld.foreclosureTime = getForeclosureTimeSafe(steward);
     // NOTE: we are safe to only update totalContibuted for `patronOld` here and not also `patron`
     //       since only Simon owned Vitalik before the vintage contract was deprecated.
+    let timeSinceLastUpdateOldPatron = txTimestamp.minus(patronOld.lastUpdated);
+    patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
+      timeSinceLastUpdateOldPatron.times(
+        BigInt.fromI32(patronOld.tokens.length)
+      )
+    );
+    // Remove token to the previous patron's tokens
+    patronOld.tokens = patronOld.tokens
+      .slice(0, itemIndex)
+      .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+
     patronOld.totalContributed = patron.totalContributed.plus(
       patronOld.patronTokenCostScaledNumerator
-        .times(timestamp.minus(patronOld.lastUpdated))
+        .times(timeSinceLastUpdateOldPatron)
         .div(VITALIK_PATRONAGE_DENOMINATOR)
         .div(NUM_SECONDS_IN_YEAR_BIG_INT)
     );
     patronOld.patronTokenCostScaledNumerator = BigInt.fromI32(0);
-    patronOld.lastUpdated = timestamp;
+    patronOld.lastUpdated = txTimestamp;
   }
 
   patron.save();
@@ -103,7 +107,7 @@ export function handleLogBuy(event: LogBuy): void {
     let previousPatron = new PreviousPatron(ownerString);
     previousPatron.patron = patron.id;
     previousPatron.timeAcquired = wildcard.timeAcquired;
-    previousPatron.timeSold = timestamp;
+    previousPatron.timeSold = txTimestamp;
     previousPatron.save();
 
     wildcard.previousOwners = wildcard.previousOwners.concat([
@@ -113,7 +117,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let price = new Price(event.transaction.hash.toHexString());
   price.price = newPrice;
-  price.timeSet = timestamp;
+  price.timeSet = txTimestamp;
   price.save();
 
   wildcard.price = price.id;
@@ -123,7 +127,7 @@ export function handleLogBuy(event: LogBuy): void {
   );
 
   wildcard.owner = patron.id;
-  wildcard.timeAcquired = timestamp;
+  wildcard.timeAcquired = txTimestamp;
 
   wildcard.save();
 }
@@ -135,7 +139,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   let tokenId = 42;
   let tokenIdString = tokenId.toString();
   let newPrice = event.params.newPrice;
-  let timestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
 
@@ -160,7 +164,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   let price = new Price(event.transaction.hash.toHexString());
   price.price = newPrice;
-  price.timeSet = timestamp;
+  price.timeSet = txTimestamp;
   price.save();
 
   wildcard.price = price.id;
@@ -173,16 +177,20 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   wildcard.save();
 
   let patron = Patron.load(wildcard.owner);
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  patron.totalTimeHeld = patron.totalTimeHeld.plus(
+    timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
+  );
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
-      .times(timestamp.minus(patron.lastUpdated))
+      .times(timeSinceLastUpdate)
       .div(VITALIK_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
   patron.patronTokenCostScaledNumerator = newPrice.times(
     wildcard.patronageNumerator
   );
-  patron.lastUpdated = timestamp;
+  patron.lastUpdated = txTimestamp;
 
   // globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
   // globalState.save()

@@ -76,9 +76,13 @@ export function handleBuy(event: Buy): void {
     patron.address = owner;
   }
 
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  patron.totalTimeHeld = patron.totalTimeHeld.plus(
+    timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
+  );
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
-      .times(txTimestamp.minus(patron.lastUpdated))
+      .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
@@ -97,10 +101,6 @@ export function handleBuy(event: Buy): void {
   // Add token to the patrons currently held tokens
   patron.tokens = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
   if (patronOld.id != "NO_OWNER") {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
@@ -109,9 +109,15 @@ export function handleBuy(event: Buy): void {
       steward,
       patronOld.address as Address
     );
+    let timeSinceLastUpdateOldPatron = txTimestamp.minus(patron.lastUpdated);
+    patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
+      timeSinceLastUpdateOldPatron.times(
+        BigInt.fromI32(patronOld.tokens.length)
+      )
+    );
     patronOld.totalContributed = patronOld.totalContributed.plus(
       patronOld.patronTokenCostScaledNumerator
-        .times(txTimestamp.minus(patronOld.lastUpdated))
+        .times(timeSinceLastUpdateOldPatron)
         .div(GLOBAL_PATRONAGE_DENOMINATOR)
         .div(NUM_SECONDS_IN_YEAR_BIG_INT)
     );
@@ -120,6 +126,10 @@ export function handleBuy(event: Buy): void {
     );
     patronOld.lastUpdated = txTimestamp;
   }
+  // Remove token to the previous patron's tokens
+  patronOld.tokens = patronOld.tokens
+    .slice(0, itemIndex)
+    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
 
   patron.save();
   patronOld.save();
@@ -230,9 +240,13 @@ export function handlePriceChange(event: PriceChange): void {
     steward,
     patron.address as Address
   );
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  patron.totalTimeHeld = patron.totalTimeHeld.plus(
+    timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
+  );
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
-      .times(txTimestamp.minus(patron.lastUpdated))
+      .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
