@@ -82,7 +82,7 @@ type BuyEvent @entity {
 type StateChange @entity {
   id: ID! # tx
   timestamp: BigInt!
-  changes: [String!]!
+  changes: [String!]! #call event logs or something
   patronChanges: [Patron]!
   wildcardChange: [Wildcard]!
 }

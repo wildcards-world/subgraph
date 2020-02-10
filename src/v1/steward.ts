@@ -31,7 +31,8 @@ import * as V0 from "../v0/steward";
 import {
   updateAvailableDepositAndForeclosureTime,
   getForeclosureTimeSafe,
-  getOrInitialiseStateChange
+  getOrInitialiseStateChange,
+  recognizeStateChange
 } from "../util";
 
 export function handleAddToken(event: AddToken): void {
@@ -45,6 +46,8 @@ export function handleBuy(event: Buy): void {
   let tokenIdString = tokenIdBigInt.toString();
   let ownerString = owner.toHexString();
   let txHashString = event.transaction.hash.toHexString();
+  let changeType = "handleBuy";
+  let currentTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
 
@@ -69,7 +72,7 @@ export function handleBuy(event: Buy): void {
     patron = new Patron(ownerString);
     patron.address = owner;
   }
-  patron.lastUpdated = event.block.timestamp;
+  patron.lastUpdated = currentTimestamp;
 
   // Add to previouslyOwnedTokens if not already there
   patron.previouslyOwnedTokens =
@@ -129,7 +132,7 @@ export function handleBuy(event: Buy): void {
 
   let price = new Price(txHashString);
   price.price = event.params.price;
-  price.timeSet = event.block.timestamp;
+  price.timeSet = currentTimestamp;
   price.save();
 
   wildcard.price = price.id;
@@ -138,7 +141,7 @@ export function handleBuy(event: Buy): void {
   );
 
   wildcard.owner = patron.id;
-  wildcard.timeAcquired = event.block.timestamp;
+  wildcard.timeAcquired = currentTimestamp;
 
   wildcard.save();
 
@@ -147,36 +150,36 @@ export function handleBuy(event: Buy): void {
   buyEvent.newOwner = patron.id;
   buyEvent.price = price.id;
   buyEvent.token = wildcard.id;
-  buyEvent.timestamp = event.block.timestamp;
+  buyEvent.timestamp = currentTimestamp;
   buyEvent.save();
 
-  let stateChange = getOrInitialiseStateChange(txHashString);
-  stateChange.changes = stateChange.changes.concat(["handleLogBuy"]);
-  stateChange.patronChanges = stateChange.patronChanges.concat([
-    patronOld.id,
-    patron.id
-  ]);
-  stateChange.timestamp = event.block.timestamp;
-  stateChange.wildcardChange = stateChange.wildcardChange.concat([wildcard.id]);
-  stateChange.save();
+  recognizeStateChange(
+    txHashString,
+    changeType,
+    [patronOld.id, patron.id],
+    [wildcard.id],
+    currentTimestamp
+  );
 
   let eventCounter = EventCounter.load("1");
   eventCounter.buyEventCount = eventCounter.buyEventCount.plus(
     BigInt.fromI32(1)
   );
   eventCounter.buyEvents = eventCounter.buyEvents.concat([buyEvent.id]);
-  eventCounter.stateChanges = eventCounter.stateChanges.concat([
-    stateChange.id
-  ]);
   eventCounter.save();
 }
+
 export function handlePriceChange(event: PriceChange): void {
   let tokenIdBigInt = event.params.tokenId;
   let tokenIdString = tokenIdBigInt.toString();
+  let txHashString = event.transaction.hash.toHexString();
 
   let steward = Steward.bind(event.address);
   let owner = steward.currentPatron(tokenIdBigInt);
   let ownerString = owner.toHexString();
+
+  let changeType = "handlePriceChange";
+  let currentTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
 
@@ -189,9 +192,9 @@ export function handlePriceChange(event: PriceChange): void {
   // Entity fields can be set using simple assignments
   wildcard.tokenId = tokenIdBigInt;
 
-  let price = new Price(event.transaction.hash.toHexString());
+  let price = new Price(txHashString);
   price.price = event.params.newPrice;
-  price.timeSet = event.block.timestamp;
+  price.timeSet = currentTimestamp;
   price.save();
 
   wildcard.price = price.id;
@@ -213,14 +216,22 @@ export function handlePriceChange(event: PriceChange): void {
     steward,
     patron.address as Address
   );
-  patron.lastUpdated = event.block.timestamp;
+  patron.lastUpdated = currentTimestamp;
   patron.save();
 
-  let priceChange = new ChangePriceEvent(event.transaction.hash.toHexString());
+  let priceChange = new ChangePriceEvent(txHashString);
   priceChange.price = price.id;
   priceChange.token = wildcard.id;
-  priceChange.timestamp = event.block.timestamp;
+  priceChange.timestamp = currentTimestamp;
   priceChange.save();
+
+  recognizeStateChange(
+    txHashString,
+    changeType,
+    [patron.id],
+    [wildcard.id],
+    currentTimestamp
+  );
 
   let eventCounter = EventCounter.load("1");
   eventCounter.changePriceEventCount = eventCounter.changePriceEventCount.plus(
@@ -232,23 +243,44 @@ export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
   let tokenPatron = event.params.prevOwner;
   let currentTimestamp = event.block.timestamp;
+  let txHashString = event.transaction.hash.toHexString();
+  let changeType = "handleForeclosure";
+  let patron = tokenPatron.toHexString();
 
   updateAvailableDepositAndForeclosureTime(
     steward,
     tokenPatron,
     currentTimestamp
   );
+  recognizeStateChange(
+    txHashString,
+    changeType,
+    [patron],
+    [],
+    currentTimestamp
+  );
 }
+
 export function handleRemainingDepositUpdate(
   event: RemainingDepositUpdate
 ): void {
   let steward = Steward.bind(event.address);
   let tokenPatron = event.params.tokenPatron;
   let currentTimestamp = event.block.timestamp;
+  let txHashString = event.transaction.hash.toHexString();
+  let changeType = "handleRemainingDepositUpdate";
+  let patron = tokenPatron.toHexString();
 
   updateAvailableDepositAndForeclosureTime(
     steward,
     tokenPatron,
+    currentTimestamp
+  );
+  recognizeStateChange(
+    txHashString,
+    changeType,
+    [patron],
+    [],
     currentTimestamp
   );
 }
@@ -256,10 +288,20 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
   let tokenPatron = event.params.patron;
   let currentTimestamp = event.block.timestamp;
+  let txHashString = event.transaction.hash.toHexString();
+  let changeType = "handleCollectPatronage";
+  let patron = tokenPatron.toHexString();
 
   updateAvailableDepositAndForeclosureTime(
     steward,
     tokenPatron,
+    currentTimestamp
+  );
+  recognizeStateChange(
+    txHashString,
+    changeType,
+    [patron],
+    [],
     currentTimestamp
   );
 }
