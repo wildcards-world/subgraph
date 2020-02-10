@@ -45,6 +45,9 @@ export function handleTransfer(event: Transfer): void {
       patron.availableDeposit = BigInt.fromI32(0);
       patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
       patron.foreclosureTime = BigInt.fromI32(0);
+      patron.totalContributed = BigInt.fromI32(0);
+      patron.totalTimeHeld = BigInt.fromI32(0);
+      patron.tokens = [];
       patron.save();
     }
 

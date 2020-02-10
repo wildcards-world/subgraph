@@ -74,6 +74,10 @@ export function handleBuy(event: Buy): void {
   if (patron == null) {
     patron = new Patron(ownerString);
     patron.address = owner;
+    patron.totalTimeHeld = BigInt.fromI32(0);
+    patron.totalContributed = BigInt.fromI32(0);
+    patron.tokens = [];
+    patron.lastUpdated = txTimestamp;
   }
 
   let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);

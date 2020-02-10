@@ -37,6 +37,7 @@ export function handleLogBuy(event: LogBuy): void {
   if (returnIfNewVitalik(event.block.number)) {
     return;
   }
+
   let owner = event.params.owner;
   let newPrice = event.params.price;
   let txTimestamp = event.block.timestamp;
@@ -57,6 +58,11 @@ export function handleLogBuy(event: LogBuy): void {
   if (patron == null) {
     patron = new Patron(ownerString);
     patron.address = owner;
+    patron.totalTimeHeld = BigInt.fromI32(0);
+    patron.totalContributed = BigInt.fromI32(0);
+    patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+    patron.tokens = [];
+    patron.lastUpdated = txTimestamp;
   }
 
   // Add to previouslyOwnedTokens if not already there
@@ -65,7 +71,7 @@ export function handleLogBuy(event: LogBuy): void {
       ? patron.previouslyOwnedTokens.concat([wildcard.id])
       : patron.previouslyOwnedTokens;
   // Add token to the patrons currently held tokens
-  patron.tokens = patron.tokens.concat([wildcard.id]);
+  patron.tokens = [wildcard.id];
   let steward = VitalikStewardLegacy.bind(event.address);
   patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw();

@@ -401,6 +401,11 @@ export function handleLogBuy(event: LogBuy): void {
   if (patron == null) {
     patron = new Patron(ownerString);
     patron.address = owner;
+    patron.totalTimeHeld = BigInt.fromI32(0);
+    patron.totalContributed = BigInt.fromI32(0);
+    patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+    patron.tokens = [];
+    patron.lastUpdated = txTimestamp;
   }
   let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
@@ -735,6 +740,8 @@ export function handleAddToken(event: AddToken): void {
     patron.availableDeposit = BigInt.fromI32(0);
     patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
     patron.foreclosureTime = BigInt.fromI32(0);
+    patron.totalContributed = BigInt.fromI32(0);
+    patron.totalTimeHeld = BigInt.fromI32(0);
     patron.save();
   }
 

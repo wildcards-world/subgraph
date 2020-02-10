@@ -43,6 +43,8 @@ export function initialiseDefaultPatronIfNull(
   );
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
   patron.totalContributed = BigInt.fromI32(0);
+  patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.tokens = [];
   patron.save();
   return patron;
 }
@@ -67,9 +69,6 @@ export function updateAvailableDepositAndForeclosureTime(
   let patron = Patron.load(tokenPatronStr);
 
   if (patron == null) {
-    log.info('Created a new patron entity! patron address: "{}"', [
-      tokenPatronStr
-    ]);
     patron = initialiseDefaultPatronIfNull(steward, tokenPatron, txTimestamp);
     return;
   }
