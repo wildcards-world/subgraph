@@ -46,7 +46,6 @@ export function handleBuy(event: Buy): void {
   let tokenIdString = tokenIdBigInt.toString();
   let ownerString = owner.toHexString();
   let txHashString = event.transaction.hash.toHexString();
-  let changeType = "handleBuy";
   let currentTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
@@ -155,7 +154,7 @@ export function handleBuy(event: Buy): void {
 
   recognizeStateChange(
     txHashString,
-    changeType,
+    "handleBuy",
     [patronOld.id, patron.id],
     [wildcard.id],
     currentTimestamp
@@ -178,7 +177,6 @@ export function handlePriceChange(event: PriceChange): void {
   let owner = steward.currentPatron(tokenIdBigInt);
   let ownerString = owner.toHexString();
 
-  let changeType = "handlePriceChange";
   let currentTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
@@ -227,7 +225,7 @@ export function handlePriceChange(event: PriceChange): void {
 
   recognizeStateChange(
     txHashString,
-    changeType,
+    "handlePriceChange",
     [patron.id],
     [wildcard.id],
     currentTimestamp
@@ -244,8 +242,7 @@ export function handleForeclosure(event: Foreclosure): void {
   let tokenPatron = event.params.prevOwner;
   let currentTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
-  let changeType = "handleForeclosure";
-  let patron = tokenPatron.toHexString();
+  let patronString = tokenPatron.toHexString();
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -254,8 +251,8 @@ export function handleForeclosure(event: Foreclosure): void {
   );
   recognizeStateChange(
     txHashString,
-    changeType,
-    [patron],
+    "handleForeclosure",
+    [patronString],
     [],
     currentTimestamp
   );
@@ -268,8 +265,7 @@ export function handleRemainingDepositUpdate(
   let tokenPatron = event.params.tokenPatron;
   let currentTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
-  let changeType = "handleRemainingDepositUpdate";
-  let patron = tokenPatron.toHexString();
+  let patronString = tokenPatron.toHexString();
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -278,8 +274,8 @@ export function handleRemainingDepositUpdate(
   );
   recognizeStateChange(
     txHashString,
-    changeType,
-    [patron],
+    "handleRemainingDepositUpdate",
+    [patronString],
     [],
     currentTimestamp
   );
@@ -289,8 +285,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   let tokenPatron = event.params.patron;
   let currentTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
-  let changeType = "handleCollectPatronage";
-  let patron = tokenPatron.toHexString();
+  let patronString = tokenPatron.toHexString();
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -299,8 +294,8 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   );
   recognizeStateChange(
     txHashString,
-    changeType,
-    [patron],
+    "handleCollectPatronage",
+    [patronString],
     [],
     currentTimestamp
   );
