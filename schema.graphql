@@ -3,6 +3,7 @@ type EventCounter @entity {
   id: ID! # this will have a fixed id of '1' since there will only be one place to count events.
   buyEventCount: BigInt!
   buyEvents: [BuyEvent!]
+  stateChanges: [StateChange]!
   changePriceEventCount: BigInt
 }
 
@@ -75,6 +76,15 @@ type BuyEvent @entity {
   price: Price!
   newOwner: Patron!
   timestamp: BigInt!
+}
+
+# For every transaction, list the changes, and stat
+type StateChange @entity {
+  id: ID! # tx
+  timestamp: BigInt!
+  txEventList: [String!]! #call event logs or something
+  patronChanges: [Patron]!
+  wildcardChange: [Wildcard]!
 }
 
 type ChangePriceEvent @entity {
