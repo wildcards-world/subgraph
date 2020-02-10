@@ -31,12 +31,12 @@ export function getForeclosureTimeSafe(
 export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
-  currentTimestamp: BigInt
+  txTimestamp: BigInt
 ): Patron {
   let patronId = patronAddress.toHexString();
   let patron = new Patron(patronId);
   patron.address = patronAddress;
-  patron.lastUpdated = currentTimestamp;
+  patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw(patronAddress);
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patronAddress
@@ -116,7 +116,7 @@ export function recognizeStateChange(
   changeType: string,
   changedPatrons: string[],
   changedWildcards: string[],
-  currentTimestamp: BigInt
+  txTimestamp: BigInt
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
   stateChange.txEventList = stateChange.txEventList.concat([changeType]);
@@ -135,6 +135,6 @@ export function recognizeStateChange(
         : stateChange.wildcardChange;
   }
 
-  stateChange.timestamp = currentTimestamp;
+  stateChange.timestamp = txTimestamp;
   stateChange.save();
 }
