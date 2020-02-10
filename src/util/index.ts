@@ -1,6 +1,6 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
-import { Patron, StateChange } from "../../generated/schema";
+import { Patron, StateChange, EventCounter } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
 import { ZERO_ADDRESS } from "../CONSTANTS";
 
@@ -88,11 +88,46 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
 
   if (stateChange == null) {
     stateChange = new StateChange(txId);
-    stateChange.changes = [];
+    stateChange.txEventList = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChange = [];
+
+    let eventCounter = EventCounter.load("1");
+    eventCounter.stateChanges = eventCounter.stateChanges.concat([
+      stateChange.id
+    ]);
+    eventCounter.save();
+
     return stateChange;
   } else {
     return stateChange;
   }
+}
+
+export function recognizeStateChange(
+  txHash: string,
+  changeType: string,
+  changedPatrons: string[],
+  changedWildcards: string[],
+  currentTimestamp: BigInt
+): void {
+  let stateChange = getOrInitialiseStateChange(txHash);
+  stateChange.txEventList = stateChange.txEventList.concat([changeType]);
+
+  for (let i = 0, len = changedPatrons.length; i < len; i++) {
+    stateChange.patronChanges =
+      stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
+        ? stateChange.patronChanges.concat([changedPatrons[i]])
+        : stateChange.patronChanges;
+  }
+
+  for (let i = 0, len = changedWildcards.length; i < len; i++) {
+    stateChange.wildcardChange =
+      stateChange.wildcardChange.indexOf(changedWildcards[i]) === -1
+        ? stateChange.wildcardChange.concat([changedWildcards[i]])
+        : stateChange.wildcardChange;
+  }
+
+  stateChange.timestamp = currentTimestamp;
+  stateChange.save();
 }
