@@ -88,7 +88,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
 
   if (stateChange == null) {
     stateChange = new StateChange(txId);
-    stateChange.changes = [];
+    stateChange.txEventList = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChange = [];
 
@@ -112,7 +112,7 @@ export function recognizeStateChange(
   currentTimestamp: BigInt
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
-  stateChange.changes = stateChange.changes.concat([changeType]);
+  stateChange.txEventList = stateChange.txEventList.concat([changeType]);
 
   for (let i = 0, len = changedPatrons.length; i < len; i++) {
     stateChange.patronChanges =
