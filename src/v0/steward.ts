@@ -364,7 +364,9 @@ export function handleLogBuy(event: LogBuy): void {
           .div(VITALIK_PATRONAGE_DENOMINATOR)
           .div(NUM_SECONDS_IN_YEAR_BIG_INT)
       );
-      patron.patronTokenCostScaledNumerator = VITALIK_PATRONAGE_NUMERATOR;
+      patron.patronTokenCostScaledNumerator = VITALIK_PRICE.times(
+        VITALIK_PATRONAGE_NUMERATOR
+      );
 
       const patronagePerSecond = VITALIK_PRICE.times(
         VITALIK_PATRONAGE_NUMERATOR
