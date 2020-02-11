@@ -61,13 +61,13 @@ type Patron @entity {
   address: Bytes! # address
   lastUpdated: BigInt!
   previouslyOwnedTokens: [Wildcard!]
-  tokens: [Wildcard!]
+  tokens: [Wildcard]!
   availableDeposit: BigInt!
   patronTokenCostScaledNumerator: BigInt!
   foreclosureTime: BigInt!
   # deposit: BigInt!
-  # totalContributed: BigInt!
-  # totalTimeHeld: BigInt!
+  totalContributed: BigInt!
+  totalTimeHeld: BigInt!
 }
 
 type BuyEvent @entity {

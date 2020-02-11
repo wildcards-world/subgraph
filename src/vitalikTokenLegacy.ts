@@ -5,7 +5,7 @@ import {
   ApprovalForAll
 } from "../generated/VitalikTokenLegacy/VitalikTokenLegacy";
 import { Wildcard, Patron, Price, TokenUri, Global } from "../generated/schema";
-import { ZERO_ADDRESS } from "./CONSTANTS";
+import { ZERO_ADDRESS, VITALIK_PATRONAGE_NUMERATOR } from "./CONSTANTS";
 
 // NOTE: I commented out the below code since it is VEEERY slow (it has to scan each transaction for the `setup` function)
 //       AND call handlers aren't supported by the graph on goerli testnet
@@ -18,9 +18,7 @@ export function handleTransfer(event: Transfer): void {
   // This should only execute on the very first transfer (when the steward is deployed)
   if (wildcard == null) {
     let tokenId = BigInt.fromI32(42);
-    let patronageNumerator = BigInt.fromI32(300000).times(
-      BigInt.fromI32(1000000)
-    );
+    let patronageNumerator = VITALIK_PATRONAGE_NUMERATOR;
 
     let wildcard = new Wildcard(tokenId.toString());
 
@@ -47,6 +45,9 @@ export function handleTransfer(event: Transfer): void {
       patron.availableDeposit = BigInt.fromI32(0);
       patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
       patron.foreclosureTime = BigInt.fromI32(0);
+      patron.totalContributed = BigInt.fromI32(0);
+      patron.totalTimeHeld = BigInt.fromI32(0);
+      patron.tokens = [];
       patron.save();
     }
 

@@ -18,3 +18,9 @@ export const AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT = BigInt.fromI32(
   .times(BILLION)
   .plus(BigInt.fromI32(454416478).times(BILLION))
   .plus(BigInt.fromI32(375190254));
+
+// NOTE: BigInt.fromI32(300000000000) errors since '300000000000' is too big for i32
+//       similarly for the patronage denominator.
+export const VITALIK_PATRONAGE_NUMERATOR = BigInt.fromI32(300).times(BILLION);
+export const GLOBAL_PATRONAGE_DENOMINATOR = BigInt.fromI32(1000).times(BILLION);
+export const VITALIK_PATRONAGE_DENOMINATOR = GLOBAL_PATRONAGE_DENOMINATOR;

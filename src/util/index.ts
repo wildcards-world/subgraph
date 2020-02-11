@@ -2,7 +2,11 @@ import { Steward } from "../../generated/Steward/Steward";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 import { Patron, StateChange, EventCounter } from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
-import { ZERO_ADDRESS } from "../CONSTANTS";
+import {
+  ZERO_ADDRESS,
+  GLOBAL_PATRONAGE_DENOMINATOR,
+  NUM_SECONDS_IN_YEAR_BIG_INT
+} from "../CONSTANTS";
 
 export function getForeclosureTimeSafe(
   steward: Steward,
@@ -27,17 +31,20 @@ export function getForeclosureTimeSafe(
 export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
-  currentTimestamp: BigInt
+  txTimestamp: BigInt
 ): Patron {
   let patronId = patronAddress.toHexString();
   let patron = new Patron(patronId);
   patron.address = patronAddress;
-  patron.lastUpdated = currentTimestamp;
+  patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw(patronAddress);
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patronAddress
   );
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
+  patron.totalContributed = BigInt.fromI32(0);
+  patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.tokens = [];
   patron.save();
   return patron;
 }
@@ -45,7 +52,7 @@ export function initialiseDefaultPatronIfNull(
 export function updateAvailableDepositAndForeclosureTime(
   steward: Steward,
   tokenPatron: Address,
-  currentTimestamp: BigInt
+  txTimestamp: BigInt
 ): void {
   // if the token patron is the zero address, return! (for example it will be the zero address if the token is foreclosed and )
   if (tokenPatron.equals(ZERO_ADDRESS)) {
@@ -62,23 +69,23 @@ export function updateAvailableDepositAndForeclosureTime(
   let patron = Patron.load(tokenPatronStr);
 
   if (patron == null) {
-    log.info('Created a new patron entity! patron address: "{}"', [
-      tokenPatronStr
-    ]);
-    patron = initialiseDefaultPatronIfNull(
-      steward,
-      tokenPatron,
-      currentTimestamp
-    );
+    patron = initialiseDefaultPatronIfNull(steward, tokenPatron, txTimestamp);
     return;
   }
 
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
-  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    tokenPatron
+  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  patron.totalContributed = patron.totalContributed.plus(
+    patron.patronTokenCostScaledNumerator
+      .times(timeSinceLastUpdate)
+      .div(GLOBAL_PATRONAGE_DENOMINATOR)
+      .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
-  patron.lastUpdated = currentTimestamp;
+  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    patron.address as Address
+  );
+  patron.lastUpdated = txTimestamp;
   patron.save();
 }
 
@@ -109,7 +116,7 @@ export function recognizeStateChange(
   changeType: string,
   changedPatrons: string[],
   changedWildcards: string[],
-  currentTimestamp: BigInt
+  txTimestamp: BigInt
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
   stateChange.txEventList = stateChange.txEventList.concat([changeType]);
@@ -128,6 +135,6 @@ export function recognizeStateChange(
         : stateChange.wildcardChange;
   }
 
-  stateChange.timestamp = currentTimestamp;
+  stateChange.timestamp = txTimestamp;
   stateChange.save();
 }
