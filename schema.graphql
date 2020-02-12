@@ -61,7 +61,7 @@ type Patron @entity {
   address: Bytes! # address
   lastUpdated: BigInt!
   previouslyOwnedTokens: [Wildcard!]
-  tokens: [Wildcard]!
+  tokens: [Wildcard!]!
   availableDeposit: BigInt!
   patronTokenCostScaledNumerator: BigInt!
   foreclosureTime: BigInt!

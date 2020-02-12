@@ -8,6 +8,13 @@ import {
   NUM_SECONDS_IN_YEAR_BIG_INT
 } from "../CONSTANTS";
 
+export function minBigInt(first: BigInt, second: BigInt): BigInt {
+  if (BigInt.compare(first, second) < 0) {
+    return first;
+  } else {
+    return second;
+  }
+}
 export function getForeclosureTimeSafe(
   steward: Steward,
   tokenPatron: Address
@@ -73,9 +80,8 @@ export function updateAvailableDepositAndForeclosureTime(
     return;
   }
 
-  patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
-  patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
-  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+  let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
       .times(timeSinceLastUpdate)
@@ -85,6 +91,8 @@ export function updateAvailableDepositAndForeclosureTime(
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
+  patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
+  patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
   patron.lastUpdated = txTimestamp;
   patron.save();
 }

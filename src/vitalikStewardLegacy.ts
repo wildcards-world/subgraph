@@ -17,6 +17,7 @@ import {
   VITALIK_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT
 } from "./CONSTANTS";
+import { minBigInt } from "./util";
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
   return blockNumber.gt(BigInt.fromI32(9077271)); // block 9077272 is the block that Vitalik was "exit"ed from the old contract.
@@ -81,11 +82,10 @@ export function handleLogBuy(event: LogBuy): void {
   patron.foreclosureTime = getForeclosureTimeSafe(steward);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
-    patronOld.availableDeposit = steward.depositAbleToWithdraw();
-    patronOld.foreclosureTime = getForeclosureTimeSafe(steward);
     // NOTE: we are safe to only update totalContibuted for `patronOld` here and not also `patron`
     //       since only Simon owned Vitalik before the vintage contract was deprecated.
-    let timeSinceLastUpdateOldPatron = txTimestamp.minus(patronOld.lastUpdated);
+    let heldUntil = minBigInt(patronOld.foreclosureTime, txTimestamp);
+    let timeSinceLastUpdateOldPatron = heldUntil.minus(patronOld.lastUpdated);
     patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
       timeSinceLastUpdateOldPatron.times(
         BigInt.fromI32(patronOld.tokens.length)
@@ -103,6 +103,8 @@ export function handleLogBuy(event: LogBuy): void {
         .div(NUM_SECONDS_IN_YEAR_BIG_INT)
     );
     patronOld.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+    patronOld.availableDeposit = steward.depositAbleToWithdraw();
+    patronOld.foreclosureTime = getForeclosureTimeSafe(steward);
     patronOld.lastUpdated = txTimestamp;
   }
 
@@ -183,7 +185,8 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   wildcard.save();
 
   let patron = Patron.load(wildcard.owner);
-  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+  let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
