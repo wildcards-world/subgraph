@@ -88,6 +88,9 @@ export function updateAvailableDepositAndForeclosureTime(
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
+  patron.totalTimeHeld = patron.totalTimeHeld.plus(
+    timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
+  );
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
