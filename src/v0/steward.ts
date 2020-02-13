@@ -355,11 +355,9 @@ export function handleLogBuy(event: LogBuy): void {
       let patron = Patron.load(ownerString);
       patron.availableDeposit = steward.depositAbleToWithdraw(owner);
 
-      let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
-      let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
-      patron.totalTimeHeld = patron.totalTimeHeld.plus(
-        timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
-      );
+      // This is for Vitalik+Simon, so token didn't foreclose, and he only holds 1 token.
+      let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+      patron.totalTimeHeld = patron.totalTimeHeld.plus(timeSinceLastUpdate);
       patron.totalContributed = patron.totalContributed.plus(
         patron.patronTokenCostScaledNumerator
           .times(timeSinceLastUpdate)
@@ -412,6 +410,8 @@ export function handleLogBuy(event: LogBuy): void {
     patron.lastUpdated = txTimestamp;
     patron.foreclosureTime = txTimestamp;
   }
+
+  // Now even if the patron puts in extra deposit when they buy a new token this will foreclose their old tokens.
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
 
   let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
