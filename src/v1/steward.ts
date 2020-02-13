@@ -33,7 +33,8 @@ import {
   getForeclosureTimeSafe,
   getOrInitialiseStateChange,
   recognizeStateChange,
-  minBigInt
+  minBigInt,
+  updateGlobalState
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -156,13 +157,15 @@ export function handleBuy(event: Buy): void {
 
   let previousPrice = Price.load(wildcard.price);
 
-  let globalState = Global.load("1");
+  // let globalState = Global.load("1");
+  // let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
 
-  let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
-  globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
-    .plus(event.params.price.times(tokenPatronageNumerator))
-    .minus(previousPrice.price.times(tokenPatronageNumerator));
-  globalState.save();
+  // globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
+  //   .plus(event.params.price.times(tokenPatronageNumerator))
+  //   .minus(previousPrice.price.times(tokenPatronageNumerator));
+
+  // globalState.save();
+  updateGlobalState(steward, txTimestamp);
 
   let price = new Price(txHashString);
   price.price = event.params.price;
@@ -280,6 +283,8 @@ export function handlePriceChange(event: PriceChange): void {
     BigInt.fromI32(1)
   );
   eventCounter.save();
+
+  updateGlobalState(steward, txTimestamp);
 }
 export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
@@ -296,6 +301,7 @@ export function handleForeclosure(event: Foreclosure): void {
     [],
     txTimestamp
   );
+  updateGlobalState(steward, txTimestamp);
 }
 
 export function handleRemainingDepositUpdate(
@@ -315,6 +321,7 @@ export function handleRemainingDepositUpdate(
     [],
     txTimestamp
   );
+  updateGlobalState(steward, txTimestamp);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
@@ -331,4 +338,5 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     [],
     txTimestamp
   );
+  updateGlobalState(steward, txTimestamp);
 }

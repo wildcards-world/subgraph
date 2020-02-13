@@ -32,6 +32,11 @@ import {
   GLOBAL_PATRONAGE_DENOMINATOR
 } from "../CONSTANTS";
 import { getForeclosureTimeSafe, minBigInt } from "../util";
+import {
+  getTotalCollectedAccurate,
+  getTotalOwedAccurate,
+  getTotalTokenCostScaledNumerator
+} from "../util/hacky";
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(
@@ -219,106 +224,6 @@ function createWildcardIfDoesntExist(
   return wildcard;
 }
 
-function getTotalCollectedAccurate(steward: Steward): BigInt {
-  return AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT.plus(
-    steward.totalCollected(BigInt.fromI32(0))
-  )
-    .plus(steward.totalCollected(BigInt.fromI32(1)))
-    .plus(steward.totalCollected(BigInt.fromI32(2)))
-    .plus(steward.totalCollected(BigInt.fromI32(3)))
-    .plus(steward.totalCollected(BigInt.fromI32(4)))
-    .plus(steward.totalCollected(BigInt.fromI32(5)))
-    .plus(steward.totalCollected(BigInt.fromI32(6)))
-    .plus(steward.totalCollected(BigInt.fromI32(7)))
-    .plus(steward.totalCollected(BigInt.fromI32(9)))
-    .plus(steward.totalCollected(BigInt.fromI32(10)))
-    .plus(steward.totalCollected(BigInt.fromI32(11)))
-    .plus(steward.totalCollected(BigInt.fromI32(12)))
-    .plus(steward.totalCollected(BigInt.fromI32(42)));
-}
-function getTotalOwedAccurate(steward: Steward): BigInt {
-  return steward
-    .patronageOwed(BigInt.fromI32(0))
-    .plus(steward.patronageOwed(BigInt.fromI32(1)))
-    .plus(steward.patronageOwed(BigInt.fromI32(2)))
-    .plus(steward.patronageOwed(BigInt.fromI32(3)))
-    .plus(steward.patronageOwed(BigInt.fromI32(4)))
-    .plus(steward.patronageOwed(BigInt.fromI32(5)))
-    .plus(steward.patronageOwed(BigInt.fromI32(6)))
-    .plus(steward.patronageOwed(BigInt.fromI32(7)))
-    .plus(steward.patronageOwed(BigInt.fromI32(9)))
-    .plus(steward.patronageOwed(BigInt.fromI32(10)))
-    .plus(steward.patronageOwed(BigInt.fromI32(11)))
-    .plus(steward.patronageOwed(BigInt.fromI32(12)))
-    .plus(steward.patronageOwed(BigInt.fromI32(42)));
-}
-function getTotalTokenCostScaledNumerator(steward: Steward): BigInt {
-  return steward
-    .patronageNumerator(BigInt.fromI32(0))
-    .times(steward.price(BigInt.fromI32(0)))
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(1))
-        .times(steward.price(BigInt.fromI32(1)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(2))
-        .times(steward.price(BigInt.fromI32(2)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(3))
-        .times(steward.price(BigInt.fromI32(3)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(4))
-        .times(steward.price(BigInt.fromI32(4)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(5))
-        .times(steward.price(BigInt.fromI32(5)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(6))
-        .times(steward.price(BigInt.fromI32(6)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(7))
-        .times(steward.price(BigInt.fromI32(7)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(9))
-        .times(steward.price(BigInt.fromI32(9)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(10))
-        .times(steward.price(BigInt.fromI32(10)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(11))
-        .times(steward.price(BigInt.fromI32(11)))
-    )
-    .plus(
-      steward
-        .patronageNumerator(BigInt.fromI32(12))
-        .times(steward.price(BigInt.fromI32(12)))
-    )
-    .plus(
-      BigInt.fromI32(300)
-        .times(BigInt.fromI32(1000000000))
-        .times(steward.price(BigInt.fromI32(42)))
-    );
-  // .plus(steward.patronageNumerator(BigInt.fromI32(42)).times(steward.price(BigInt.fromI32(42))))
-}
-
 // TODO:: check on every block header if there are any foreclosures or do other updates to data. See how feasible this is.
 export function handleLogBuy(event: LogBuy): void {
   let owner = event.params.owner;
@@ -492,9 +397,17 @@ export function handleLogBuy(event: LogBuy): void {
   let globalState = Global.load("1");
 
   let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
-  globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
-    .plus(event.params.price.times(tokenPatronageNumerator))
-    .minus(previousPrice.price.times(tokenPatronageNumerator));
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
+  globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
+    steward
+  );
+  // globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
+  //   .plus(event.params.price.times(tokenPatronageNumerator))
+  //   .minus(previousPrice.price.times(tokenPatronageNumerator));
+  let totalOwed = getTotalOwedAccurate(steward);
+  globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
+    totalOwed
+  );
   globalState.save();
 
   let price = new Price(event.transaction.hash.toHexString());
@@ -618,7 +531,7 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 
 export function handleLogCollection(event: LogCollection): void {
   let globalState = Global.load("1");
-  let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator;
+  // let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator;
   const txTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
@@ -634,13 +547,13 @@ export function handleLogCollection(event: LogCollection): void {
       event.transaction.hash.toHexString() ==
       "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
     ) {
-      globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator.plus(
-        steward
-          .price(BigInt.fromI32(42))
-          .times(
-            VITALIK_PATRONAGE_NUMERATOR /*NOTE: `steward.patronageNumerator(BigInt.fromI32(42))` is incorrect since token was upgraded with a faulty value.*/
-          )
-      );
+      // globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator.plus(
+      //   steward
+      //     .price(BigInt.fromI32(42))
+      //     .times(
+      //       VITALIK_PATRONAGE_NUMERATOR /*NOTE: `steward.patronageNumerator(BigInt.fromI32(42))` is incorrect since token was upgraded with a faulty value.*/
+      //     )
+      // );
     } // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
     else if (
       event.transaction.hash.toHexString() ==
@@ -678,15 +591,15 @@ export function handleLogCollection(event: LogCollection): void {
     totalOwed
   );
 
-  globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
-    totalTokenCostScaledNumerator
-      .times(txTimestamp.minus(globalState.timeLastCollected))
-      .div(
-        steward
-          .patronageDenominator()
-          .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
-      )
-  );
+  // globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
+  //   totalTokenCostScaledNumerator
+  //     .times(txTimestamp.minus(globalState.timeLastCollected))
+  //     .div(
+  //       steward
+  //         .patronageDenominator()
+  //         .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
+  //     )
+  // );
   globalState.timeLastCollected = txTimestamp;
 
   globalState.save();
@@ -772,9 +685,9 @@ export function handleAddToken(event: AddToken): void {
     globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
     globalState.totalCollectedAccurate = globalState.totalCollected;
     // log.warning("setting global state {} {}", [globalState.totalCollected.toString(), event.transaction.hash.toHexString()])
-    globalState.totalCollectedOrDue = globalState.totalCollected;
+    // globalState.totalCollectedOrDue = globalState.totalCollected;
     globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
-    globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
+    // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
     globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
     globalState.save();
   }
