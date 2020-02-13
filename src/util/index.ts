@@ -14,7 +14,8 @@ import {
 } from "../CONSTANTS";
 import {
   getTotalOwedAccurate,
-  getTotalTokenCostScaledNumerator
+  getTotalTokenCostScaledNumerator,
+  getTotalCollectedAccurate
 } from "./hacky";
 
 export function minBigInt(first: BigInt, second: BigInt): BigInt {
@@ -27,7 +28,7 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
 
 export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
   let globalState = Global.load("1");
-  // globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
   globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
   );
