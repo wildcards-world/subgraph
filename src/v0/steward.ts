@@ -31,7 +31,7 @@ import {
   VITALIK_PATRONAGE_DENOMINATOR,
   GLOBAL_PATRONAGE_DENOMINATOR
 } from "../CONSTANTS";
-import { getForeclosureTimeSafe } from "../util";
+import { getForeclosureTimeSafe, minBigInt } from "../util";
 
 // A token would need to be set to the same price
 function getTokenIdFromTxTokenPrice(
@@ -354,7 +354,9 @@ export function handleLogBuy(event: LogBuy): void {
       const VITALIK_PRICE = steward.price(tokenIdBigInt);
       let patron = Patron.load(ownerString);
       patron.availableDeposit = steward.depositAbleToWithdraw(owner);
-      let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+
+      let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+      let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
       patron.totalTimeHeld = patron.totalTimeHeld.plus(
         timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
       );
@@ -408,8 +410,11 @@ export function handleLogBuy(event: LogBuy): void {
     patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
     patron.tokens = [];
     patron.lastUpdated = txTimestamp;
+    patron.foreclosureTime = txTimestamp;
   }
-  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+
+  let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
@@ -438,7 +443,8 @@ export function handleLogBuy(event: LogBuy): void {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
     );
-    let timeSinceLastUpdateOldPatron = txTimestamp.minus(patronOld.lastUpdated);
+    let heldUntil = minBigInt(patronOld.foreclosureTime, txTimestamp);
+    let timeSinceLastUpdateOldPatron = heldUntil.minus(patronOld.lastUpdated);
     patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
       timeSinceLastUpdateOldPatron.times(
         BigInt.fromI32(patronOld.tokens.length)
@@ -572,15 +578,8 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   let patron = Patron.load(wildcard.owner);
 
-  // Add to previouslyOwnedTokens if not already there
-  patron.availableDeposit = steward.depositAbleToWithdraw(
-    patron.address as Address
-  );
-  patron.foreclosureTime = getForeclosureTimeSafe(
-    steward,
-    patron.address as Address
-  );
-  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+  let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
       .times(timeSinceLastUpdate)
@@ -591,6 +590,13 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     patron.address as Address
   );
   patron.lastUpdated = txTimestamp;
+  patron.availableDeposit = steward.depositAbleToWithdraw(
+    patron.address as Address
+  );
+  patron.foreclosureTime = getForeclosureTimeSafe(
+    steward,
+    patron.address as Address
+  );
   patron.save();
 
   let priceChange = new ChangePriceEvent(event.transaction.hash.toHexString());

@@ -32,7 +32,8 @@ import {
   updateAvailableDepositAndForeclosureTime,
   getForeclosureTimeSafe,
   getOrInitialiseStateChange,
-  recognizeStateChange
+  recognizeStateChange,
+  minBigInt
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -78,9 +79,11 @@ export function handleBuy(event: Buy): void {
     patron.totalContributed = BigInt.fromI32(0);
     patron.tokens = [];
     patron.lastUpdated = txTimestamp;
+    patron.foreclosureTime = txTimestamp;
   }
 
-  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+  let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
@@ -106,13 +109,6 @@ export function handleBuy(event: Buy): void {
   patron.tokens = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
-    patronOld.availableDeposit = steward.depositAbleToWithdraw(
-      patronOld.address as Address
-    );
-    patronOld.foreclosureTime = getForeclosureTimeSafe(
-      steward,
-      patronOld.address as Address
-    );
     let timeSinceLastUpdateOldPatron = txTimestamp.minus(patron.lastUpdated);
     patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
       timeSinceLastUpdateOldPatron.times(
@@ -129,6 +125,13 @@ export function handleBuy(event: Buy): void {
       patronOld.address as Address
     );
     patronOld.lastUpdated = txTimestamp;
+    patronOld.availableDeposit = steward.depositAbleToWithdraw(
+      patronOld.address as Address
+    );
+    patronOld.foreclosureTime = getForeclosureTimeSafe(
+      steward,
+      patronOld.address as Address
+    );
   }
   // Remove token to the previous patron's tokens
   patronOld.tokens = patronOld.tokens
@@ -234,15 +237,8 @@ export function handlePriceChange(event: PriceChange): void {
 
   let patron = Patron.load(wildcard.owner);
 
-  // Add to previouslyOwnedTokens if not already there
-  patron.availableDeposit = steward.depositAbleToWithdraw(
-    patron.address as Address
-  );
-  patron.foreclosureTime = getForeclosureTimeSafe(
-    steward,
-    patron.address as Address
-  );
-  let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
+  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+  let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
@@ -256,6 +252,13 @@ export function handlePriceChange(event: PriceChange): void {
     patron.address as Address
   );
   patron.lastUpdated = txTimestamp;
+  patron.availableDeposit = steward.depositAbleToWithdraw(
+    patron.address as Address
+  );
+  patron.foreclosureTime = getForeclosureTimeSafe(
+    steward,
+    patron.address as Address
+  );
   patron.save();
 
   let priceChange = new ChangePriceEvent(txHashString);
