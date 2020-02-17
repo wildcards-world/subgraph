@@ -12,9 +12,9 @@ type Global @entity {
   totalCollected: BigInt!
   totalCollectedAccurate: BigInt!
   timeLastCollected: BigInt!
-  totalCollectedOrDue: BigInt!
+  # totalCollectedOrDue: BigInt!
   totalCollectedOrDueAccurate: BigInt!
-  totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
+  # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
 }
 

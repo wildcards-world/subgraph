@@ -1,12 +1,22 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
-import { Patron, StateChange, EventCounter } from "../../generated/schema";
+import {
+  Patron,
+  StateChange,
+  EventCounter,
+  Global
+} from "../../generated/schema";
 import { log } from "@graphprotocol/graph-ts";
 import {
   ZERO_ADDRESS,
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT
 } from "../CONSTANTS";
+import {
+  getTotalOwedAccurate,
+  getTotalTokenCostScaledNumerator,
+  getTotalCollectedAccurate
+} from "./hacky";
 
 export function minBigInt(first: BigInt, second: BigInt): BigInt {
   if (BigInt.compare(first, second) < 0) {
@@ -15,6 +25,32 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
     return second;
   }
 }
+
+export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
+  let globalState = Global.load("1");
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
+  globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
+    steward
+  );
+  let totalOwed = getTotalOwedAccurate(steward);
+  globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
+    totalOwed
+  );
+  // BUG!
+  // This code below is inaccurate because the `timeLastCollected` isn't correct. Should have `timeLastCalculatedCollection` as separate variable
+  // globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
+  //   totalTokenCostScaledNumerator
+  //     .times(txTimestamp.minus(globalState.timeLastCollected))
+  //     .div(
+  //       steward
+  //         .patronageDenominator()
+  //         .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
+  //     )
+  // );
+  globalState.timeLastCollected = txTimestamp;
+  globalState.save();
+}
+
 export function getForeclosureTimeSafe(
   steward: Steward,
   tokenPatron: Address
