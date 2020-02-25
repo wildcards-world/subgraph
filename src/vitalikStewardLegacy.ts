@@ -18,6 +18,7 @@ import {
   NUM_SECONDS_IN_YEAR_BIG_INT
 } from "./CONSTANTS";
 import { minBigInt } from "./util";
+import { handleLogBuyVitalikLegacy } from "./rewrite/steward";
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
   return blockNumber.gt(BigInt.fromI32(9077271)); // block 9077272 is the block that Vitalik was "exit"ed from the old contract.
@@ -138,6 +139,9 @@ export function handleLogBuy(event: LogBuy): void {
   wildcard.timeAcquired = txTimestamp;
 
   wildcard.save();
+
+  // the new code:
+  handleLogBuyVitalikLegacy(event);
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {

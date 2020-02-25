@@ -93,3 +93,34 @@ type ChangePriceEvent @entity {
   price: Price!
   timestamp: BigInt!
 }
+
+# Types for rewrite. Plan is to merge/replace the old entities when rewrite works.
+
+type PatronNew @entity {
+  id: ID! # Just the address
+  address: Bytes! # address
+  lastUpdated: BigInt!
+  # previouslyOwnedTokens: [Wildcard!]!
+  tokens: [WildcardNew!]!
+  # availableDeposit: BigInt!
+  # patronTokenCostScaledNumerator: BigInt!
+  # foreclosureTime: BigInt!
+  # deposit: BigInt!
+  # totalContributed: BigInt!
+  totalTimeHeld: BigInt!
+}
+
+type WildcardNew @entity {
+  id: ID! # Just the tokenId
+  tokenId: BigInt!
+  # price: Price!
+  owner: PatronNew! # address
+  # patronageNumerator: BigInt!
+  # patronageNumeratorPriceScaled: BigInt!
+  # timeAcquired: BigInt!
+  # previousOwners: [PreviousPatron!]
+  # priceHistory: [Price!]
+  # tokenUri: TokenUri!
+  # totalCollected: BigInt!
+  # timeCollected: BigInt!
+}
