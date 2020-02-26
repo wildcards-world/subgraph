@@ -48,6 +48,7 @@ export function handleTransfer(event: Transfer): void {
       patron.totalContributed = BigInt.fromI32(0);
       patron.totalTimeHeld = BigInt.fromI32(0);
       patron.tokens = [];
+      patron.previouslyOwnedTokens = [];
       patron.save();
     }
 

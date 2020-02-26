@@ -79,6 +79,7 @@ export function handleBuy(event: Buy): void {
     patron.totalTimeHeld = BigInt.fromI32(0);
     patron.totalContributed = BigInt.fromI32(0);
     patron.tokens = [];
+    patron.previouslyOwnedTokens = [];
     patron.lastUpdated = txTimestamp;
     patron.foreclosureTime = txTimestamp;
   }

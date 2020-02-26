@@ -64,6 +64,7 @@ export function handleLogBuy(event: LogBuy): void {
     patron.totalContributed = BigInt.fromI32(0);
     patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
     patron.tokens = [];
+    patron.previouslyOwnedTokens = [];
     patron.lastUpdated = txTimestamp;
   }
 

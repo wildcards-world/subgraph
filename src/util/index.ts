@@ -88,6 +88,7 @@ export function initialiseDefaultPatronIfNull(
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
+  patron.previouslyOwnedTokens = [];
   patron.save();
   return patron;
 }
