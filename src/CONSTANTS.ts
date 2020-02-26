@@ -21,6 +21,11 @@ export const AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT: BigInt = BigInt.fromI32(
 
 // NOTE: BigInt.fromI32(300000000000) errors since '300000000000' is too big for i32
 //       similarly for the patronage denominator.
+
+// 20 ETH = 20000000000000000000 = 20 * billion * billion
+export const VITALIK_PRICE_WHEN_OWNED_BY_SIMON = BigInt.fromI32(20)
+  .times(BILLION)
+  .times(BILLION);
 export const VITALIK_PATRONAGE_NUMERATOR = BigInt.fromI32(300).times(BILLION);
 export const GLOBAL_PATRONAGE_DENOMINATOR = BigInt.fromI32(1000).times(BILLION);
 export const VITALIK_PATRONAGE_DENOMINATOR = GLOBAL_PATRONAGE_DENOMINATOR;

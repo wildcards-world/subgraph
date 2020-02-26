@@ -6,6 +6,12 @@ import {
   VitalikStewardLegacy,
   LogBuy as LogBuyLegacy
 } from "../../generated/VitalikStewardLegacy/VitalikStewardLegacy";
+import {
+  GLOBAL_PATRONAGE_DENOMINATOR,
+  NUM_SECONDS_IN_YEAR_BIG_INT,
+  VITALIK_PATRONAGE_NUMERATOR,
+  VITALIK_PRICE_WHEN_OWNED_BY_SIMON
+} from "../CONSTANTS";
 // import { minBigInt } from "../util";
 
 function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
@@ -13,9 +19,11 @@ function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
   let patron = new PatronNew(addressString);
   patron.address = address;
   patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.totalContributed = BigInt.fromI32(0);
+  patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.tokens = [];
   patron.lastUpdated = txTimestamp;
-  patron.save();
+  // patron.save();
   return patron;
 }
 function createNO_OWNERPatron(
@@ -26,9 +34,11 @@ function createNO_OWNERPatron(
   let patron = new PatronNew("NO_OWNER");
   patron.address = address;
   patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.totalContributed = BigInt.fromI32(0);
+  patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.tokens = [];
   patron.lastUpdated = txTimestamp;
-  patron.save();
+  // patron.save();
   return patron;
 }
 
@@ -40,7 +50,7 @@ export function createWildcardIfDoesntExist(
 
   wildcard.tokenId = tokenId;
   wildcard.owner = "NO_OWNER";
-  wildcard.save();
+  // wildcard.save();
   return wildcard;
 }
 
@@ -53,6 +63,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = VitalikStewardLegacy.bind(event.address);
+  let tokenPrice = steward.price();
   let tokenId = 42;
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
@@ -99,22 +110,49 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
         )
       : BigInt.fromI32(0);
 
+  let newPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patron.totalContributed.plus(
+          patron.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let newPatronTokenCostScaledNumerator = VITALIK_PATRONAGE_NUMERATOR.times(
+    tokenPrice
+  );
+  let oldPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patronOld.totalContributed.plus(
+          patronOld.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let oldPatronTokenCostScaledNumerator = BigInt.fromI32(0);
+
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   let oldPatronTokenArray = patronOld.tokens
     .slice(0, itemIndex)
     .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
 
-  // Phave 3: set+save values.
+  // Phase 3: set+save values.
 
   patron.lastUpdated = txTimestamp;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
+  patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
+  patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
   patronOld.lastUpdated = txTimestamp;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
+  patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
+  patronOld.totalContributed = oldPatronTotalContributed;
   patronOld.save();
 
   wildcard.owner = ownerString;
@@ -122,6 +160,17 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
 }
 
 export function handleLogBuy(event: LogBuy): void {
+  // This is a hack, but after spending 4 hours trying to work out why the
+  //    "0x3ea1ecb8775a37fb797bb79f6c419176f15e35d4" wildcards address is
+  //    still being created (when I bought back vitalik as a test for Simon).
+  //    Theoritically this should be caught by the `isVitalik` section, but for some reason it isn't.
+  if (
+    event.transaction.hash.toHexString() ==
+    "0x8961f14a43c82842d5541da454b44aad64cbbe11b2f9094d6dc191bce3eac2f3"
+  ) {
+    return;
+  }
+
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
@@ -181,6 +230,31 @@ export function handleLogBuy(event: LogBuy): void {
         )
       : BigInt.fromI32(0);
 
+  let newPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patron.totalContributed.plus(
+          patron.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let newPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
+  let oldPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patronOld.totalContributed.plus(
+          patronOld.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let oldPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
+
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   let oldPatronTokenArray = patronOld.tokens
@@ -190,24 +264,45 @@ export function handleLogBuy(event: LogBuy): void {
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
     // BE VERY CAREFUL HERE, there was an issue upgrading vitalik that we must take into account.
     // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
-    // if (
-    //   event.transaction.hash.toHexString() !=
-    //   "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
-    // ) {
+    // Over here do all the accounting necessary for the upgrade.
+    if (
+      event.transaction.hash.toHexString() !=
+      "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
+    ) {
+      let newPatronTokenCostScaledNumerator = VITALIK_PATRONAGE_NUMERATOR.times(
+        VITALIK_PRICE_WHEN_OWNED_BY_SIMON
+      );
+      let newPatronTotalContributed = patron.totalContributed.plus(
+        newPatronTokenCostScaledNumerator
+          .times(timeSinceLastUpdatePatron)
+          .div(GLOBAL_PATRONAGE_DENOMINATOR)
+          .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+      );
+      patron.lastUpdated = txTimestamp;
+      patron.totalTimeHeld = newPatronTotalTimeHeld;
+      patron.tokens = newPatronTokenArray;
+      patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
+      patron.totalContributed = newPatronTotalContributed;
+
+      patron.save();
+    }
     return;
-    // }
   }
 
-  // Phave 3: set+save values.
+  // Phase 3: set+save values.
 
   patron.lastUpdated = txTimestamp;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
+  patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
+  patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
   patronOld.lastUpdated = txTimestamp;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
+  patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
+  patronOld.totalContributed = oldPatronTotalContributed;
   patronOld.save();
 
   wildcard.owner = ownerString;
@@ -266,22 +361,52 @@ export function handleBuy(event: Buy): void {
         )
       : BigInt.fromI32(0);
 
+  let newPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patron.totalContributed.plus(
+          patron.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let newPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
+  let oldPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patronOld.totalContributed.plus(
+          patronOld.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+
+  let oldPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
+
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   let oldPatronTokenArray = patronOld.tokens
     .slice(0, itemIndex)
     .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
 
-  // Phave 3: set+save values.
+  // Phase 3: set+save values.
 
   patron.lastUpdated = txTimestamp;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
+  patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
+  patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
   patronOld.lastUpdated = txTimestamp;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
+  patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
+  patronOld.totalContributed = oldPatronTotalContributed;
   patronOld.save();
 
   wildcard.owner = ownerString;
@@ -320,7 +445,7 @@ export function genericUpdateTimeHeld(
     timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
   );
 
-  // Phave 3: set+save values.
+  // Phase 3: set+save values.
 
   patron.lastUpdated = txTimestamp;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
