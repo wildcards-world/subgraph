@@ -133,6 +133,7 @@ export function handleLogBuy(event: LogBuy): void {
     patron.totalContributed = BigInt.fromI32(0);
     patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
     patron.tokens = [];
+    patron.previouslyOwnedTokens = [];
     patron.lastUpdated = txTimestamp;
     patron.foreclosureTime = txTimestamp;
   }
@@ -476,15 +477,7 @@ export function handleAddToken(event: AddToken): void {
 
   let patron = Patron.load("NO_OWNER");
   if (patron == null) {
-    patron = new Patron("NO_OWNER");
-    patron.address = ZERO_ADDRESS;
-    patron.lastUpdated = BigInt.fromI32(0);
-    patron.availableDeposit = BigInt.fromI32(0);
-    patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
-    patron.foreclosureTime = BigInt.fromI32(0);
-    patron.totalContributed = BigInt.fromI32(0);
-    patron.totalTimeHeld = BigInt.fromI32(0);
-    patron.save();
+    log.critical("This should definitely exist", []);
   }
 
   wildcard.price = price.id;
