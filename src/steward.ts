@@ -10,7 +10,7 @@ import {
   Foreclosure,
   RemainingDepositUpdate,
   CollectPatronage,
-  Steward
+  Steward,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
 import * as V1 from "./v1/steward";
@@ -70,3 +70,4 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     event.params.tokenId
   );
 }
+export function handleAddTokenV2(event: RemainingDepositUpdate): void {}

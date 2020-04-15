@@ -21,6 +21,12 @@ dataSources:
         - LogCollection
         - LogRemainingDepositUpdate
         - AddToken
+        - Buy
+        - PriceChange
+        - Foreclosure
+        - RemainingDepositUpdate
+        - CollectPatronage
+        - CollectLoyalty
       abis:
         - name: Steward
           file: ./abis/Steward.json
@@ -52,6 +58,11 @@ dataSources:
           handler: handleRemainingDepositUpdate
         - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
           handler: handleCollectPatronage
+        # v2 events
+        - event: AddToken(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV2
+        # - event: CollectLoyalty(indexd uint256,indexd address,uint256)
+        #   handler: handleCollectLoyalty
       file: ./src/steward.ts
 
   - kind: ethereum/contract
