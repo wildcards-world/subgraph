@@ -11,6 +11,7 @@ import {
   RemainingDepositUpdate,
   CollectPatronage,
   Steward,
+  CollectLoyalty,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
 import * as V1 from "./v1/steward";
@@ -71,3 +72,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   );
 }
 export function handleAddTokenV2(event: RemainingDepositUpdate): void {}
+
+export function handleCollectLoyalty(event: CollectLoyalty): void {
+  NEW.handleCollectLoyalty(event);
+}

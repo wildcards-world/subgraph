@@ -4,13 +4,13 @@ import { getTokenIdFromTxTokenPrice, isVintageVitalik } from "../v0/helpers";
 import { PatronNew, WildcardNew } from "../../generated/schema";
 import {
   VitalikStewardLegacy,
-  LogBuy as LogBuyLegacy
+  LogBuy as LogBuyLegacy,
 } from "../../generated/VitalikStewardLegacy/VitalikStewardLegacy";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
   VITALIK_PATRONAGE_NUMERATOR,
-  VITALIK_PRICE_WHEN_OWNED_BY_SIMON
+  VITALIK_PRICE_WHEN_OWNED_BY_SIMON,
 } from "../CONSTANTS";
 // import { minBigInt } from "../util";
 
@@ -23,6 +23,8 @@ function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.tokens = [];
   patron.lastUpdated = txTimestamp;
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
   // patron.save();
   return patron;
 }
@@ -453,4 +455,23 @@ export function genericUpdateTimeHeld(
 
   wildcard.owner = ownerString;
   wildcard.save();
+}
+
+export function handleCollectLoyalty(event: CollectLoyalty): void {
+  // Phase 1: reading and getting values.
+  let collectedLoyaltyTokens = event.params.amountReceived;
+  let patronAddress = event.params.patron;
+  let tokenId = event.params.tokenId;
+  let patron = PatronNew.load(patronAddress.toHexString());
+
+  // Phase 2: calculate new values.
+  let newCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
+    collectedLoyaltyTokens
+  );
+
+  // Phase 3: set+save values.
+  patron.totalLoyaltyTokens = newCollectedLoyaltyTokens;
+  patron.totalLoyaltyTokensIncludingUnRedeemed = collectedLoyaltyTokens;
+
+  patron.save();
 }

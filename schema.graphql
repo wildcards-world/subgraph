@@ -108,6 +108,8 @@ type PatronNew @entity {
   # deposit: BigInt!
   totalContributed: BigInt!
   totalTimeHeld: BigInt!
+  totalLoyaltyTokens: BigInt!
+  totalLoyaltyTokensIncludingUnRedeemed: BigInt!
 }
 
 type WildcardNew @entity {
