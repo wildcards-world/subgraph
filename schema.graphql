@@ -102,6 +102,7 @@ type PatronNew @entity {
   lastUpdated: BigInt!
   # previouslyOwnedTokens: [Wildcard!]!
   tokens: [WildcardNew!]!
+  # tokens: [Wildcard!]!
   # availableDeposit: BigInt!
   patronTokenCostScaledNumerator: BigInt!
   # foreclosureTime: BigInt!

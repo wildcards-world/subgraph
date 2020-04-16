@@ -1,5 +1,10 @@
 import { BigInt, Address, log } from "@graphprotocol/graph-ts";
-import { LogBuy, Steward, Buy } from "../../generated/Steward/Steward";
+import {
+  LogBuy,
+  Steward,
+  Buy,
+  CollectLoyalty,
+} from "../../generated/Steward/Steward";
 import { getTokenIdFromTxTokenPrice, isVintageVitalik } from "../v0/helpers";
 import { PatronNew, WildcardNew } from "../../generated/schema";
 import {
@@ -40,6 +45,8 @@ function createNO_OWNERPatron(
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.tokens = [];
   patron.lastUpdated = txTimestamp;
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
   // patron.save();
   return patron;
 }
@@ -459,19 +466,26 @@ export function genericUpdateTimeHeld(
 
 export function handleCollectLoyalty(event: CollectLoyalty): void {
   // Phase 1: reading and getting values.
-  let collectedLoyaltyTokens = event.params.amountReceived;
+  let collectedLoyaltyTokens = event.params.amountRecieved;
   let patronAddress = event.params.patron;
   let tokenId = event.params.tokenId;
   let patron = PatronNew.load(patronAddress.toHexString());
+  let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
+    patron.tokens.length
+  );
 
   // Phase 2: calculate new values.
   let newCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
     collectedLoyaltyTokens
   );
 
+  let newTotalLoyaltyTokensIncludingUnRedeemed = patron.totalLoyaltyTokensIncludingUnRedeemed.plus(
+    numberOfTokensHeldByUserAtBeginningOfTx.times(collectedLoyaltyTokens)
+  );
+
   // Phase 3: set+save values.
   patron.totalLoyaltyTokens = newCollectedLoyaltyTokens;
-  patron.totalLoyaltyTokensIncludingUnRedeemed = collectedLoyaltyTokens;
+  patron.totalLoyaltyTokensIncludingUnRedeemed = newTotalLoyaltyTokensIncludingUnRedeemed;
 
   patron.save();
 }
