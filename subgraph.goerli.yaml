@@ -45,7 +45,7 @@ dataSources:
         # v0 and v1 events
         - event: AddToken(indexed uint256,uint256)
           handler: handleAddToken
-        # v1 events
+        # v1 and v2 events
         - event: Buy(indexed uint256,indexed address,uint256)
           handler: handleBuy
         - event: PriceChange(indexed uint256,uint256)

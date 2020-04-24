@@ -29,3 +29,11 @@ export const VITALIK_PRICE_WHEN_OWNED_BY_SIMON = BigInt.fromI32(20)
 export const VITALIK_PATRONAGE_NUMERATOR = BigInt.fromI32(300).times(BILLION);
 export const GLOBAL_PATRONAGE_DENOMINATOR = BigInt.fromI32(1000).times(BILLION);
 export const VITALIK_PATRONAGE_DENOMINATOR = GLOBAL_PATRONAGE_DENOMINATOR;
+export const VITALIK_TOKEN_ID = "42";
+export let patronageTokenPerSecond = BigInt.fromI32(11574)
+  .times(BILLION)
+  .plus(BigInt.fromI32(74074074));
+//         11574074074074 (number of units of token created per second)
+//     = ( 11574
+//          *  1000000000 )
+//          +    74074074

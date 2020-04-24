@@ -30,7 +30,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
-  // Unimplemented
+  V0.handleLogForeclosure(event);
 }
 
 export function handleLogCollection(event: LogCollection): void {

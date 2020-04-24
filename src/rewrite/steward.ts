@@ -6,7 +6,7 @@ import {
   CollectLoyalty,
 } from "../../generated/Steward/Steward";
 import { getTokenIdFromTxTokenPrice, isVintageVitalik } from "../v0/helpers";
-import { PatronNew, WildcardNew } from "../../generated/schema";
+import { PatronNew, WildcardNew, Patron } from "../../generated/schema";
 import {
   VitalikStewardLegacy,
   LogBuy as LogBuyLegacy,
@@ -16,6 +16,7 @@ import {
   NUM_SECONDS_IN_YEAR_BIG_INT,
   VITALIK_PATRONAGE_NUMERATOR,
   VITALIK_PRICE_WHEN_OWNED_BY_SIMON,
+  patronageTokenPerSecond,
 } from "../CONSTANTS";
 // import { minBigInt } from "../util";
 
@@ -468,19 +469,38 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   // Phase 1: reading and getting values.
   let collectedLoyaltyTokens = event.params.amountRecieved;
   let patronAddress = event.params.patron;
-  let tokenId = event.params.tokenId;
+  // let tokenId = event.params.tokenId;
   let patron = PatronNew.load(patronAddress.toHexString());
+  let patronLegacy = Patron.load(patronAddress.toHexString());
   let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
-    patron.tokens.length
+    // NOTE: the value on the `PatronNew` for tokens is currently inaccurate.
+    patronLegacy.tokens.length
   );
+  let timeSinceLastUpdatePatron = patron.lastUpdated;
+  let txTimestamp = event.block.timestamp;
 
   // Phase 2: calculate new values.
   let newCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
     collectedLoyaltyTokens
   );
 
+  log.warning("(handleCollectLoyalty -- {} has {} tokens at the moment.", [
+    patronAddress.toHexString(),
+    numberOfTokensHeldByUserAtBeginningOfTx.toString(),
+  ]);
+
+  let timeSinceLastPatronCollection = txTimestamp.minus(
+    timeSinceLastUpdatePatron
+  );
+  let amountCollectedPerTokenSinceLastCollection = timeSinceLastPatronCollection.times(
+    patronageTokenPerSecond
+  );
+  let newTokensDueSinceLastUpdate = numberOfTokensHeldByUserAtBeginningOfTx.times(
+    amountCollectedPerTokenSinceLastCollection
+  );
+
   let newTotalLoyaltyTokensIncludingUnRedeemed = patron.totalLoyaltyTokensIncludingUnRedeemed.plus(
-    numberOfTokensHeldByUserAtBeginningOfTx.times(collectedLoyaltyTokens)
+    newTokensDueSinceLastUpdate
   );
 
   // Phase 3: set+save values.

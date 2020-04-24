@@ -6,7 +6,7 @@ import {
   LogForeclosure,
   LogCollection,
   LogRemainingDepositUpdate,
-  AddToken
+  AddToken,
 } from "../../generated/Steward/Steward";
 import {
   Wildcard,
@@ -17,7 +17,7 @@ import {
   BuyEvent,
   EventCounter,
   ChangePriceEvent,
-  Global
+  Global,
 } from "../../generated/schema";
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
@@ -29,20 +29,20 @@ import {
   BILLION,
   VITALIK_PATRONAGE_NUMERATOR,
   VITALIK_PATRONAGE_DENOMINATOR,
-  GLOBAL_PATRONAGE_DENOMINATOR
+  GLOBAL_PATRONAGE_DENOMINATOR,
 } from "../CONSTANTS";
 import { getForeclosureTimeSafe, minBigInt } from "../util";
 import {
   getTotalCollectedAccurate,
   getTotalOwedAccurate,
-  getTotalTokenCostScaledNumerator
+  getTotalTokenCostScaledNumerator,
 } from "../util/hacky";
 import {
   getTokenIdFromTxTokenPrice,
   isVintageVitalik,
   createWildcardIfDoesntExist,
   getTokenIdFromTimestamp,
-  createCounterIfDoesntExist
+  createCounterIfDoesntExist,
 } from "./helpers";
 
 // TODO:: check on every block header if there are any foreclosures or do other updates to data. See how feasible this is.
@@ -164,7 +164,11 @@ export function handleLogBuy(event: LogBuy): void {
   patron.availableDeposit = steward.depositAbleToWithdraw(owner);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
   // Add token to the patrons currently held tokens
-  patron.tokens = patron.tokens.concat([wildcard.id]);
+  patron.tokens =
+    patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
+      ? patron.previouslyOwnedTokens.concat([wildcard.id])
+      : patron.previouslyOwnedTokens;
+
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
@@ -210,7 +214,7 @@ export function handleLogBuy(event: LogBuy): void {
 
     // TODO: update the `timeSold` of the previous token.
     wildcard.previousOwners = wildcard.previousOwners.concat([
-      previousPatron.id
+      previousPatron.id,
     ]);
   }
 
@@ -348,7 +352,39 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
-  // TODO!
+  /**
+   * PHASE 1 - load data
+   */
+
+  // TODO: this function isn't complete. Revisit.
+  let foreclosedPatron = event.params.prevOwner;
+  let foreclosedPatronString = foreclosedPatron.toHexString();
+  let patronOld = Patron.load(foreclosedPatronString);
+
+  let steward = Steward.bind(event.address);
+
+  /**
+   * PHASE 2 - update data
+   */
+  // TODO: update Vitalik wildcard entity also.
+
+  let prevTokens = patronOld.previouslyOwnedTokens;
+  // NOTE: this shouldn't be necessary, `previouslyOwnedTokens` is updated for the patron when the token is bought.
+  for (let i = 0; i < patronOld.tokens.length; i++) {
+    // patron
+    let currentToken = prevTokens[i];
+    patronOld.previouslyOwnedTokens =
+      patronOld.previouslyOwnedTokens.indexOf(currentToken) === -1
+        ? patronOld.previouslyOwnedTokens.concat([currentToken])
+        : patronOld.previouslyOwnedTokens;
+  }
+  patronOld.tokens = []; // NOTE: Only safe to do this because Simon held Legacy vitalik the whole time (otherwise would need to check if this user held legacy vitalik).
+  patronOld.lastUpdated = steward.timeLastCollectedPatron(foreclosedPatron); // TODO: double check this.
+
+  /**
+   * PHASE 3 - save data
+   */
+  patronOld.save();
 }
 
 export function handleLogCollection(event: LogCollection): void {
