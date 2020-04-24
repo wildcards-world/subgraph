@@ -145,9 +145,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  let oldPatronTokenArray = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  let oldPatronTokenArray = patronOld.tokens.splice(itemIndex, 1);
 
   // Phase 3: set+save values.
 
@@ -267,9 +265,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  let oldPatronTokenArray = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  let oldPatronTokenArray = patronOld.tokens.splice(itemIndex, 1);
 
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
     // BE VERY CAREFUL HERE, there was an issue upgrading vitalik that we must take into account.
@@ -399,9 +395,7 @@ export function handleBuy(event: Buy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  let oldPatronTokenArray = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  let oldPatronTokenArray = patronOld.tokens.splice(itemIndex, 1);
 
   // Phase 3: set+save values.
 
@@ -483,11 +477,6 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   let newCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
     collectedLoyaltyTokens
   );
-
-  log.warning("(handleCollectLoyalty -- {} has {} tokens at the moment.", [
-    patronAddress.toHexString(),
-    numberOfTokensHeldByUserAtBeginningOfTx.toString(),
-  ]);
 
   let timeSinceLastPatronCollection = txTimestamp.minus(
     timeSinceLastUpdatePatron

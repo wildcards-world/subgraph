@@ -170,8 +170,8 @@ export function handleLogBuy(event: LogBuy): void {
   // Add token to the patrons currently held tokens
   patron.tokens =
     patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
-      ? patron.previouslyOwnedTokens.concat([wildcard.id])
-      : patron.previouslyOwnedTokens;
+      ? patron.tokens.concat([wildcard.id])
+      : patron.tokens;
 
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
@@ -202,9 +202,7 @@ export function handleLogBuy(event: LogBuy): void {
     );
   }
   // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  patronOld.tokens = patronOld.tokens.splice(itemIndex, 1);
 
   patron.save();
   patronOld.save();
@@ -359,14 +357,10 @@ export function handleLogForeclosure(event: LogForeclosure): void {
   /**
    * PHASE 1 - load data
    */
-  log.warning("1 {}", [event.block.hash.toHexString()]);
   let foreclosedPatron = event.params.prevOwner;
-  log.warning("2 {}", [event.block.hash.toHexString()]);
   let steward = Steward.bind(event.address);
-  log.warning("3 {}", [event.block.hash.toHexString()]);
 
   updateForeclosedTokens(foreclosedPatron, steward);
-  log.warning("15 {}", [event.block.hash.toHexString()]);
 }
 
 export function handleLogCollection(event: LogCollection): void {

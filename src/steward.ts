@@ -31,8 +31,6 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
-  log.warning("handle forcelosure {}", [event.block.hash.toHexString()]);
-
   V0.handleLogForeclosure(event);
 }
 

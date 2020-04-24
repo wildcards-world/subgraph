@@ -111,8 +111,8 @@ export function handleBuy(event: Buy): void {
   // Add token to the patrons currently held tokens
   patron.tokens =
     patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
-      ? patron.previouslyOwnedTokens.concat([wildcard.id])
-      : patron.previouslyOwnedTokens;
+      ? patron.tokens.concat([wildcard.id])
+      : patron.tokens;
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
     let timeSinceLastUpdateOldPatron = txTimestamp.minus(patron.lastUpdated);
@@ -140,9 +140,8 @@ export function handleBuy(event: Buy): void {
     );
   }
   // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  patronOld.tokens = patronOld.tokens.splice(itemIndex, 1);
+  let newIndexOf = patronOld.tokens.indexOf(tokenIdString);
 
   patron.save();
   patronOld.save();
@@ -298,8 +297,6 @@ export function handleForeclosure(event: Foreclosure): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
 
-  updateForeclosedTokens(foreclosedPatron, steward);
-
   updateAvailableDepositAndForeclosureTime(
     steward,
     foreclosedPatron,
@@ -313,6 +310,7 @@ export function handleForeclosure(event: Foreclosure): void {
     txTimestamp
   );
   updateGlobalState(steward, txTimestamp);
+  updateForeclosedTokens(foreclosedPatron, steward);
 }
 
 export function handleRemainingDepositUpdate(
