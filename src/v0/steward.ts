@@ -31,7 +31,11 @@ import {
   VITALIK_PATRONAGE_DENOMINATOR,
   GLOBAL_PATRONAGE_DENOMINATOR,
 } from "../CONSTANTS";
-import { getForeclosureTimeSafe, minBigInt } from "../util";
+import {
+  getForeclosureTimeSafe,
+  minBigInt,
+  updateForeclosedTokens,
+} from "../util";
 import {
   getTotalCollectedAccurate,
   getTotalOwedAccurate,
@@ -355,36 +359,14 @@ export function handleLogForeclosure(event: LogForeclosure): void {
   /**
    * PHASE 1 - load data
    */
-
-  // TODO: this function isn't complete. Revisit.
+  log.warning("1 {}", [event.block.hash.toHexString()]);
   let foreclosedPatron = event.params.prevOwner;
-  let foreclosedPatronString = foreclosedPatron.toHexString();
-  let patronOld = Patron.load(foreclosedPatronString);
-
+  log.warning("2 {}", [event.block.hash.toHexString()]);
   let steward = Steward.bind(event.address);
+  log.warning("3 {}", [event.block.hash.toHexString()]);
 
-  /**
-   * PHASE 2 - update data
-   */
-  // TODO: update Vitalik wildcard entity also.
-
-  let prevTokens = patronOld.previouslyOwnedTokens;
-  // NOTE: this shouldn't be necessary, `previouslyOwnedTokens` is updated for the patron when the token is bought.
-  for (let i = 0; i < patronOld.tokens.length; i++) {
-    // patron
-    let currentToken = prevTokens[i];
-    patronOld.previouslyOwnedTokens =
-      patronOld.previouslyOwnedTokens.indexOf(currentToken) === -1
-        ? patronOld.previouslyOwnedTokens.concat([currentToken])
-        : patronOld.previouslyOwnedTokens;
-  }
-  patronOld.tokens = []; // NOTE: Only safe to do this because Simon held Legacy vitalik the whole time (otherwise would need to check if this user held legacy vitalik).
-  patronOld.lastUpdated = steward.timeLastCollectedPatron(foreclosedPatron); // TODO: double check this.
-
-  /**
-   * PHASE 3 - save data
-   */
-  patronOld.save();
+  updateForeclosedTokens(foreclosedPatron, steward);
+  log.warning("15 {}", [event.block.hash.toHexString()]);
 }
 
 export function handleLogCollection(event: LogCollection): void {
