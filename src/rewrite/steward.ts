@@ -285,7 +285,7 @@ export function handleLogBuy(event: LogBuy): void {
           .div(GLOBAL_PATRONAGE_DENOMINATOR)
           .div(NUM_SECONDS_IN_YEAR_BIG_INT)
       );
-      patron.lastUpdated = txTimestamp;
+      patron.lastUpdated = txTimestamp; // TODO: it is not correct just using `txTimestamp` not all transactions update the `timeLastCollectedPatron` value, such as changing the price
       patron.totalTimeHeld = newPatronTotalTimeHeld;
       patron.tokens = newPatronTokenArray;
       patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
@@ -296,16 +296,21 @@ export function handleLogBuy(event: LogBuy): void {
     return;
   }
 
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(owner);
+  let timePatronOldLastUpdated = steward.timeLastCollectedPatron(
+    patronOld.address as Address
+  );
+
   // Phase 3: set+save values.
 
-  patron.lastUpdated = txTimestamp;
+  patron.lastUpdated = timePatronLastUpdated;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
   patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
-  patronOld.lastUpdated = txTimestamp;
+  patronOld.lastUpdated = timePatronOldLastUpdated;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
@@ -398,16 +403,21 @@ export function handleBuy(event: Buy): void {
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(owner);
+  let timePatronOldLastUpdated = steward.timeLastCollectedPatron(
+    patronOld.address as Address
+  );
+
   // Phase 3: set+save values.
 
-  patron.lastUpdated = txTimestamp;
+  patron.lastUpdated = timePatronLastUpdated;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
   patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
-  patronOld.lastUpdated = txTimestamp;
+  patronOld.lastUpdated = timePatronOldLastUpdated;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
@@ -449,10 +459,13 @@ export function genericUpdateTimeHeld(
   let newPatronTotalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
   );
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(
+    patron.address as Address
+  );
 
   // Phase 3: set+save values.
 
-  patron.lastUpdated = txTimestamp;
+  patron.lastUpdated = timePatronLastUpdated;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.save();
 

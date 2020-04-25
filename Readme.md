@@ -11,3 +11,4 @@ This is a subgraph to allow useful queries of data about wildcards from: https:/
 ## TODO:
 
 - [ ] get rid of all occurrences of `splice` in code. It was a mistake to introduce it since it performs a mutation. (introduced during a hackathon, forgive me).
+- [ ] Make a distinction between `lastUpdated` and `timeLastCollectedPatron`. For example changing the price doesn't update `timeLastCollectedPatron` on the contract. This was causing some issues...
