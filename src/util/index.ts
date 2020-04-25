@@ -1,12 +1,11 @@
 import { Steward } from "../../generated/Steward/Steward";
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   Patron,
   StateChange,
   EventCounter,
   Global,
 } from "../../generated/schema";
-import { log } from "@graphprotocol/graph-ts";
 import {
   ZERO_ADDRESS,
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -23,6 +22,17 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
     return first;
   } else {
     return second;
+  }
+}
+
+export function removeFromArrayAtIndex<t>(
+  array: Array<t>,
+  index: i32
+): Array<t> {
+  if (array.length > index && index > -1) {
+    return array.slice(0, index).concat(array.slice(index + 1, array.length));
+  } else {
+    return array;
   }
 }
 
