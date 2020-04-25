@@ -35,6 +35,7 @@ import {
   getForeclosureTimeSafe,
   minBigInt,
   updateForeclosedTokens,
+  removeFromArrayAtIndex,
 } from "../util";
 import {
   getTotalCollectedAccurate,
@@ -202,8 +203,7 @@ export function handleLogBuy(event: LogBuy): void {
     );
   }
   // Remove token to the previous patron's tokens
-  // TODO: run a check on the removed elements
-  let removedElements = patronOld.tokens.splice(itemIndex, 1);
+  patronOld.tokens = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   patron.save();
   patronOld.save();

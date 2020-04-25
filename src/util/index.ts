@@ -25,10 +25,11 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
   }
 }
 
-export function removeFromArrayAtIndex<t>(
-  array: Array<t>,
+// This currently only works with strings, because assembly script is shit... (the tests do pass when this is a template parameter though :) )
+export function removeFromArrayAtIndex(
+  array: Array<string>,
   index: i32
-): Array<t> {
+): Array<string> {
   if (array.length > index && index > -1) {
     return array.slice(0, index).concat(array.slice(index + 1, array.length));
   } else {

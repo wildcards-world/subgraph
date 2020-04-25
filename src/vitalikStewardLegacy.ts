@@ -18,7 +18,7 @@ import {
   NUM_SECONDS_IN_YEAR_BIG_INT,
   VITALIK_TOKEN_ID,
 } from "./CONSTANTS";
-import { minBigInt } from "./util";
+import { minBigInt, removeFromArrayAtIndex } from "./util";
 import { handleLogBuyVitalikLegacy } from "./rewrite/steward";
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
@@ -100,8 +100,7 @@ export function handleLogBuy(event: LogBuy): void {
     );
 
     // Remove token to the previous patron's tokens
-    // TODO: run a check on the removed elements
-    let removedElements = patronOld.tokens.splice(itemIndex, 1);
+    patronOld.tokens = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
     patronOld.totalContributed = patron.totalContributed.plus(
       patronOld.patronTokenCostScaledNumerator
@@ -245,8 +244,10 @@ export function handleLogForeclosure(event: LogForeclosure): void {
    * PHASE 2 - update data
    */
 
-  // TODO: run a check on the removed elements
-  let removedElements = patronOld.tokens.splice(wildcardIndexInPatronTokens, 1);
+  patronOld.tokens = removeFromArrayAtIndex(
+    patronOld.tokens,
+    wildcardIndexInPatronTokens
+  );
 
   patronOld.lastUpdated = steward.timeLastCollected(); // TODO: double check this.
   // NOTE: this shouldn't be necessary, `previouslyOwnedTokens` is updated for the patron when the token is bought.

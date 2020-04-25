@@ -36,6 +36,7 @@ import {
   minBigInt,
   updateGlobalState,
   updateForeclosedTokens,
+  removeFromArrayAtIndex,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -139,10 +140,8 @@ export function handleBuy(event: Buy): void {
       patronOld.address as Address
     );
   }
-
   // Remove token to the previous patron's tokens
-  // TODO: run a check on the removed elements
-  let removedElements = patronOld.tokens.splice(itemIndex, 1);
+  patronOld.tokens = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   patron.save();
   patronOld.save();

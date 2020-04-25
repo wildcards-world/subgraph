@@ -18,6 +18,7 @@ import {
   VITALIK_PRICE_WHEN_OWNED_BY_SIMON,
   patronageTokenPerSecond,
 } from "../CONSTANTS";
+import { removeFromArrayAtIndex } from "../util";
 // import { minBigInt } from "../util";
 
 function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
@@ -145,8 +146,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  // TODO: run a check on the removed elements
-  let removedElements = patronOld.tokens.splice(itemIndex, 1);
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   // Phase 3: set+save values.
 
@@ -159,7 +159,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
 
   patronOld.lastUpdated = txTimestamp;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
-  // patronOld.tokens = oldPatronTokenArray;
+  patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
   patronOld.totalContributed = oldPatronTotalContributed;
   patronOld.save();
@@ -266,8 +266,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  // TODO: run a check on the removed elements
-  let removedElements = patronOld.tokens.splice(itemIndex, 1);
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
     // BE VERY CAREFUL HERE, there was an issue upgrading vitalik that we must take into account.
@@ -308,7 +307,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   patronOld.lastUpdated = txTimestamp;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
-  // patronOld.tokens = oldPatronTokenArray;
+  patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
   patronOld.totalContributed = oldPatronTotalContributed;
   patronOld.save();
@@ -397,8 +396,7 @@ export function handleBuy(event: Buy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  // TODO: run a check on the removed elements
-  let removedElements = patronOld.tokens.splice(itemIndex, 1);
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   // Phase 3: set+save values.
 
@@ -411,7 +409,7 @@ export function handleBuy(event: Buy): void {
 
   patronOld.lastUpdated = txTimestamp;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
-  // patronOld.tokens = oldPatronTokenArray;
+  patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
   patronOld.totalContributed = oldPatronTotalContributed;
   patronOld.save();
