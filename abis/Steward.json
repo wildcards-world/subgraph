@@ -17,7 +17,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amountRecieved",
+        "name": "timeSinceLastMint",
         "type": "uint256"
       }
     ],

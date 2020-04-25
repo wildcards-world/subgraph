@@ -5,17 +5,22 @@ import {
   StateChange,
   EventCounter,
   Global,
+  Wildcard,
+  TokenUri,
+  Price,
 } from "../../generated/schema";
 import {
   ZERO_ADDRESS,
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
+  AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
 } from "../CONSTANTS";
 import {
   getTotalOwedAccurate,
   getTotalTokenCostScaledNumerator,
   getTotalCollectedAccurate,
 } from "./hacky";
+import { Token } from "../../generated/Token/Token";
 
 export function minBigInt(first: BigInt, second: BigInt): BigInt {
   if (BigInt.compare(first, second) < 0) {
@@ -232,4 +237,47 @@ export function updateForeclosedTokens(
    * PHASE 3 - save data
    */
   patronOld.save();
+}
+
+export function handleAddTokenUtil(
+  tokenId: BigInt,
+  txTimestamp: BigInt,
+  patronageNumerator: BigInt,
+  wildcard: Wildcard,
+  steward: Steward,
+  txHashStr: string
+): void {
+  let tokenAddress = steward.assetToken();
+  let erc721 = Token.bind(tokenAddress);
+
+  let tokenInfo = erc721.tokenURI(tokenId);
+
+  // Entity fields can be set using simple assignments
+  let tokenUri = new TokenUri(tokenId.toString());
+  tokenUri.uriString = tokenInfo;
+  tokenUri.save();
+
+  wildcard.tokenUri = tokenUri.id;
+  wildcard.tokenId = tokenId;
+  wildcard.totalCollected = BigInt.fromI32(0);
+  wildcard.timeCollected = txTimestamp;
+
+  let price = new Price(txHashStr);
+  price.price = BigInt.fromI32(0);
+  price.timeSet = txTimestamp;
+  price.save();
+
+  let patron = Patron.load("NO_OWNER");
+  if (patron == null) {
+    log.critical("This should definitely exist", []);
+  }
+
+  wildcard.price = price.id;
+  wildcard.owner = patron.id;
+  wildcard.patronageNumerator = patronageNumerator;
+  wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
+  wildcard.timeAcquired = txTimestamp;
+  wildcard.previousOwners = [];
+
+  wildcard.save();
 }

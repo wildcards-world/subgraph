@@ -18,7 +18,7 @@ import {
   VITALIK_PRICE_WHEN_OWNED_BY_SIMON,
   patronageTokenPerSecond,
 } from "../CONSTANTS";
-import { removeFromArrayAtIndex } from "../util";
+import { removeFromArrayAtIndex, minBigInt } from "../util";
 // import { minBigInt } from "../util";
 
 function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
@@ -475,39 +475,75 @@ export function genericUpdateTimeHeld(
 
 export function handleCollectLoyalty(event: CollectLoyalty): void {
   // Phase 1: reading and getting values.
-  let collectedLoyaltyTokens = event.params.amountRecieved;
+  let collectedLoyaltyTokens = event.params.timeSinceLastMint;
   let patronAddress = event.params.patron;
   // let tokenId = event.params.tokenId;
   let patron = PatronNew.load(patronAddress.toHexString());
   let patronLegacy = Patron.load(patronAddress.toHexString());
-  let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
-    // NOTE: the value on the `PatronNew` for tokens is currently inaccurate.
-    patronLegacy.tokens.length
-  );
-  let timeSinceLastUpdatePatron = patron.lastUpdated;
+  // let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
+  //   // NOTE: the value on the `PatronNew` for tokens is currently inaccurate.
+  //   patronLegacy.tokens.length
+  // );
+  var steward = Steward.bind(event.address);
+  let foreclosureTime = steward.foreclosureTimePatron(patronAddress);
   let txTimestamp = event.block.timestamp;
+  // let timeSinceLastUpdatePatron = patron.lastUpdated;
 
   // Phase 2: calculate new values.
-  let newCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
-    collectedLoyaltyTokens
+  let newTotalCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
+    collectedLoyaltyTokens.times(patronageTokenPerSecond)
   );
 
-  let timeSinceLastPatronCollection = txTimestamp.minus(
-    timeSinceLastUpdatePatron
-  );
-  let amountCollectedPerTokenSinceLastCollection = timeSinceLastPatronCollection.times(
-    patronageTokenPerSecond
-  );
-  let newTokensDueSinceLastUpdate = numberOfTokensHeldByUserAtBeginningOfTx.times(
-    amountCollectedPerTokenSinceLastCollection
-  );
+  var settlementTime = minBigInt(foreclosureTime, txTimestamp);
+  let totalUnredeemed = patronLegacy.tokens.reduce<BigInt>(
+    (previous: BigInt, currentTokenIdString: string): BigInt => {
+      // let currentTokenIdString: string = patronLegacy.tokens[i];
+      let tokenId = WildcardNew.load(currentTokenIdString).tokenId;
+      let timeTokenWasLastUpdated = steward.timeLastCollected(tokenId);
+      let timeTokenHeldWithoutSettlement = settlementTime.minus(
+        timeTokenWasLastUpdated
+      );
 
-  let newTotalLoyaltyTokensIncludingUnRedeemed = patron.totalLoyaltyTokensIncludingUnRedeemed.plus(
-    newTokensDueSinceLastUpdate
+      let totalLoyaltyTokenDueByToken = timeTokenHeldWithoutSettlement.times(
+        patronageTokenPerSecond
+      );
+      return previous.plus(totalLoyaltyTokenDueByToken);
+    },
+    BigInt.fromI32(0)
   );
+  // let totalUnredeemed = BigInt.fromI32(0);
+  // for (let i = 0; i < patronLegacy.tokens.length; ++i) {
+  //   let currentTokenIdString: string = patronLegacy.tokens[i];
+  //   let tokenId = WildcardNew.load(currentTokenIdString).tokenId;
+  //   let timeTokenWasLastUpdated = steward.timeLastCollected(tokenId);
+  //   let timeTokenHeldWithoutSettlement = settlementTime.minus(
+  //     timeTokenWasLastUpdated
+  //   );
+
+  //   let totalLoyaltyTokenDueByToken = timeTokenHeldWithoutSettlement.times(
+  //     patronageTokenPerSecond
+  //   );
+  //   totalUnredeemed = totalUnredeemed.plus(totalLoyaltyTokenDueByToken);
+  // }
+  let newTotalLoyaltyTokensIncludingUnRedeemed = newTotalCollectedLoyaltyTokens.plus(
+    totalUnredeemed
+  );
+  // Alturnate Calculation (that returns a different answer XD)
+  // let timeSinceLastPatronCollection = txTimestamp.minus(
+  //   timeSinceLastUpdatePatron
+  // );
+  // let amountCollectedPerTokenSinceLastCollection = timeSinceLastPatronCollection.times(
+  //   patronageTokenPerSecond
+  // );
+  // let newTokensDueSinceLastUpdate = numberOfTokensHeldByUserAtBeginningOfTx.times(
+  //   amountCollectedPerTokenSinceLastCollection
+  // );
+  // let newTotalLoyaltyTokensIncludingUnRedeemed = patron.totalLoyaltyTokensIncludingUnRedeemed.plus(
+  //   newTokensDueSinceLastUpdate
+  // );
 
   // Phase 3: set+save values.
-  patron.totalLoyaltyTokens = newCollectedLoyaltyTokens;
+  patron.totalLoyaltyTokens = newTotalCollectedLoyaltyTokens;
   patron.totalLoyaltyTokensIncludingUnRedeemed = newTotalLoyaltyTokensIncludingUnRedeemed;
 
   patron.save();

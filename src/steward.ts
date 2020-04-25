@@ -13,9 +13,11 @@ import {
   CollectPatronage,
   Steward,
   CollectLoyalty,
+  AddToken1,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
 import * as V1 from "./v1/steward";
+import * as V2 from "./v2/steward";
 import * as NEW from "./rewrite/steward";
 
 // NOTE: Events labled with the latest version of the contracts (eg V1) will be the only events that will be called.
@@ -72,7 +74,9 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     event.params.tokenId
   );
 }
-export function handleAddTokenV2(event: RemainingDepositUpdate): void {}
+export function handleAddTokenV2(event: AddToken): void {
+  V2.handleAddToken(event);
+}
 
 export function handleCollectLoyalty(event: CollectLoyalty): void {
   NEW.handleCollectLoyalty(event);

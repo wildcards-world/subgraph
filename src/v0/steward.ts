@@ -37,6 +37,7 @@ import {
   minBigInt,
   updateForeclosedTokens,
   removeFromArrayAtIndex,
+  handleAddTokenUtil,
 } from "../util";
 import {
   getTotalCollectedAccurate,
@@ -480,39 +481,16 @@ export function handleAddToken(event: AddToken): void {
 
   let steward = Steward.bind(event.address);
 
-  let tokenAddress = steward.assetToken();
-  let erc721 = Token.bind(tokenAddress);
+  let txHashStr = event.transaction.hash.toHexString();
 
-  let tokenInfo = erc721.tokenURI(tokenId);
-
-  // Entity fields can be set using simple assignments
-  let tokenUri = new TokenUri(tokenId.toString());
-  tokenUri.uriString = tokenInfo;
-  tokenUri.save();
-
-  wildcard.tokenUri = tokenUri.id;
-  wildcard.tokenId = tokenId;
-  wildcard.totalCollected = BigInt.fromI32(0);
-  wildcard.timeCollected = txTimestamp;
-
-  let price = new Price(event.transaction.hash.toHexString());
-  price.price = BigInt.fromI32(0);
-  price.timeSet = txTimestamp;
-  price.save();
-
-  let patron = Patron.load("NO_OWNER");
-  if (patron == null) {
-    log.critical("This should definitely exist", []);
-  }
-
-  wildcard.price = price.id;
-  wildcard.owner = patron.id;
-  wildcard.patronageNumerator = patronageNumerator;
-  wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
-  wildcard.timeAcquired = txTimestamp;
-  wildcard.previousOwners = [];
-
-  wildcard.save();
+  handleAddTokenUtil(
+    tokenId,
+    txTimestamp,
+    patronageNumerator,
+    wildcard,
+    steward,
+    txHashStr
+  );
 
   let globalState = Global.load("1");
 
