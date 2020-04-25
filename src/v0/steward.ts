@@ -30,6 +30,7 @@ import {
   VITALIK_PATRONAGE_NUMERATOR,
   VITALIK_PATRONAGE_DENOMINATOR,
   GLOBAL_PATRONAGE_DENOMINATOR,
+  SIMON_DLR_ADDRESS,
 } from "../CONSTANTS";
 import {
   getForeclosureTimeSafe,
@@ -355,10 +356,21 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
+  let foreclosedPatron = event.params.prevOwner;
+  let blockNumber = event.block.number.toI32();
+  // If it is simon foreclosing, and it was at the time that we were fixing the bad migration.
+  //      https://etherscan.io/tx/0xc5e2a5de2a49543b1ddf542dbfaf0f537653b91bc8cb0f913d0bc3193ed0cfd4
+  //      https://etherscan.io/tx/0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90
+  if (
+    foreclosedPatron.toHexString() == SIMON_DLR_ADDRESS &&
+    9077422 >= blockNumber &&
+    9077272 <= blockNumber
+  ) {
+    return;
+  }
   /**
    * PHASE 1 - load data
    */
-  let foreclosedPatron = event.params.prevOwner;
   let steward = Steward.bind(event.address);
 
   updateForeclosedTokens(foreclosedPatron, steward);

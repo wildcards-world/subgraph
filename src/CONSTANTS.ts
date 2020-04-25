@@ -37,3 +37,5 @@ export let patronageTokenPerSecond = BigInt.fromI32(11574)
 //     = ( 11574
 //          *  1000000000 )
 //          +    74074074
+
+export let SIMON_DLR_ADDRESS = "0x0cacc6104d8cd9d7b2850b4f35c65c1ecdeece03";
