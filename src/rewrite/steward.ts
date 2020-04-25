@@ -494,7 +494,11 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
     collectedLoyaltyTokens.times(patronageTokenPerSecond)
   );
 
-  var settlementTime = minBigInt(foreclosureTime, txTimestamp);
+  // TODO: Investigate why the bollow line works, but line 499 doesn't.
+  var settlementTime: BigInt = txTimestamp;
+  // var settlementTime: BigInt = minBigInt(foreclosureTime, txTimestamp);
+
+  // let totalUnredeemed = BigInt.fromI32(0);
   let totalUnredeemed = patronLegacy.tokens.reduce<BigInt>(
     (previous: BigInt, currentTokenIdString: string): BigInt => {
       // let currentTokenIdString: string = patronLegacy.tokens[i];
@@ -504,30 +508,21 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
         timeTokenWasLastUpdated
       );
 
-      let totalLoyaltyTokenDueByToken = timeTokenHeldWithoutSettlement.times(
-        patronageTokenPerSecond
+      // var totalLoyaltyTokenDueByToken: BigInt = timeTokenHeldWithoutSettlement.times(
+      //   patronageTokenPerSecond
+      // );
+      // return previous.plus(totalLoyaltyTokenDueByToken);
+      // TODO: Investigate why the commented out code above doesn't work, but the bellow does.
+      return previous.plus(
+        timeTokenHeldWithoutSettlement.times(patronageTokenPerSecond)
       );
-      return previous.plus(totalLoyaltyTokenDueByToken);
     },
     BigInt.fromI32(0)
   );
-  // let totalUnredeemed = BigInt.fromI32(0);
-  // for (let i = 0; i < patronLegacy.tokens.length; ++i) {
-  //   let currentTokenIdString: string = patronLegacy.tokens[i];
-  //   let tokenId = WildcardNew.load(currentTokenIdString).tokenId;
-  //   let timeTokenWasLastUpdated = steward.timeLastCollected(tokenId);
-  //   let timeTokenHeldWithoutSettlement = settlementTime.minus(
-  //     timeTokenWasLastUpdated
-  //   );
-
-  //   let totalLoyaltyTokenDueByToken = timeTokenHeldWithoutSettlement.times(
-  //     patronageTokenPerSecond
-  //   );
-  //   totalUnredeemed = totalUnredeemed.plus(totalLoyaltyTokenDueByToken);
-  // }
   let newTotalLoyaltyTokensIncludingUnRedeemed = newTotalCollectedLoyaltyTokens.plus(
     totalUnredeemed
   );
+
   // Alturnate Calculation (that returns a different answer XD)
   // let timeSinceLastPatronCollection = txTimestamp.minus(
   //   timeSinceLastUpdatePatron
