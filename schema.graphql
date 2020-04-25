@@ -127,3 +127,17 @@ type WildcardNew @entity {
   # totalCollected: BigInt!
   # timeCollected: BigInt!
 }
+
+type VoteStatus @entity {
+  id: ID! # <iteration>-<projectId>
+  projectVote: BigInt!
+}
+type Iteration @entity {
+  id: ID! # the iteration number
+  projectVotes: [VoteStatus!]!
+  totalVotes: BigInt!
+}
+type VoteManager @entity {
+  id: ID! # this should be a singleton. Give it a constant id of "VOTE_MANAGER"
+  cerruntIteration: Iteration!
+}
