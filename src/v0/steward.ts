@@ -202,7 +202,8 @@ export function handleLogBuy(event: LogBuy): void {
     );
   }
   // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens.splice(itemIndex, 1);
+  // TODO: run a check on the removed elements
+  let removedElements = patronOld.tokens.splice(itemIndex, 1);
 
   patron.save();
   patronOld.save();

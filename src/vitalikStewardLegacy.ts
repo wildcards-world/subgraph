@@ -100,7 +100,8 @@ export function handleLogBuy(event: LogBuy): void {
     );
 
     // Remove token to the previous patron's tokens
-    patronOld.tokens = patronOld.tokens.splice(itemIndex, 1);
+    // TODO: run a check on the removed elements
+    let removedElements = patronOld.tokens.splice(itemIndex, 1);
 
     patronOld.totalContributed = patron.totalContributed.plus(
       patronOld.patronTokenCostScaledNumerator
@@ -244,7 +245,8 @@ export function handleLogForeclosure(event: LogForeclosure): void {
    * PHASE 2 - update data
    */
 
-  patronOld.tokens = patronOld.tokens.splice(wildcardIndexInPatronTokens, 1);
+  // TODO: run a check on the removed elements
+  let removedElements = patronOld.tokens.splice(wildcardIndexInPatronTokens, 1);
 
   patronOld.lastUpdated = steward.timeLastCollected(); // TODO: double check this.
   // NOTE: this shouldn't be necessary, `previouslyOwnedTokens` is updated for the patron when the token is bought.

@@ -139,9 +139,10 @@ export function handleBuy(event: Buy): void {
       patronOld.address as Address
     );
   }
+
   // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens.splice(itemIndex, 1);
-  let newIndexOf = patronOld.tokens.indexOf(tokenIdString);
+  // TODO: run a check on the removed elements
+  let removedElements = patronOld.tokens.splice(itemIndex, 1);
 
   patron.save();
   patronOld.save();
