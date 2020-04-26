@@ -9,6 +9,7 @@ This is a subgraph to allow useful queries of data about wildcards from: https:/
 3. Due to the emergent complexity of smart contracts, it is useful to break graph updates into functions, but remember #2! Don't try make these functions not overlap, as long as they only set correct, up to date values there is no problem.
 
 - if there is an option to read a value from the contract (rather than reading a value already stored in the graph), always use it!
+- in the top section of the graph don't load any entities, they (other instances of the same entity) may get modified in other places and saved causing race conditions.
 
 ## TODO:
 

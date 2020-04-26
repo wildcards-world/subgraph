@@ -111,6 +111,7 @@ type PatronNew @entity {
   totalTimeHeld: BigInt!
   totalLoyaltyTokens: BigInt!
   totalLoyaltyTokensIncludingUnRedeemed: BigInt!
+  currentBalance: BigInt!
 }
 
 type WildcardNew @entity {

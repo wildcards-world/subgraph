@@ -37,6 +37,7 @@ import {
   updateGlobalState,
   updateForeclosedTokens,
   removeFromArrayAtIndex,
+  updateAllOfPatronsTokensLastUpdated,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -299,8 +300,11 @@ export function handleForeclosure(event: Foreclosure): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
 
-  // TODO:: somewhere this code needs to update 'timeCollecetd' for the wildcards
-  //   wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  updateAllOfPatronsTokensLastUpdated(
+    patronString,
+    steward,
+    "handleForeclosure"
+  );
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -327,8 +331,11 @@ export function handleRemainingDepositUpdate(
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
-  // TODO:: somewhere this code needs to update 'timeCollecetd' for the wildcards
-  //   wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  updateAllOfPatronsTokensLastUpdated(
+    patronString,
+    steward,
+    "handleRemainingDepositUpdate"
+  );
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
@@ -347,10 +354,17 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
-  // TODO:: somewhere this code needs to update 'timeCollecetd' for the wildcards
-  //   wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  // log.warning("OUTSIDE, patron {}", [patronString]);
+  // FOR SOME REASON ADDING THIS CAUSES AN ISSUE! :(
+  updateAllOfPatronsTokensLastUpdated(
+    patronString,
+    steward,
+    "handleCollectPatronage"
+  );
+  // log.warning("AFTER, patron {}", [patronString]);
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+  // log.warning("HERE, patron {}", [patronString]);
   recognizeStateChange(
     txHashString,
     "handleCollectPatronage",
@@ -358,5 +372,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     [],
     txTimestamp
   );
+  // log.warning("THERE, patron {}", [patronString]);
   updateGlobalState(steward, txTimestamp);
+  // log.warning("DONE, patron {}", [patronString]);
 }

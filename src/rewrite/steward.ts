@@ -26,7 +26,10 @@ import {
 } from "../util";
 // import { minBigInt } from "../util";
 
-function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
+export function createDefaultPatron(
+  address: Address,
+  txTimestamp: BigInt
+): PatronNew {
   let addressString = address.toHexString();
   let patron = new PatronNew(addressString);
   patron.address = address;
@@ -37,6 +40,7 @@ function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
   patron.lastUpdated = txTimestamp;
   patron.totalLoyaltyTokens = BigInt.fromI32(0);
   patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   // patron.save();
   return patron;
 }
@@ -54,6 +58,7 @@ function createNO_OWNERPatron(
   patron.lastUpdated = txTimestamp;
   patron.totalLoyaltyTokens = BigInt.fromI32(0);
   patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   // patron.save();
   return patron;
 }
