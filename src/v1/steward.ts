@@ -70,6 +70,7 @@ export function handleBuy(event: Buy): void {
   wildcard.tokenId = tokenIdBigInt;
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
+  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
 
   let previousTokenOwnerString = wildcard.owner;
 
@@ -221,6 +222,7 @@ export function handlePriceChange(event: PriceChange): void {
   let txTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
+  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
 
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [
@@ -297,6 +299,9 @@ export function handleForeclosure(event: Foreclosure): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
 
+  // TODO:: somewhere this code needs to update 'timeCollecetd' for the wildcards
+  //   wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+
   updateAvailableDepositAndForeclosureTime(
     steward,
     foreclosedPatron,
@@ -322,6 +327,9 @@ export function handleRemainingDepositUpdate(
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
+  // TODO:: somewhere this code needs to update 'timeCollecetd' for the wildcards
+  //   wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
@@ -338,6 +346,9 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
+
+  // TODO:: somewhere this code needs to update 'timeCollecetd' for the wildcards
+  //   wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
