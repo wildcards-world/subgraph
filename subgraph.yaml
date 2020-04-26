@@ -178,3 +178,28 @@ dataSources:
         # - event: Transfer(indexed address,indexed address,uint256)
       # callHandlers:
       file: ./src/LoyaltyToken.ts
+
+  - kind: ethereum/contract
+    name: Dao
+    network: mainnet
+    source:
+      address: "0x9929df6ecf561779067CC18f3EF9bc9aeaF642E2" #this is wrong doesn't exist yet
+      abi: Dao
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: Dao
+          file: ./abis/Dao.json
+      eventHandlers:
+        - event: LogVote(indexed uint256,indexed uint256,uint256,uint256,indexed address)
+          handler: handleLogVote
+        - event: LogFundsDistrubuted(indexed uint256,indexed uint256,uint256,indexed uint256,uint256,uint256)
+          handler: handleLogFundsDistrubuted
+        #   - event: MinterRemoved(indexed address)
+        # - event: Transfer(indexed address,indexed address,uint256)
+      # callHandlers:
+      file: ./src/dao.ts
