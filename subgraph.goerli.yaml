@@ -152,3 +152,27 @@ dataSources:
       #   - function: setup()
       #     handler: handleSetupVitalk
       file: ./src/vitalikTokenLegacy.ts
+
+  - kind: ethereum/contract
+    name: LoyaltyToken
+    network: goerli
+    source:
+      address: "0xd7D8c42Ab5B83aA3D4114e5297989DC27BDfb715"
+      abi: LoyaltyToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.3
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: LoyaltyToken
+          file: ./abis/LoyaltyToken.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        #   - event: MinterAdded(indexed address)
+        #   - event: MinterRemoved(indexed address)
+        # - event: Transfer(indexed address,indexed address,uint256)
+      # callHandlers:
+      file: ./src/LoyaltyToken.ts

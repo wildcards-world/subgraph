@@ -1,4 +1,5 @@
 import { Steward } from "../../generated/Steward/Steward";
+import { LoyaltyToken } from "../../generated/LoyaltyToken/LoyaltyToken";
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 import {
   Patron,
@@ -280,4 +281,28 @@ export function handleAddTokenUtil(
   wildcard.previousOwners = [];
 
   wildcard.save();
+}
+
+export function getTokenBalance(
+  user: Address,
+  stewardAddress: Address
+): BigInt {
+  let loyaltyToken: LoyaltyToken;
+  if (
+    stewardAddress.toHexString() == "0x6d47cf86f6a490c6410fc082fd1ad29cf61492d0"
+  ) {
+    loyaltyToken = LoyaltyToken.bind(
+      Address.fromString("0x773c75c2277ed3e402bdefd28ec3b51a3afbd8a4")
+    );
+  } else if (
+    stewardAddress.toHexString() == "0x0c00cfe8ebb34fe7c31d4915a43cde211e9f0f3b"
+  ) {
+    loyaltyToken = LoyaltyToken.bind(
+      Address.fromString("0xd7d8c42ab5b83aa3d4114e5297989dc27bdfb715")
+    );
+  } else {
+    log.critical("UNKNOWN NETWORK", []);
+  }
+
+  return loyaltyToken.balanceOf(user);
 }

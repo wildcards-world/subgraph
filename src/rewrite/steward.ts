@@ -18,7 +18,7 @@ import {
   VITALIK_PRICE_WHEN_OWNED_BY_SIMON,
   patronageTokenPerSecond,
 } from "../CONSTANTS";
-import { removeFromArrayAtIndex, minBigInt } from "../util";
+import { removeFromArrayAtIndex, minBigInt, getTokenBalance } from "../util";
 // import { minBigInt } from "../util";
 
 function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
@@ -493,6 +493,11 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   let newTotalCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
     collectedLoyaltyTokens.times(patronageTokenPerSecond)
   );
+
+  // let currentBalance = getTokenBalance(
+  //   patronAddress,
+  //   event.address
+  // );
 
   // TODO: Investigate why the bollow line works, but line 499 doesn't.
   var settlementTime: BigInt = txTimestamp;
