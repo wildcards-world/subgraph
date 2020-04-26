@@ -71,7 +71,7 @@
         "type": "uint256"
       }
     ],
-    "name": "LogFundsDistrubuted",
+    "name": "LogFundsDistributed",
     "type": "event"
   },
   {
@@ -161,6 +161,11 @@
     ],
     "name": "LogVote",
     "type": "event"
+  },
+  {
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "fallback"
   },
   {
     "constant": true,

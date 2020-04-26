@@ -135,10 +135,13 @@ type VoteStatus @entity {
 }
 type Iteration @entity {
   id: ID! # the iteration number
-  projectVotes: [VoteStatus!]!
+  #projectVotes: [VoteStatus!]!
   totalVotes: BigInt!
+  winningProposal: BigInt!
+  fundsDistributed: BigInt!
+  winningVotes: BigInt!
 }
 type VoteManager @entity {
   id: ID! # this should be a singleton. Give it a constant id of "VOTE_MANAGER"
-  cerruntIteration: Iteration!
+  currentIteration: Iteration!
 }
