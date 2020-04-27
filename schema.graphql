@@ -133,9 +133,15 @@ type VoteStatus @entity {
   id: ID! # <iteration>-<projectId>
   projectVote: BigInt!
 }
+type Vote @entity {
+  id: ID! # <iteration>-<projectId>
+  voteAmount: BigInt!
+  voter: Patron!
+}
 type Iteration @entity {
   id: ID! # the iteration number
-  #projectVotes: [VoteStatus!]!
+  projectVoteTallies: [VoteStatus!]!
+  # individualVotes: [Vote!]!
   totalVotes: BigInt!
   winningProposal: BigInt!
   fundsDistributed: BigInt!

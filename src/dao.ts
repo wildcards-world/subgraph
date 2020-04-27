@@ -1,47 +1,54 @@
 import { BigInt, Address, log } from "@graphprotocol/graph-ts";
 import { LogVote } from "../generated/Dao/Dao";
-import { LogFundsDistributed } from "../generated/Dao/Dao";
+import { LogFundsDistributed, Dao } from "../generated/Dao/Dao";
 import { VoteManager, Iteration, VoteStatus } from "../generated/schema";
+import { VOTES_MANAGER_ENTITY_ID } from "./CONSTANTS";
 
 export function handleLogVote(event: LogVote): void {
   let proposalVotedFor = event.params.proposalVotedFor;
-  //let votesCast = event.params.votesCast;
+  // let votesCast = event.params.votesCast;
   let totalVotesForProposal = event.params.totalVotesForProposal;
-  //let totalVotesAllProposals = event.params.totalVotesAllProposals;
-  //let addressOfVoter = event.params.addressOfVoter;
+  let totalVotesAllProposals = event.params.totalVotesAllProposals;
+  // let addressOfVoter = event.params.addressOfVoter;
+  let voteManagerContract = Dao.bind(event.address);
+  let currentIteration = voteManagerContract.proposalIteration();
+  let currentIterationString = currentIteration.toString();
+  let projectVoteId =
+    currentIterationString + "-" + proposalVotedFor.toString();
 
-  //let vote = new Vote(event.transaction.hash.toHexString());
-  let voteManager = VoteManager.load("VOTE_MANAGER");
+  let iteration = Iteration.load(currentIterationString);
+  if (iteration == null) {
+    iteration = new Iteration(currentIterationString);
+    iteration.totalVotes = BigInt.fromI32(0);
+    iteration.winningProposal = BigInt.fromI32(0);
+    iteration.fundsDistributed = BigInt.fromI32(0);
+    iteration.winningVotes = BigInt.fromI32(0);
+  }
+  iteration.totalVotes = totalVotesAllProposals;
+
+  // TODO: create event in the initialize function.
+  let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
   if (voteManager == null) {
-    let voteManager = new VoteManager("VOTE_MANAGER");
-    voteManager.currentIteration = "0";
+    voteManager = new VoteManager(VOTES_MANAGER_ENTITY_ID);
+
+    voteManager.currentIteration = iteration.id;
+    iteration.save();
     voteManager.save();
   }
 
-  let newVote = VoteStatus.load(
-    voteManager.currentIteration + "-" + proposalVotedFor.toHexString()
-  );
-  if (newVote == null) {
-    let newVote = new VoteStatus(
-      voteManager.currentIteration + "-" + proposalVotedFor.toHexString()
-    );
-    newVote.projectVote = BigInt.fromI32(0);
+  let newVoteStatus = VoteStatus.load(projectVoteId);
+  if (newVoteStatus == null) {
+    newVoteStatus = new VoteStatus(projectVoteId);
+    newVoteStatus.projectVote = BigInt.fromI32(0);
+    iteration.projectVoteTallies =
+      iteration.projectVoteTallies.indexOf(projectVoteId) === -1
+        ? iteration.projectVoteTallies.concat([projectVoteId])
+        : iteration.projectVoteTallies;
   }
-  newVote.projectVote = totalVotesForProposal;
-  newVote.save();
 
-  //   let iteration = Iteration.load(voteManager.currentIteration);
-  //   if (iteration == null) {
-  //     let iteration = new Iteration(voteManager.currentIteration);
-  //     iteration.totalVotes = BigInt.fromI32(0);
-  //     iteration.winningProposal = BigInt.fromI32(0); // Silly as 0 is a proposal. What is no-one votes??
-  //     iteration.fundsDistributed = BigInt.fromI32(0);
-  //     iteration.winningVotes = BigInt.fromI32(0);
-  //     //iteration.projectVotes = [];
-  //   }
-
-  //   iteration.totalVotes = totalVotesAllProposals;
-  //   iteration.save();
+  newVoteStatus.projectVote = totalVotesForProposal;
+  newVoteStatus.save();
+  iteration.save();
 }
 
 export function handleLogFundsDistributed(event: LogFundsDistributed): void {
@@ -49,21 +56,24 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
   let fundsDistributed = event.params.fundsDistributed;
   let winningVotes = event.params.winningVotes;
   let totalVotes = event.params.totalVotes;
+  let newIteration = event.params.newIteration;
 
-  let voteManager = VoteManager.load("VOTE_MANAGER");
+  let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
   if (voteManager == null) {
-    let voteManager = new VoteManager("VOTE_MANAGER");
-    voteManager.currentIteration = "0";
+    log.critical(
+      "VoteManager is not defined in the `handleLogFundsDistributed` function.",
+      []
+    );
   }
 
   let iteration = Iteration.load(voteManager.currentIteration);
   if (iteration == null) {
-    let iteration = new Iteration(voteManager.currentIteration);
+    iteration = new Iteration(voteManager.currentIteration);
     iteration.totalVotes = BigInt.fromI32(0);
     iteration.winningProposal = BigInt.fromI32(0);
     iteration.fundsDistributed = BigInt.fromI32(0);
     iteration.winningVotes = BigInt.fromI32(0);
-    //iteration.projectVotes = [];
+    //iteration.projectVoteTallies = [];
   }
 
   iteration.winningProposal = winningProposal;
@@ -72,7 +82,6 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
   iteration.totalVotes = totalVotes;
   iteration.save();
 
-  let newIteration = event.params.newIteration;
-  voteManager.currentIteration = newIteration.toHexString();
+  voteManager.currentIteration = newIteration.toString();
   voteManager.save();
 }
