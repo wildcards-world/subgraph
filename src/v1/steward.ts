@@ -1,4 +1,4 @@
-import { BigInt, Address, EthereumBlock, Bytes } from "@graphprotocol/graph-ts";
+import { BigInt, Address, Bytes } from "@graphprotocol/graph-ts";
 import {
   Steward,
   LogBuy,
@@ -299,12 +299,16 @@ export function handleForeclosure(event: Foreclosure): void {
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
+  // let patron = Patron.load(patronString);
 
+  log.warning("before printing before", []);
+  // log.warning("Before - foreclosure - patron {}", [patron.id]);
   updateAllOfPatronsTokensLastUpdated(
     patronString,
     steward,
-    "handleForeclosure"
+    "handleCollectPatronage"
   );
+  // log.warning("After - foreclosure - patron {}", [patron.id]);
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -330,13 +334,15 @@ export function handleRemainingDepositUpdate(
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
+  // let patron = Patron.load(patronString);
 
+  // log.warning("Before - remaining deposit - patron {}", [patron.id]);
   updateAllOfPatronsTokensLastUpdated(
     patronString,
     steward,
-    "handleRemainingDepositUpdate"
+    "handleCollectPatronage"
   );
-
+  // log.warning("After - remaining deposit - patron {}", [patron.id]);
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
@@ -353,14 +359,17 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
+  // let patron = Patron.load(patronString);
 
   // log.warning("OUTSIDE, patron {}", [patronString]);
   // FOR SOME REASON ADDING THIS CAUSES AN ISSUE! :(
+  // log.warning("Before - collectPatronage - patron {}", [patron.id]);
   updateAllOfPatronsTokensLastUpdated(
     patronString,
     steward,
     "handleCollectPatronage"
   );
+  // log.warning("After - collectPatronage - patron {}", [patron.id]);
   // log.warning("AFTER, patron {}", [patronString]);
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);

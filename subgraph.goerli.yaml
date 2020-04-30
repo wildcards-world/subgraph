@@ -10,7 +10,7 @@ dataSources:
       abi: Steward
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - LogBuy
@@ -71,7 +71,7 @@ dataSources:
       abi: Token
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - MinterAdded
@@ -103,7 +103,7 @@ dataSources:
       abi: VitalikStewardLegacy
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - LogBuy
@@ -132,7 +132,7 @@ dataSources:
       abi: VitalikTokenLegacy
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - Transfer
@@ -161,7 +161,7 @@ dataSources:
       abi: LoyaltyToken
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - Transfer

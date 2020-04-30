@@ -316,87 +316,11 @@ export function getTokenBalanceWithSteward(
 
 // The below function is a MESS!!
 export function updateAllOfPatronsTokensLastUpdated(
-  patronsIdString: string,
+  // patron: Patron | null,
+  // patron: Patron | null,
+  patronIdString: string,
   steward: Steward,
   trackingString: string
 ): void {
-  // NativeM.random();
-  // // IF it is vitalik return immediatly.
-  // // TODO: Some wierd stuff happening to investigate after the hackathon.
-  // if (patronsIdString == "0x0c00cfe8ebb34fe7c31d4915a43cde211e9f0f3b") {
-  //   return;
-  // }
-  log.warning("BEGINNNNN {}, -- {}", [patronsIdString, trackingString]);
-  let patron = Patron.load(patronsIdString);
-  if (patron == null) {
-    log.warning("EARLY RETURN #1 - {}, -- {}", [
-      patronsIdString,
-      trackingString,
-    ]);
-    return;
-  }
-  // if (patron.tokens == undefined) {
-  //   log.warning("EARLY RETURN #3 - {}, -- {}", [
-  //     patronsIdString,
-  //     trackingString,
-  //   ]);
-  //   return;
-  // }
-  // if (patron == undefined) {
-  //   log.warning("EARLY RETURN #4 - {}, -- {}", [
-  //     patronsIdString,
-  //     trackingString,
-  //   ]);
-  //   return;
-  // }
-  log.warning("THE ERROR IS JUST AFTER THIS?? {}, length??, -- {}", [
-    patronsIdString,
-    BigInt.fromI32(patron.tokens.length).toString(),
-    trackingString,
-  ]);
-
-  let patronsTokens: Array<string> = patron.tokens;
-
-  log.warning("1 updateAllOfPatronsTokens, patron {}, -- {}", [
-    patronsIdString,
-    trackingString,
-  ]);
-
-  for (let i = 0, len = patronsTokens.length; i < len; i++) {
-    let wildcardId = patronsTokens[i];
-    log.warning("2 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-      patronsIdString,
-      wildcardId,
-
-      trackingString,
-    ]);
-    let wildcard = Wildcard.load(wildcardId);
-    log.warning("3 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-      patronsIdString,
-      wildcardId,
-
-      trackingString,
-    ]);
-    // TODO: this is a weird hack, for vitalik Vintage... token.
-    // if (wildcardId != "42") {
-    wildcard.timeCollected = steward.timeLastCollected(wildcard.tokenId);
-    log.warning("4 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-      patronsIdString,
-      wildcardId,
-
-      trackingString,
-    ]);
-    // wildcard.save();
-    log.warning("5 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-      patronsIdString,
-      wildcardId,
-
-      trackingString,
-    ]);
-    // }
-  }
-  log.warning("6 updateAllOfPatronsTokens, patron {}, -- {}", [
-    patronsIdString,
-    trackingString,
-  ]);
+  log.warning("INSIDE {}, -- {}", [patronIdString, trackingString]);
 }

@@ -1,8 +1,8 @@
-import { BigInt, EthereumCall, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Address } from "@graphprotocol/graph-ts";
 import {
   Transfer,
   Approval,
-  ApprovalForAll
+  ApprovalForAll,
 } from "../generated/VitalikTokenLegacy/VitalikTokenLegacy";
 import { Wildcard, Patron, Price, TokenUri, Global } from "../generated/schema";
 import { ZERO_ADDRESS, VITALIK_PATRONAGE_NUMERATOR } from "./CONSTANTS";
