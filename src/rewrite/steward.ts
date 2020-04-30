@@ -79,7 +79,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -193,7 +193,7 @@ export function handleLogBuy(event: LogBuy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -335,7 +335,7 @@ export function handleBuy(event: Buy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
   let tokenIdBigInt = event.params.tokenId;

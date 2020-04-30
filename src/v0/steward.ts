@@ -56,7 +56,7 @@ import {
 export function handleLogBuy(event: LogBuy): void {
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -84,7 +84,7 @@ export function handleLogBuy(event: LogBuy): void {
       event.transaction.hash.toHexString() ==
       "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
     ) {
-      const VITALIK_PRICE = steward.price(tokenIdBigInt);
+      let VITALIK_PRICE = steward.price(tokenIdBigInt);
       let patron = Patron.load(ownerString);
       patron.availableDeposit = steward.depositAbleToWithdraw(owner);
 
@@ -101,9 +101,7 @@ export function handleLogBuy(event: LogBuy): void {
         VITALIK_PATRONAGE_NUMERATOR
       );
 
-      const patronagePerSecond = VITALIK_PRICE.times(
-        VITALIK_PATRONAGE_NUMERATOR
-      )
+      let patronagePerSecond = VITALIK_PRICE.times(VITALIK_PATRONAGE_NUMERATOR)
         .div(VITALIK_PATRONAGE_DENOMINATOR)
         .div(NUM_SECONDS_IN_YEAR_BIG_INT);
 
@@ -277,7 +275,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address);
   let txOrigin = event.transaction.from;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let tokenId = getTokenIdFromTxTokenPrice(
     steward,
@@ -380,7 +378,7 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 export function handleLogCollection(event: LogCollection): void {
   let globalState = Global.load("1");
   // let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
   let tokenId = getTokenIdFromTimestamp(steward, txTimestamp);
@@ -468,7 +466,7 @@ export function handleAddToken(event: AddToken): void {
   createCounterIfDoesntExist();
 
   let tokenId = event.params.tokenId;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // Don't re-add the 'vintage' Vitalik...
   if (isVintageVitalik(tokenId, event.block.number)) {

@@ -4,7 +4,7 @@ import { handleAddTokenUtil } from "../util";
 
 export function handleAddToken(event: AddToken): void {
   let tokenId = event.params.tokenId;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let patronageNumerator = event.params.patronageNumerator;
 

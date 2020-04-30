@@ -299,16 +299,19 @@ export function handleForeclosure(event: Foreclosure): void {
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
-  // let patron = Patron.load(patronString);
+  let patron = Patron.load(patronString);
 
-  log.warning("before printing before", []);
-  // log.warning("Before - foreclosure - patron {}", [patron.id]);
-  updateAllOfPatronsTokensLastUpdated(
-    patronString,
-    steward,
-    "handleCollectPatronage"
-  );
-  // log.warning("After - foreclosure - patron {}", [patron.id]);
+  // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  if (patronString != event.address.toHexString()) {
+    let patron = Patron.load(patronString);
+    if (patron != null) {
+      updateAllOfPatronsTokensLastUpdated(
+        patron,
+        steward,
+        "handleCollectPatronage"
+      );
+    }
+  }
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -334,15 +337,20 @@ export function handleRemainingDepositUpdate(
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
-  // let patron = Patron.load(patronString);
+  let patron = Patron.load(patronString);
 
-  // log.warning("Before - remaining deposit - patron {}", [patron.id]);
-  updateAllOfPatronsTokensLastUpdated(
-    patronString,
-    steward,
-    "handleCollectPatronage"
-  );
-  // log.warning("After - remaining deposit - patron {}", [patron.id]);
+  // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  if (patronString != event.address.toHexString()) {
+    let patron = Patron.load(patronString);
+    if (patron != null) {
+      updateAllOfPatronsTokensLastUpdated(
+        patron,
+        steward,
+        "handleCollectPatronage"
+      );
+    }
+  }
+
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
@@ -359,21 +367,20 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
-  // let patron = Patron.load(patronString);
 
-  // log.warning("OUTSIDE, patron {}", [patronString]);
-  // FOR SOME REASON ADDING THIS CAUSES AN ISSUE! :(
-  // log.warning("Before - collectPatronage - patron {}", [patron.id]);
-  updateAllOfPatronsTokensLastUpdated(
-    patronString,
-    steward,
-    "handleCollectPatronage"
-  );
-  // log.warning("After - collectPatronage - patron {}", [patron.id]);
-  // log.warning("AFTER, patron {}", [patronString]);
+  // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  if (patronString != event.address.toHexString()) {
+    let patron = Patron.load(patronString);
+    if (patron != null) {
+      updateAllOfPatronsTokensLastUpdated(
+        patron,
+        steward,
+        "handleCollectPatronage"
+      );
+    }
+  }
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
-  // log.warning("HERE, patron {}", [patronString]);
   recognizeStateChange(
     txHashString,
     "handleCollectPatronage",
@@ -381,7 +388,5 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     [],
     txTimestamp
   );
-  // log.warning("THERE, patron {}", [patronString]);
   updateGlobalState(steward, txTimestamp);
-  // log.warning("DONE, patron {}", [patronString]);
 }
