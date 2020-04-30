@@ -314,14 +314,11 @@ export function getTokenBalanceWithSteward(
   return getTokenBalance(user, loyaltyToken);
 }
 
-// The below function is a MESS!!
 export function updateAllOfPatronsTokensLastUpdated(
   patron: Patron | null,
-  // patron.id: string,
   steward: Steward,
   trackingString: string
 ): void {
-  // log.warning("BEGINNNNN {}, -- {}", [patron.id, trackingString]);
   if (patron == null) {
     log.critical("patron should always be defined", []);
     return;
@@ -329,44 +326,14 @@ export function updateAllOfPatronsTokensLastUpdated(
 
   let patronsTokens: Array<string> = patron.tokens;
 
-  // log.warning("1 updateAllOfPatronsTokens, patron {}, -- {}, on this array {}", [
-  //   patron.id,
-  //   trackingString,
-  //   toString(),
-  // ]);
-
   for (let i = 0, len = patronsTokens.length; i < len; i++) {
     let wildcardId = patronsTokens[i];
-    // log.warning("2 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-    //   patron.id,
-    //   wildcardId,
 
-    //   trackingString,
-    // ]);
     let wildcard = Wildcard.load(wildcardId);
-    // log.warning("3 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-    //   patron.id,
-    //   wildcardId,
 
-    //   trackingString,
-    // ]);
-    // TODO: this is a weird hack, for vitalik Vintage... token.
-    // if (wildcardId != "42") {
     wildcard.timeCollected = steward.timeLastCollected(wildcard.tokenId);
-    // log.warning("4 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-    //   patron.id,
-    //   wildcardId,
 
-    //   trackingString,
-    // ]);
     wildcard.save();
-    // log.warning("5 updateAllOfPatronsTokens, patron {}, tokenId {}, -- {}", [
-    //   patron.id,
-    //   wildcardId,
-
-    //   trackingString,
-    // ]);
-    // }
   }
   log.warning("6 updateAllOfPatronsTokens, patron {}, -- {}", [
     patron.id,
