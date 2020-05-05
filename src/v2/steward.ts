@@ -1,10 +1,11 @@
 import { AddToken, Steward } from "../../generated/Steward/Steward";
 import { Wildcard } from "../../generated/schema";
-import { handleAddTokenUtil } from "../util";
+import { handleAddTokenUtil, recognizeStateChange } from "../util";
 
 export function handleAddToken(event: AddToken): void {
   let tokenId = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
+  let txHashString = event.transaction.hash.toHexString();
 
   let patronageNumerator = event.params.patronageNumerator;
 
@@ -21,5 +22,13 @@ export function handleAddToken(event: AddToken): void {
     wildcard,
     steward,
     txHashStr
+  );
+  recognizeStateChange(
+    txHashString,
+    "handleAddToken",
+    // NOTE: leaving these null because they will be updated by the other tokens
+    [],
+    [],
+    txTimestamp
   );
 }

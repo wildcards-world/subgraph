@@ -483,9 +483,6 @@ export function genericUpdateTimeHeld(
   wildcard.save();
 }
 
-// let steward: Steward;
-// let stewardAddress: Address;
-
 export function handleCollectLoyalty(event: CollectLoyalty): void {
   log.warning("1", []);
   // Phase 1: reading and getting values.

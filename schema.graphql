@@ -83,8 +83,8 @@ type StateChange @entity {
   id: ID! # tx
   timestamp: BigInt!
   txEventList: [String!]! #call event logs or something
-  patronChanges: [Patron]!
-  wildcardChange: [Wildcard]!
+  patronChanges: [Patron!]!
+  wildcardChanges: [Wildcard!]!
 }
 
 type ChangePriceEvent @entity {

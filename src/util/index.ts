@@ -162,7 +162,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
     stateChange = new StateChange(txId);
     stateChange.txEventList = [];
     stateChange.patronChanges = [];
-    stateChange.wildcardChange = [];
+    stateChange.wildcardChanges = [];
 
     let eventCounter = EventCounter.load("1");
     eventCounter.stateChanges = eventCounter.stateChanges.concat([
@@ -194,10 +194,10 @@ export function recognizeStateChange(
   }
 
   for (let i = 0, len = changedWildcards.length; i < len; i++) {
-    stateChange.wildcardChange =
-      stateChange.wildcardChange.indexOf(changedWildcards[i]) === -1
-        ? stateChange.wildcardChange.concat([changedWildcards[i]])
-        : stateChange.wildcardChange;
+    stateChange.wildcardChanges =
+      stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
+        ? stateChange.wildcardChanges.concat([changedWildcards[i]])
+        : stateChange.wildcardChanges;
   }
 
   stateChange.timestamp = txTimestamp;

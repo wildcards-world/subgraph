@@ -198,7 +198,7 @@ export function handleBuy(event: Buy): void {
 
   recognizeStateChange(
     txHashString,
-    "handleBuy",
+    "Buy",
     [patronOld.id, patron.id],
     [wildcard.id],
     txTimestamp
@@ -279,7 +279,7 @@ export function handlePriceChange(event: PriceChange): void {
 
   recognizeStateChange(
     txHashString,
-    "handlePriceChange",
+    "PriceChange",
     [patron.id],
     [wildcard.id],
     txTimestamp
@@ -299,17 +299,14 @@ export function handleForeclosure(event: Foreclosure): void {
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
-  let patron = Patron.load(patronString);
+  let foreclosedTokens: Array<string> = [];
 
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
     let patron = Patron.load(patronString);
     if (patron != null) {
-      updateAllOfPatronsTokensLastUpdated(
-        patron,
-        steward,
-        "handleCollectPatronage"
-      );
+      foreclosedTokens = patron.tokens;
+      updateAllOfPatronsTokensLastUpdated(patron, steward, "handleForeclosure");
     }
   }
 
@@ -320,9 +317,9 @@ export function handleForeclosure(event: Foreclosure): void {
   );
   recognizeStateChange(
     txHashString,
-    "handleForeclosure",
+    "Foreclosure",
     [patronString],
-    [],
+    foreclosedTokens,
     txTimestamp
   );
   updateGlobalState(steward, txTimestamp);
@@ -337,9 +334,9 @@ export function handleRemainingDepositUpdate(
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
-  let patron = Patron.load(patronString);
 
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  // Also, the below code is totally redundant, just there for safety.
   if (patronString != event.address.toHexString()) {
     let patron = Patron.load(patronString);
     if (patron != null) {
@@ -354,7 +351,7 @@ export function handleRemainingDepositUpdate(
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
-    "handleRemainingDepositUpdate",
+    "RemainingDepositUpdate",
     [patronString],
     [],
     txTimestamp
@@ -364,6 +361,7 @@ export function handleRemainingDepositUpdate(
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
   let tokenPatron = event.params.patron;
+  let collectedToken = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
@@ -383,9 +381,9 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
-    "handleCollectPatronage",
+    "CollectPatronage",
     [patronString],
-    [],
+    [collectedToken.toString()],
     txTimestamp
   );
   updateGlobalState(steward, txTimestamp);
