@@ -10,7 +10,7 @@ dataSources:
       abi: Steward
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - LogBuy
@@ -19,6 +19,12 @@ dataSources:
         - LogCollection
         - LogRemainingDepositUpdate
         - AddToken
+        - Buy
+        - PriceChange
+        - Foreclosure
+        - RemainingDepositUpdate
+        - CollectPatronage
+        - CollectLoyalty
       abis:
         - name: Steward
           file: ./abis/Steward.json
@@ -39,7 +45,7 @@ dataSources:
         # v0 and v1 events
         - event: AddToken(indexed uint256,uint256)
           handler: handleAddToken
-        # v1 events
+        # v1 and v2 events
         - event: Buy(indexed uint256,indexed address,uint256)
           handler: handleBuy
         - event: PriceChange(indexed uint256,uint256)
@@ -50,6 +56,11 @@ dataSources:
           handler: handleRemainingDepositUpdate
         - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
           handler: handleCollectPatronage
+        # v2 events
+        - event: AddToken(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV2
+        - event: CollectLoyalty(indexed uint256,indexed address,uint256)
+          handler: handleCollectLoyalty
       file: ./src/steward.ts
 
   - kind: ethereum/contract
@@ -60,7 +71,7 @@ dataSources:
       abi: Token
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - MinterAdded
@@ -92,7 +103,7 @@ dataSources:
       abi: VitalikStewardLegacy
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - LogBuy
@@ -121,7 +132,7 @@ dataSources:
       abi: VitalikTokenLegacy
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.3
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
         - Transfer
@@ -141,3 +152,27 @@ dataSources:
       #   - function: setup()
       #     handler: handleSetupVitalk
       file: ./src/vitalikTokenLegacy.ts
+
+  - kind: ethereum/contract
+    name: LoyaltyToken
+    network: goerli
+    source:
+      address: "0xd7D8c42Ab5B83aA3D4114e5297989DC27BDfb715"
+      abi: LoyaltyToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: LoyaltyToken
+          file: ./abis/LoyaltyToken.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        #   - event: MinterAdded(indexed address)
+        #   - event: MinterRemoved(indexed address)
+        # - event: Transfer(indexed address,indexed address,uint256)
+      # callHandlers:
+      file: ./src/LoyaltyToken.ts

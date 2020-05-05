@@ -1,20 +1,35 @@
 import { BigInt, Address, log } from "@graphprotocol/graph-ts";
-import { LogBuy, Steward, Buy } from "../../generated/Steward/Steward";
+import {
+  LogBuy,
+  Steward,
+  Buy,
+  CollectLoyalty,
+} from "../../generated/Steward/Steward";
 import { getTokenIdFromTxTokenPrice, isVintageVitalik } from "../v0/helpers";
-import { PatronNew, WildcardNew } from "../../generated/schema";
+import { PatronNew, WildcardNew, Patron } from "../../generated/schema";
 import {
   VitalikStewardLegacy,
-  LogBuy as LogBuyLegacy
+  LogBuy as LogBuyLegacy,
 } from "../../generated/VitalikStewardLegacy/VitalikStewardLegacy";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
   VITALIK_PATRONAGE_NUMERATOR,
-  VITALIK_PRICE_WHEN_OWNED_BY_SIMON
+  VITALIK_PRICE_WHEN_OWNED_BY_SIMON,
+  patronageTokenPerSecond,
 } from "../CONSTANTS";
+import {
+  removeFromArrayAtIndex,
+  minBigInt,
+  getTokenBalance,
+  getForeclosureTimeSafe,
+} from "../util";
 // import { minBigInt } from "../util";
 
-function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
+export function createDefaultPatron(
+  address: Address,
+  txTimestamp: BigInt
+): PatronNew {
   let addressString = address.toHexString();
   let patron = new PatronNew(addressString);
   patron.address = address;
@@ -23,6 +38,9 @@ function createDefaultPatron(address: Address, txTimestamp: BigInt): PatronNew {
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.tokens = [];
   patron.lastUpdated = txTimestamp;
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   // patron.save();
   return patron;
 }
@@ -38,6 +56,9 @@ function createNO_OWNERPatron(
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.tokens = [];
   patron.lastUpdated = txTimestamp;
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   // patron.save();
   return patron;
 }
@@ -58,7 +79,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -135,9 +156,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  let oldPatronTokenArray = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   // Phase 3: set+save values.
 
@@ -174,7 +193,7 @@ export function handleLogBuy(event: LogBuy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -257,9 +276,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  let oldPatronTokenArray = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
     // BE VERY CAREFUL HERE, there was an issue upgrading vitalik that we must take into account.
@@ -278,7 +295,7 @@ export function handleLogBuy(event: LogBuy): void {
           .div(GLOBAL_PATRONAGE_DENOMINATOR)
           .div(NUM_SECONDS_IN_YEAR_BIG_INT)
       );
-      patron.lastUpdated = txTimestamp;
+      patron.lastUpdated = txTimestamp; // TODO: it is not correct just using `txTimestamp` not all transactions update the `timeLastCollectedPatron` value, such as changing the price
       patron.totalTimeHeld = newPatronTotalTimeHeld;
       patron.tokens = newPatronTokenArray;
       patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
@@ -289,16 +306,21 @@ export function handleLogBuy(event: LogBuy): void {
     return;
   }
 
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(owner);
+  let timePatronOldLastUpdated = steward.timeLastCollectedPatron(
+    patronOld.address as Address
+  );
+
   // Phase 3: set+save values.
 
-  patron.lastUpdated = txTimestamp;
+  patron.lastUpdated = timePatronLastUpdated;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
   patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
-  patronOld.lastUpdated = txTimestamp;
+  patronOld.lastUpdated = timePatronOldLastUpdated;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
@@ -313,7 +335,7 @@ export function handleBuy(event: Buy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
   let tokenIdBigInt = event.params.tokenId;
@@ -389,20 +411,23 @@ export function handleBuy(event: Buy): void {
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
-  let oldPatronTokenArray = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
+
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(owner);
+  let timePatronOldLastUpdated = steward.timeLastCollectedPatron(
+    patronOld.address as Address
+  );
 
   // Phase 3: set+save values.
 
-  patron.lastUpdated = txTimestamp;
+  patron.lastUpdated = timePatronLastUpdated;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.tokens = newPatronTokenArray;
   patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
-  patronOld.lastUpdated = txTimestamp;
+  patronOld.lastUpdated = timePatronOldLastUpdated;
   patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
   patronOld.tokens = oldPatronTokenArray;
   patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
@@ -444,13 +469,143 @@ export function genericUpdateTimeHeld(
   let newPatronTotalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
   );
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(
+    patron.address as Address
+  );
 
   // Phase 3: set+save values.
 
-  patron.lastUpdated = txTimestamp;
+  patron.lastUpdated = timePatronLastUpdated;
   patron.totalTimeHeld = newPatronTotalTimeHeld;
   patron.save();
 
   wildcard.owner = ownerString;
   wildcard.save();
+}
+
+export function handleCollectLoyalty(event: CollectLoyalty): void {
+  log.warning("1", []);
+  // Phase 1: reading and getting values.
+  let collectedLoyaltyTokens = event.params.timeSinceLastMint;
+  log.warning("2", []);
+  let patronAddress = event.params.patron;
+  log.warning("3 -- patron {}", [patronAddress.toHexString()]);
+  // let tokenId = event.params.tokenId;
+  let patron = PatronNew.load(patronAddress.toHexString());
+  log.warning("4 -- patron {}", [patronAddress.toHexString()]);
+  let patronLegacy = Patron.load(patronAddress.toHexString());
+  log.warning("5 -- patron {}", [patronAddress.toHexString()]);
+  // let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
+  //   // NOTE: the value on the `PatronNew` for tokens is currently inaccurate.
+  //   patronLegacy.tokens.length
+  // );
+  let steward = Steward.bind(event.address);
+  let ownedTokens = patronLegacy.tokens;
+  // var stewardAddress = event.address;
+  log.warning("6 -- patron {}", [patronAddress.toHexString()]);
+  let foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
+  log.warning("7 -- patron {}", [patronAddress.toHexString()]);
+  let txTimestamp = event.block.timestamp;
+  log.warning("8 -- patron {}", [patronAddress.toHexString()]);
+  // let timeSinceLastUpdatePatron = patron.lastUpdated;
+
+  // Phase 2: calculate new values.
+  let newTotalCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
+    collectedLoyaltyTokens.times(patronageTokenPerSecond)
+  );
+  log.warning("9 -- patron {}", [patronAddress.toHexString()]);
+
+  // let currentBalance = getTokenBalance(
+  //   patronAddress,
+  //   event.address
+  // );
+
+  // // TODO: Investigate why the bollow line works, but line 499 doesn't.
+  // var settlementTime: BigInt = txTimestamp;
+  var settlementTime: BigInt = minBigInt(foreclosureTime, txTimestamp);
+  log.warning("10 -- patron {}", [patronAddress.toHexString()]);
+
+  // let totalUnredeemed = BigInt.fromI32(0);
+  let totalUnredeemed = BigInt.fromI32(0);
+  for (let i = 0, len = ownedTokens.length; i < len; i++) {
+    let currentTokenIdString: string = ownedTokens[i];
+    log.warning("11 -- {}", [currentTokenIdString]);
+    // let currentTokenIdString: string = patronLegacy.tokens[i];
+    let tokenId = WildcardNew.load(currentTokenIdString).tokenId;
+    log.warning("12 -- {}", [currentTokenIdString]);
+    // let localSteward = Steward.bind(stewardAddress);
+    log.warning("LOADED STEWARD -- {}", [currentTokenIdString]);
+    let timeTokenWasLastUpdated = steward.timeLastCollected(tokenId);
+    log.warning("13 -- {}", [currentTokenIdString]);
+    let timeTokenHeldWithoutSettlement = settlementTime.minus(
+      timeTokenWasLastUpdated
+    );
+    log.warning("14 -- {}", [currentTokenIdString]);
+    log.warning("14 -- patron {}", [patronAddress.toHexString()]);
+
+    // var totalLoyaltyTokenDueByToken: BigInt = timeTokenHeldWithoutSettlement.times(
+    //   patronageTokenPerSecond
+    // );
+    // return previous.plus(totalLoyaltyTokenDueByToken);
+    // TODO: Investigate why the commented out code above doesn't work, but the bellow does.
+    totalUnredeemed = totalUnredeemed.plus(
+      timeTokenHeldWithoutSettlement.times(patronageTokenPerSecond)
+    );
+  }
+  // // let totalUnredeemed = BigInt.fromI32(0);
+  // let totalUnredeemed = ownedTokens.reduce<BigInt>(
+  //   (previous: BigInt, currentTokenIdString: string): BigInt => {
+  //     log.warning("11 -- {}", [currentTokenIdString]);
+  //     // let currentTokenIdString: string = patronLegacy.tokens[i];
+  //     let tokenId = WildcardNew.load(currentTokenIdString).tokenId;
+  //     log.warning("12 -- {}", [currentTokenIdString]);
+  //     let localSteward = Steward.bind(stewardAddress);
+  //     log.warning("LOADED STEWARD -- {}", [currentTokenIdString]);
+  //     let timeTokenWasLastUpdated = localSteward.timeLastCollected(tokenId);
+  //     log.warning("13 -- {}", [currentTokenIdString]);
+  //     let timeTokenHeldWithoutSettlement = settlementTime.minus(
+  //       timeTokenWasLastUpdated
+  //     );
+  //     log.warning("14 -- {}", [currentTokenIdString]);
+  //     log.warning("14 -- patron {}", [patronAddress.toHexString()]);
+
+  //     // var totalLoyaltyTokenDueByToken: BigInt = timeTokenHeldWithoutSettlement.times(
+  //     //   patronageTokenPerSecond
+  //     // );
+  //     // return previous.plus(totalLoyaltyTokenDueByToken);
+  //     // TODO: Investigate why the commented out code above doesn't work, but the bellow does.
+  //     return previous.plus(
+  //       timeTokenHeldWithoutSettlement.times(patronageTokenPerSecond)
+  //     );
+  //   },
+  //   BigInt.fromI32(0)
+  // );
+  log.warning("15 -- patron {}", [patronAddress.toHexString()]);
+  let newTotalLoyaltyTokensIncludingUnRedeemed = newTotalCollectedLoyaltyTokens.plus(
+    totalUnredeemed
+  );
+  log.warning("16 -- patron {}", [patronAddress.toHexString()]);
+
+  // Alturnate Calculation (that returns a different answer XD)
+  // let timeSinceLastPatronCollection = txTimestamp.minus(
+  //   timeSinceLastUpdatePatron
+  // );
+  // let amountCollectedPerTokenSinceLastCollection = timeSinceLastPatronCollection.times(
+  //   patronageTokenPerSecond
+  // );
+  // let newTokensDueSinceLastUpdate = numberOfTokensHeldByUserAtBeginningOfTx.times(
+  //   amountCollectedPerTokenSinceLastCollection
+  // );
+  // let newTotalLoyaltyTokensIncludingUnRedeemed = patron.totalLoyaltyTokensIncludingUnRedeemed.plus(
+  //   newTokensDueSinceLastUpdate
+  // );
+
+  // Phase 3: set+save values.
+  patron.totalLoyaltyTokens = newTotalCollectedLoyaltyTokens;
+  log.warning("18 -- patron {}", [patronAddress.toHexString()]);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = newTotalLoyaltyTokensIncludingUnRedeemed;
+  log.warning("19 -- patron {}", [patronAddress.toHexString()]);
+
+  patron.save();
+  log.warning("20 -- patron {}", [patronAddress.toHexString()]);
 }

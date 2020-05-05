@@ -1,4 +1,4 @@
-import { BigInt, Address, EthereumBlock, Bytes } from "@graphprotocol/graph-ts";
+import { BigInt, Address, Bytes } from "@graphprotocol/graph-ts";
 import {
   Steward,
   LogBuy,
@@ -12,7 +12,7 @@ import {
   PriceChange,
   Foreclosure,
   RemainingDepositUpdate,
-  CollectPatronage
+  CollectPatronage,
 } from "../../generated/Steward/Steward";
 import {
   Wildcard,
@@ -23,7 +23,7 @@ import {
   BuyEvent,
   EventCounter,
   ChangePriceEvent,
-  Global
+  Global,
 } from "../../generated/schema";
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
@@ -34,11 +34,14 @@ import {
   getOrInitialiseStateChange,
   recognizeStateChange,
   minBigInt,
-  updateGlobalState
+  updateGlobalState,
+  updateForeclosedTokens,
+  removeFromArrayAtIndex,
+  updateAllOfPatronsTokensLastUpdated,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
-  NUM_SECONDS_IN_YEAR_BIG_INT
+  NUM_SECONDS_IN_YEAR_BIG_INT,
 } from "../CONSTANTS";
 
 export function handleAddToken(event: AddToken): void {
@@ -60,7 +63,7 @@ export function handleBuy(event: Buy): void {
 
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [
-      tokenIdString
+      tokenIdString,
     ]);
   }
 
@@ -68,6 +71,7 @@ export function handleBuy(event: Buy): void {
   wildcard.tokenId = tokenIdBigInt;
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
+  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
 
   let previousTokenOwnerString = wildcard.owner;
 
@@ -108,7 +112,10 @@ export function handleBuy(event: Buy): void {
   patron.availableDeposit = steward.depositAbleToWithdraw(owner);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
   // Add token to the patrons currently held tokens
-  patron.tokens = patron.tokens.concat([wildcard.id]);
+  patron.tokens =
+    patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
+      ? patron.tokens.concat([wildcard.id])
+      : patron.tokens;
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
     let timeSinceLastUpdateOldPatron = txTimestamp.minus(patron.lastUpdated);
@@ -136,9 +143,7 @@ export function handleBuy(event: Buy): void {
     );
   }
   // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  patronOld.tokens = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   patron.save();
   patronOld.save();
@@ -152,7 +157,7 @@ export function handleBuy(event: Buy): void {
 
     // TODO: update the `timeSold` of the previous token.
     wildcard.previousOwners = wildcard.previousOwners.concat([
-      previousPatron.id
+      previousPatron.id,
     ]);
   }
 
@@ -193,7 +198,7 @@ export function handleBuy(event: Buy): void {
 
   recognizeStateChange(
     txHashString,
-    "handleBuy",
+    "Buy",
     [patronOld.id, patron.id],
     [wildcard.id],
     txTimestamp
@@ -218,10 +223,11 @@ export function handlePriceChange(event: PriceChange): void {
   let txTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
+  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
 
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [
-      tokenIdString
+      tokenIdString,
     ]);
   }
 
@@ -273,7 +279,7 @@ export function handlePriceChange(event: PriceChange): void {
 
   recognizeStateChange(
     txHashString,
-    "handlePriceChange",
+    "PriceChange",
     [patron.id],
     [wildcard.id],
     txTimestamp
@@ -289,20 +295,35 @@ export function handlePriceChange(event: PriceChange): void {
 }
 export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
-  let tokenPatron = event.params.prevOwner;
+  let foreclosedPatron = event.params.prevOwner;
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
-  let patronString = tokenPatron.toHexString();
+  let patronString = foreclosedPatron.toHexString();
+  let foreclosedTokens: Array<string> = [];
 
-  updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+  // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  if (patronString != event.address.toHexString()) {
+    let patron = Patron.load(patronString);
+    if (patron != null) {
+      foreclosedTokens = patron.tokens;
+      updateAllOfPatronsTokensLastUpdated(patron, steward, "handleForeclosure");
+    }
+  }
+
+  updateAvailableDepositAndForeclosureTime(
+    steward,
+    foreclosedPatron,
+    txTimestamp
+  );
   recognizeStateChange(
     txHashString,
-    "handleForeclosure",
+    "Foreclosure",
     [patronString],
-    [],
+    foreclosedTokens,
     txTimestamp
   );
   updateGlobalState(steward, txTimestamp);
+  updateForeclosedTokens(foreclosedPatron, steward);
 }
 
 export function handleRemainingDepositUpdate(
@@ -314,10 +335,23 @@ export function handleRemainingDepositUpdate(
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
+  // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  // Also, the below code is totally redundant, just there for safety.
+  if (patronString != event.address.toHexString()) {
+    let patron = Patron.load(patronString);
+    if (patron != null) {
+      updateAllOfPatronsTokensLastUpdated(
+        patron,
+        steward,
+        "handleCollectPatronage"
+      );
+    }
+  }
+
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
-    "handleRemainingDepositUpdate",
+    "RemainingDepositUpdate",
     [patronString],
     [],
     txTimestamp
@@ -327,16 +361,29 @@ export function handleRemainingDepositUpdate(
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
   let tokenPatron = event.params.patron;
+  let collectedToken = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
+  // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
+  if (patronString != event.address.toHexString()) {
+    let patron = Patron.load(patronString);
+    if (patron != null) {
+      updateAllOfPatronsTokensLastUpdated(
+        patron,
+        steward,
+        "handleCollectPatronage"
+      );
+    }
+  }
+
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
   recognizeStateChange(
     txHashString,
-    "handleCollectPatronage",
+    "CollectPatronage",
     [patronString],
-    [],
+    [collectedToken.toString()],
     txTimestamp
   );
   updateGlobalState(steward, txTimestamp);

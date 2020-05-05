@@ -4,20 +4,21 @@ import {
   LogBuy,
   LogPriceChange,
   LogForeclosure,
-  LogCollection
+  LogCollection,
 } from "../generated/VitalikStewardLegacy/VitalikStewardLegacy";
 import {
   Wildcard,
   Patron,
   PreviousPatron,
   Price,
-  Global
+  Global,
 } from "../generated/schema";
 import {
   VITALIK_PATRONAGE_DENOMINATOR,
-  NUM_SECONDS_IN_YEAR_BIG_INT
+  NUM_SECONDS_IN_YEAR_BIG_INT,
+  VITALIK_TOKEN_ID,
 } from "./CONSTANTS";
-import { minBigInt } from "./util";
+import { minBigInt, removeFromArrayAtIndex } from "./util";
 import { handleLogBuyVitalikLegacy } from "./rewrite/steward";
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
@@ -74,7 +75,11 @@ export function handleLogBuy(event: LogBuy): void {
       ? patron.previouslyOwnedTokens.concat([wildcard.id])
       : patron.previouslyOwnedTokens;
   // Add token to the patrons currently held tokens
-  patron.tokens = [wildcard.id];
+  patron.tokens =
+    patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
+      ? patron.previouslyOwnedTokens.concat([wildcard.id])
+      : patron.previouslyOwnedTokens;
+
   let steward = VitalikStewardLegacy.bind(event.address);
   patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw();
@@ -93,10 +98,9 @@ export function handleLogBuy(event: LogBuy): void {
         BigInt.fromI32(patronOld.tokens.length)
       )
     );
+
     // Remove token to the previous patron's tokens
-    patronOld.tokens = patronOld.tokens
-      .slice(0, itemIndex)
-      .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+    patronOld.tokens = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
     patronOld.totalContributed = patron.totalContributed.plus(
       patronOld.patronTokenCostScaledNumerator
@@ -110,8 +114,15 @@ export function handleLogBuy(event: LogBuy): void {
     patronOld.lastUpdated = txTimestamp;
   }
 
-  patron.save();
-  patronOld.save();
+  // NOTE: Case where someone buys the token from themselves.
+  //       Effectively that is the same as just changing the price.
+  if (ownerString == patronOld.id) {
+    // TODO: we need to methodically go through all the parameters of patron and make sure it is correct doing it like this.
+    patron.save();
+  } else {
+    patronOld.save();
+    patron.save();
+  }
 
   if (wildcard.owner !== "NO_OWNER") {
     let previousPatron = new PreviousPatron(ownerString);
@@ -121,7 +132,7 @@ export function handleLogBuy(event: LogBuy): void {
     previousPatron.save();
 
     wildcard.previousOwners = wildcard.previousOwners.concat([
-      previousPatron.id
+      previousPatron.id,
     ]);
   }
 
@@ -210,7 +221,46 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   // globalState.save()
 }
 
-export function handleLogForeclosure(event: LogForeclosure): void {}
+export function handleLogForeclosure(event: LogForeclosure): void {
+  if (returnIfNewVitalik(event.block.number)) {
+    return;
+  }
+
+  /**
+   * PHASE 1 - load data
+   */
+  // NOTE: keep in mind this is on the legacy vitalik contract. So only 1 token is foreclosing (not many)
+
+  // TODO: this function isn't complete. Revisit.
+  let foreclosedPatron = event.params.prevOwner.toHexString();
+  let patronOld = Patron.load(foreclosedPatron);
+
+  let steward = VitalikStewardLegacy.bind(event.address);
+  let wildcardIndexInPatronTokens = patronOld.tokens.indexOf(VITALIK_TOKEN_ID);
+
+  // TODO: update Vitalik wildcard entity also.
+
+  /**
+   * PHASE 2 - update data
+   */
+
+  patronOld.tokens = removeFromArrayAtIndex(
+    patronOld.tokens,
+    wildcardIndexInPatronTokens
+  );
+
+  patronOld.lastUpdated = steward.timeLastCollected(); // TODO: double check this.
+  // NOTE: this shouldn't be necessary, `previouslyOwnedTokens` is updated for the patron when the token is bought.
+  patronOld.previouslyOwnedTokens =
+    patronOld.previouslyOwnedTokens.indexOf(VITALIK_TOKEN_ID) === -1
+      ? patronOld.previouslyOwnedTokens.concat([VITALIK_TOKEN_ID])
+      : patronOld.previouslyOwnedTokens;
+
+  /**
+   * PHASE 3 - save data
+   */
+  patronOld.save();
+}
 
 export function handleLogCollection(event: LogCollection): void {
   // let globalState = Global.load("1")

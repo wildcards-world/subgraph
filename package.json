@@ -4,7 +4,7 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wild-cards/wildcards",
+    "deploy-mainnet": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wild-cards/wildcards",
     "build-goerli": "graph build ./subgraph.goerli.yaml",
     "deploy-goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wild-cards/wildcards-goerli ./subgraph.goerli.yaml",
     "create-local": "graph create --node http://localhost:8020/ wild-cards/subgraph",
@@ -16,8 +16,8 @@
     "@as-pect/assembly": "^2.8.1",
     "@as-pect/cli": "^2.8.1",
     "@as-pect/core": "^2.8.1",
-    "assemblyscript": "0.9.2",
-    "@graphprotocol/graph-cli": "0.16.1",
-    "@graphprotocol/graph-ts": "0.16.0"
+    "@graphprotocol/graph-cli": "^0.18.0",
+    "@graphprotocol/graph-ts": "^0.18.1",
+    "assemblyscript": "0.9.2"
   }
 }

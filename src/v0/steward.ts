@@ -6,7 +6,7 @@ import {
   LogForeclosure,
   LogCollection,
   LogRemainingDepositUpdate,
-  AddToken
+  AddToken,
 } from "../../generated/Steward/Steward";
 import {
   Wildcard,
@@ -17,7 +17,7 @@ import {
   BuyEvent,
   EventCounter,
   ChangePriceEvent,
-  Global
+  Global,
 } from "../../generated/schema";
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
@@ -29,27 +29,34 @@ import {
   BILLION,
   VITALIK_PATRONAGE_NUMERATOR,
   VITALIK_PATRONAGE_DENOMINATOR,
-  GLOBAL_PATRONAGE_DENOMINATOR
+  GLOBAL_PATRONAGE_DENOMINATOR,
+  SIMON_DLR_ADDRESS,
 } from "../CONSTANTS";
-import { getForeclosureTimeSafe, minBigInt } from "../util";
+import {
+  getForeclosureTimeSafe,
+  minBigInt,
+  updateForeclosedTokens,
+  removeFromArrayAtIndex,
+  handleAddTokenUtil,
+} from "../util";
 import {
   getTotalCollectedAccurate,
   getTotalOwedAccurate,
-  getTotalTokenCostScaledNumerator
+  getTotalTokenCostScaledNumerator,
 } from "../util/hacky";
 import {
   getTokenIdFromTxTokenPrice,
   isVintageVitalik,
   createWildcardIfDoesntExist,
   getTokenIdFromTimestamp,
-  createCounterIfDoesntExist
+  createCounterIfDoesntExist,
 } from "./helpers";
 
 // TODO:: check on every block header if there are any foreclosures or do other updates to data. See how feasible this is.
 export function handleLogBuy(event: LogBuy): void {
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
@@ -77,7 +84,7 @@ export function handleLogBuy(event: LogBuy): void {
       event.transaction.hash.toHexString() ==
       "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
     ) {
-      const VITALIK_PRICE = steward.price(tokenIdBigInt);
+      let VITALIK_PRICE = steward.price(tokenIdBigInt);
       let patron = Patron.load(ownerString);
       patron.availableDeposit = steward.depositAbleToWithdraw(owner);
 
@@ -94,9 +101,7 @@ export function handleLogBuy(event: LogBuy): void {
         VITALIK_PATRONAGE_NUMERATOR
       );
 
-      const patronagePerSecond = VITALIK_PRICE.times(
-        VITALIK_PATRONAGE_NUMERATOR
-      )
+      let patronagePerSecond = VITALIK_PRICE.times(VITALIK_PATRONAGE_NUMERATOR)
         .div(VITALIK_PATRONAGE_DENOMINATOR)
         .div(NUM_SECONDS_IN_YEAR_BIG_INT);
 
@@ -164,7 +169,11 @@ export function handleLogBuy(event: LogBuy): void {
   patron.availableDeposit = steward.depositAbleToWithdraw(owner);
   patron.foreclosureTime = getForeclosureTimeSafe(steward, owner);
   // Add token to the patrons currently held tokens
-  patron.tokens = patron.tokens.concat([wildcard.id]);
+  patron.tokens =
+    patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
+      ? patron.tokens.concat([wildcard.id])
+      : patron.tokens;
+
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
@@ -194,9 +203,7 @@ export function handleLogBuy(event: LogBuy): void {
     );
   }
   // Remove token to the previous patron's tokens
-  patronOld.tokens = patronOld.tokens
-    .slice(0, itemIndex)
-    .concat(patronOld.tokens.slice(itemIndex + 1, patronOld.tokens.length));
+  patronOld.tokens = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
 
   patron.save();
   patronOld.save();
@@ -210,7 +217,7 @@ export function handleLogBuy(event: LogBuy): void {
 
     // TODO: update the `timeSold` of the previous token.
     wildcard.previousOwners = wildcard.previousOwners.concat([
-      previousPatron.id
+      previousPatron.id,
     ]);
   }
 
@@ -268,7 +275,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address);
   let txOrigin = event.transaction.from;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let tokenId = getTokenIdFromTxTokenPrice(
     steward,
@@ -348,13 +355,30 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
-  // TODO!
+  let foreclosedPatron = event.params.prevOwner;
+  let blockNumber = event.block.number.toI32();
+  // If it is simon foreclosing, and it was at the time that we were fixing the bad migration.
+  //      https://etherscan.io/tx/0xc5e2a5de2a49543b1ddf542dbfaf0f537653b91bc8cb0f913d0bc3193ed0cfd4
+  //      https://etherscan.io/tx/0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90
+  if (
+    foreclosedPatron.toHexString() == SIMON_DLR_ADDRESS &&
+    9077422 >= blockNumber &&
+    9077272 <= blockNumber
+  ) {
+    return;
+  }
+  /**
+   * PHASE 1 - load data
+   */
+  let steward = Steward.bind(event.address);
+
+  updateForeclosedTokens(foreclosedPatron, steward);
 }
 
 export function handleLogCollection(event: LogCollection): void {
   let globalState = Global.load("1");
   // let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
   let tokenId = getTokenIdFromTimestamp(steward, txTimestamp);
@@ -442,7 +466,7 @@ export function handleAddToken(event: AddToken): void {
   createCounterIfDoesntExist();
 
   let tokenId = event.params.tokenId;
-  const txTimestamp = event.block.timestamp;
+  let txTimestamp = event.block.timestamp;
 
   // Don't re-add the 'vintage' Vitalik...
   if (isVintageVitalik(tokenId, event.block.number)) {
@@ -455,39 +479,16 @@ export function handleAddToken(event: AddToken): void {
 
   let steward = Steward.bind(event.address);
 
-  let tokenAddress = steward.assetToken();
-  let erc721 = Token.bind(tokenAddress);
+  let txHashStr = event.transaction.hash.toHexString();
 
-  let tokenInfo = erc721.tokenURI(tokenId);
-
-  // Entity fields can be set using simple assignments
-  let tokenUri = new TokenUri(tokenId.toString());
-  tokenUri.uriString = tokenInfo;
-  tokenUri.save();
-
-  wildcard.tokenUri = tokenUri.id;
-  wildcard.tokenId = tokenId;
-  wildcard.totalCollected = BigInt.fromI32(0);
-  wildcard.timeCollected = txTimestamp;
-
-  let price = new Price(event.transaction.hash.toHexString());
-  price.price = BigInt.fromI32(0);
-  price.timeSet = txTimestamp;
-  price.save();
-
-  let patron = Patron.load("NO_OWNER");
-  if (patron == null) {
-    log.critical("This should definitely exist", []);
-  }
-
-  wildcard.price = price.id;
-  wildcard.owner = patron.id;
-  wildcard.patronageNumerator = patronageNumerator;
-  wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
-  wildcard.timeAcquired = txTimestamp;
-  wildcard.previousOwners = [];
-
-  wildcard.save();
+  handleAddTokenUtil(
+    tokenId,
+    txTimestamp,
+    patronageNumerator,
+    wildcard,
+    steward,
+    txHashStr
+  );
 
   let globalState = Global.load("1");
 

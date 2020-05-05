@@ -1,3 +1,4 @@
+import { log } from "@graphprotocol/graph-ts";
 import {
   LogBuy,
   LogPriceChange,
@@ -10,10 +11,13 @@ import {
   Foreclosure,
   RemainingDepositUpdate,
   CollectPatronage,
-  Steward
+  Steward,
+  CollectLoyalty,
+  AddToken1,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
 import * as V1 from "./v1/steward";
+import * as V2 from "./v2/steward";
 import * as NEW from "./rewrite/steward";
 
 // NOTE: Events labled with the latest version of the contracts (eg V1) will be the only events that will be called.
@@ -29,7 +33,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
-  // Unimplemented
+  V0.handleLogForeclosure(event);
 }
 
 export function handleLogCollection(event: LogCollection): void {
@@ -69,4 +73,11 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     Steward.bind(event.address),
     event.params.tokenId
   );
+}
+export function handleAddTokenV2(event: AddToken): void {
+  V2.handleAddToken(event);
+}
+
+export function handleCollectLoyalty(event: CollectLoyalty): void {
+  NEW.handleCollectLoyalty(event);
 }

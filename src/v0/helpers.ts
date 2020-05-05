@@ -6,7 +6,7 @@ import {
   LogForeclosure,
   LogCollection,
   LogRemainingDepositUpdate,
-  AddToken
+  AddToken,
 } from "../../generated/Steward/Steward";
 import {
   Wildcard,
@@ -17,7 +17,7 @@ import {
   BuyEvent,
   EventCounter,
   ChangePriceEvent,
-  Global
+  Global,
 } from "../../generated/schema";
 import { Token } from "../../generated/Token/Token";
 import { log } from "@graphprotocol/graph-ts";
@@ -29,13 +29,13 @@ import {
   BILLION,
   VITALIK_PATRONAGE_NUMERATOR,
   VITALIK_PATRONAGE_DENOMINATOR,
-  GLOBAL_PATRONAGE_DENOMINATOR
+  GLOBAL_PATRONAGE_DENOMINATOR,
 } from "../CONSTANTS";
 import { getForeclosureTimeSafe, minBigInt } from "../util";
 import {
   getTotalCollectedAccurate,
   getTotalOwedAccurate,
-  getTotalTokenCostScaledNumerator
+  getTotalTokenCostScaledNumerator,
 } from "../util/hacky";
 
 // A token would need to be set to the same price
