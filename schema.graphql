@@ -140,7 +140,7 @@ type Vote @entity {
 }
 type Iteration @entity {
   id: ID! # the iteration number
-  projectVoteTallies: [VoteStatus!]!
+  projectVoteTallies: [VoteStatus!]
   # individualVotes: [Vote!]!
   totalVotes: BigInt!
   winningProposal: BigInt!

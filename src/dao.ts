@@ -23,6 +23,7 @@ export function handleLogVote(event: LogVote): void {
     iteration.winningProposal = BigInt.fromI32(0);
     iteration.fundsDistributed = BigInt.fromI32(0);
     iteration.winningVotes = BigInt.fromI32(0);
+    iteration.projectVoteTallies = [];
   }
   iteration.totalVotes = totalVotesAllProposals;
 
@@ -58,12 +59,37 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
   let totalVotes = event.params.totalVotes;
   let newIteration = event.params.newIteration;
 
+  // if (newIteration.toString() == "0") {
+  //   let iteration = new Iteration(newIteration.toString());
+  //   iteration.totalVotes = BigInt.fromI32(0);
+  //   iteration.winningProposal = BigInt.fromI32(0);
+  //   iteration.fundsDistributed = BigInt.fromI32(0);
+  //   iteration.winningVotes = BigInt.fromI32(0);
+
+  //   let voteManager = new VoteManager(VOTES_MANAGER_ENTITY_ID);
+
+  //   voteManager.currentIteration = iteration.id;
+  //   iteration.save();
+  //   voteManager.save();
+
+  //   return;
+  // }
+
   let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
   if (voteManager == null) {
-    log.critical(
-      "VoteManager is not defined in the `handleLogFundsDistributed` function.",
-      []
-    );
+    let iteration = new Iteration(newIteration.toString());
+    iteration.totalVotes = BigInt.fromI32(0);
+    iteration.winningProposal = BigInt.fromI32(0);
+    iteration.fundsDistributed = BigInt.fromI32(0);
+    iteration.winningVotes = BigInt.fromI32(0);
+
+    let voteManager = new VoteManager(VOTES_MANAGER_ENTITY_ID);
+
+    voteManager.currentIteration = iteration.id;
+    iteration.save();
+    voteManager.save();
+
+    return;
   }
 
   let iteration = Iteration.load(voteManager.currentIteration);
@@ -73,7 +99,7 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
     iteration.winningProposal = BigInt.fromI32(0);
     iteration.fundsDistributed = BigInt.fromI32(0);
     iteration.winningVotes = BigInt.fromI32(0);
-    //iteration.projectVoteTallies = [];
+    iteration.projectVoteTallies = [];
   }
 
   iteration.winningProposal = winningProposal;

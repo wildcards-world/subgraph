@@ -181,7 +181,7 @@ dataSources:
     name: Dao
     network: goerli
     source:
-      address: "0xa8751eE9e0Fb34fD01f37c04Ee8FA2f1Cb53B1b6"
+      address: "0x316C5f8867B21923db8A0Bd6890A6BFE0Ab6F9d2"
       abi: Dao
     mapping:
       kind: ethereum/events

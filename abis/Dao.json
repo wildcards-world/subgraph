@@ -1,37 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_votingInterval",
-        "type": "uint256"
-      },
-      {
-        "internalType": "contract ILoyaltyToken",
-        "name": "_addressOfLoyalyTokenContract",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IWildCardToken",
-        "name": "_addressOfWildCardTokenContract",
-        "type": "address"
-      },
-      {
-        "internalType": "contract IWildCardSteward",
-        "name": "_addressOfWildCardStewardContract",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_dragonCardId",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -231,6 +199,27 @@
     "constant": true,
     "inputs": [
       {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "failedTransferCredits",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
@@ -252,6 +241,21 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "latestProposalId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "payable": false,
@@ -298,21 +302,6 @@
     "constant": true,
     "inputs": [],
     "name": "proposalDeadline",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "proposalId",
     "outputs": [
       {
         "internalType": "uint256",
@@ -472,6 +461,50 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "_votingInterval",
+        "type": "uint256"
+      },
+      {
+        "internalType": "contract ILoyaltyToken",
+        "name": "_addressOfLoyalyTokenContract",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IWildCardToken",
+        "name": "_addressOfWildCardTokenContract",
+        "type": "address"
+      },
+      {
+        "internalType": "contract IWildCardSteward",
+        "name": "_addressOfWildCardStewardContract",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_dragonCardId",
+        "type": "uint256"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "initialize2",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "newInterval",
         "type": "uint256"
       }
@@ -528,6 +561,26 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address payable",
+        "name": "newOrganisationAddress",
+        "type": "address"
+      }
+    ],
+    "name": "updateProposalLinkedAddress",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "proposalIdToVoteFor",
         "type": "uint256"
       },
@@ -543,6 +596,15 @@
       }
     ],
     "name": "vote",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "withdrawAllFailedCredits",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",

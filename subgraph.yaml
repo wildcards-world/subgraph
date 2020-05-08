@@ -183,7 +183,7 @@ dataSources:
     name: Dao
     network: mainnet
     source:
-      address: "0xa8751eE9e0Fb34fD01f37c04Ee8FA2f1Cb53B1b6" #this is wrong doesn't exist yet
+      address: "0x03e051b7e42480Cc9D54F1caB525D2Fea2cF4d83" #this is wrong doesn't exist yet
       abi: Dao
     mapping:
       kind: ethereum/events
