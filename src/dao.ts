@@ -23,25 +23,9 @@ export function handleLogVote(event: LogVote): void {
     currentIterationString + "-" + proposalVotedFor.toString();
 
   let iteration = Iteration.load(currentIterationString);
-  if (iteration == null) {
-    iteration = new Iteration(currentIterationString);
-    iteration.totalVotes = BigInt.fromI32(0);
-    iteration.winningProposal = BigInt.fromI32(0);
-    iteration.fundsDistributed = BigInt.fromI32(0);
-    iteration.winningVotes = BigInt.fromI32(0);
-    iteration.projectVoteTallies = [];
-    iteration.individualVotes = [];
-  }
   iteration.totalVotes = totalVotesAllProposals;
 
   // TODO: create event in the initialize function.
-  let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
-  if (voteManager == null) {
-    voteManager = new VoteManager(VOTES_MANAGER_ENTITY_ID);
-
-    voteManager.currentIteration = iteration.id;
-    voteManager.save();
-  }
 
   let newVoteStatus = VoteStatus.load(projectVoteId);
   if (newVoteStatus == null) {
@@ -74,6 +58,7 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
   let totalVotes = event.params.totalVotes;
   let newIteration = event.params.newIteration;
 
+  // This block only runs on start-up to set up the vote Manager initially
   let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
   if (voteManager == null) {
     let iteration = new Iteration(newIteration.toString());
@@ -90,24 +75,24 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
 
     return;
   }
+  // Make current iteration into latestCompleteIteration, create a new current iteration.
+  let completeIteration = Iteration.load(voteManager.currentIteration);
+  completeIteration.winningProposal = winningProposal;
+  completeIteration.fundsDistributed = fundsDistributed;
+  completeIteration.winningVotes = winningVotes;
+  completeIteration.totalVotes = totalVotes;
+  completeIteration.save();
+  voteManager.latestCompleteIteration = completeIteration.id;
 
-  let iteration = Iteration.load(voteManager.currentIteration);
-  if (iteration == null) {
-    iteration = new Iteration(voteManager.currentIteration);
-    iteration.totalVotes = BigInt.fromI32(0);
-    iteration.winningProposal = BigInt.fromI32(0);
-    iteration.fundsDistributed = BigInt.fromI32(0);
-    iteration.winningVotes = BigInt.fromI32(0);
-    iteration.projectVoteTallies = [];
-    iteration.individualVotes = [];
-  }
+  let currentIteration = new Iteration(newIteration.toString());
+  currentIteration.totalVotes = BigInt.fromI32(0);
+  currentIteration.winningProposal = BigInt.fromI32(0);
+  currentIteration.fundsDistributed = BigInt.fromI32(0);
+  currentIteration.winningVotes = BigInt.fromI32(0);
+  currentIteration.projectVoteTallies = [];
+  currentIteration.individualVotes = [];
+  currentIteration.save();
 
-  iteration.winningProposal = winningProposal;
-  iteration.fundsDistributed = fundsDistributed;
-  iteration.winningVotes = winningVotes;
-  iteration.totalVotes = totalVotes;
-  iteration.save();
-
-  voteManager.currentIteration = newIteration.toString();
+  voteManager.currentIteration = currentIteration.id;
   voteManager.save();
 }
