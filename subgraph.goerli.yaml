@@ -176,3 +176,28 @@ dataSources:
         # - event: Transfer(indexed address,indexed address,uint256)
       # callHandlers:
       file: ./src/LoyaltyToken.ts
+
+  - kind: ethereum/contract
+    name: Dao
+    network: goerli
+    source:
+      address: "0x316C5f8867B21923db8A0Bd6890A6BFE0Ab6F9d2"
+      abi: Dao
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: Dao
+          file: ./abis/Dao.json
+      eventHandlers:
+        - event: LogVote(indexed uint256,indexed uint256,uint256,uint256,indexed address)
+          handler: handleLogVote
+        - event: LogFundsDistributed(indexed uint256,indexed uint256,uint256,indexed uint256,uint256,uint256)
+          handler: handleLogFundsDistributed
+        #   - event: MinterRemoved(indexed address)
+        # - event: Transfer(indexed address,indexed address,uint256)
+      # callHandlers:
+      file: ./src/dao.ts

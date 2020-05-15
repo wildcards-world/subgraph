@@ -39,3 +39,5 @@ export let patronageTokenPerSecond = BigInt.fromI32(11574)
 //          +    74074074
 
 export const SIMON_DLR_ADDRESS = "0x0cacc6104d8cd9d7b2850b4f35c65c1ecdeece03";
+
+export let VOTES_MANAGER_ENTITY_ID = "VOTE_MANAGER";
