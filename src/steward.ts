@@ -13,7 +13,6 @@ import {
   CollectPatronage,
   Steward,
   CollectLoyalty,
-  AddToken1,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
 import * as V1 from "./v1/steward";
