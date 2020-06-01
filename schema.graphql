@@ -150,4 +150,5 @@ type Iteration @entity {
 type VoteManager @entity {
   id: ID! # this should be a singleton. Give it a constant id of "VOTE_MANAGER"
   currentIteration: Iteration!
+  latestCompleteIteration: Iteration
 }
