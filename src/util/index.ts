@@ -340,3 +340,24 @@ export function updateAllOfPatronsTokensLastUpdated(
     trackingString,
   ]);
 }
+
+export function isVitalik(tokenId: BigInt): boolean {
+  return tokenId.equals(BigInt.fromI32(42));
+}
+
+export function getTotalCollectedForWildcard(
+  steward: Steward,
+  tokenId: BigInt
+): BigInt {
+  let totalCollected: BigInt;
+  if (isVitalik(tokenId)) {
+    // Include the patronage from the legacy vitalik contract.
+    totalCollected = steward
+      .totalCollected(tokenId)
+      .plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
+  } else {
+    totalCollected = steward.totalCollected(tokenId);
+  }
+
+  return totalCollected;
+}

@@ -38,6 +38,11 @@ import {
   getTotalTokenCostScaledNumerator,
 } from "../util/hacky";
 
+/*
+NOTE:
+  These helper functions are legacy and only relevant to v0.
+  The tokenId of the token involved was not included in the events emitted by this version and there fore we need to use different methods to get the token id.
+*/
 // A token would need to be set to the same price
 export function getTokenIdFromTxTokenPrice(
   steward: Steward,
@@ -45,19 +50,6 @@ export function getTokenIdFromTxTokenPrice(
   owner: Address,
   timestamp: BigInt
 ): i32 {
-  // if ("0x6b90b98733928136cb44675929ca5359d1a76417" == owner.toHexString()) {
-  //   log.warning(
-  //     "Matching Marvin's v0 token! timestamp: {} == {} ? \n ? tokenPrice: {} == {} ? \n ? owner: {} == {}",
-  //     [
-  //       timestamp.toString(),
-  //       steward.timeLastCollected(BigInt.fromI32(0)).toString(),
-  //       tokenPrice.toString(),
-  //       steward.price(BigInt.fromI32(0)).toString(),
-  //       owner.toString(),
-  //       steward.currentPatron(BigInt.fromI32(0)).toString()
-  //     ]
-  //   );
-  // }
   if (
     timestamp.equals(steward.timeLastCollected(BigInt.fromI32(0))) &&
     tokenPrice.equals(steward.price(BigInt.fromI32(0))) &&
@@ -150,6 +142,7 @@ export function getTokenIdFromTxTokenPrice(
 export function getTokenIdFromTimestamp(
   steward: Steward,
   timestamp: BigInt
+  // TODO: might need to add a variable here of txhash, and match on txhash if the token was foreclosed (since foreclosed tokens have a different timeLastCollected to the trasnaction time stamp)
 ): i32 {
   // NOTE: this code is broken for token foreclosures!
   if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(0)))) {
@@ -181,6 +174,7 @@ export function getTokenIdFromTimestamp(
   } else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(42)))) {
     return 42;
   } else {
+    // TODO: might need to add a variable here of txhash, and match on txhash if the token was foreclosed (since foreclosed tokens have a different timeLastCollected to the trasnaction time stamp)
     return -1; // a random non-released token -- this normally means the token was foreclosed or something like that
   }
 }
@@ -208,6 +202,8 @@ export function createCounterIfDoesntExist(): void {
   eventCounter.stateChanges = [];
   eventCounter.save();
 }
+
+// TODO: this creation function should be shared between all the code.
 export function createWildcardIfDoesntExist(
   steward: Steward,
   tokenId: BigInt
