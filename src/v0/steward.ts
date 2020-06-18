@@ -38,6 +38,7 @@ import {
   updateForeclosedTokens,
   removeFromArrayAtIndex,
   handleAddTokenUtil,
+  getTotalCollectedForWildcard,
 } from "../util";
 import {
   getTotalCollectedAccurate,
@@ -386,7 +387,9 @@ export function handleLogCollection(event: LogCollection): void {
   let steward = Steward.bind(event.address);
   let tokenId = getTokenIdFromTimestamp(steward, txTimestamp);
   if (tokenId == -1) {
-    return;
+    log.critical("This token could not be found. Transaction hash: {}", [
+      event.block.hash.toHexString(),
+    ]);
   }
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
@@ -396,20 +399,13 @@ export function handleLogCollection(event: LogCollection): void {
       event.transaction.hash.toHexString() ==
       "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
     ) {
-      // globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator.plus(
-      //   steward
-      //     .price(BigInt.fromI32(42))
-      //     .times(
-      //       VITALIK_PATRONAGE_NUMERATOR /*NOTE: `steward.patronageNumerator(BigInt.fromI32(42))` is incorrect since token was upgraded with a faulty value.*/
-      //     )
-      // );
-    } // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
-    else if (
-      event.transaction.hash.toHexString() ==
-      "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
-    ) {
+      // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
+      // NOTE: there was an error on upgrading that set the token price to 20000000.. ETH instead of 20.
+      //       so although there were a few transactions to fix this problem, all of them should be ignored.
+
       let wildcard = Wildcard.load(tokenIdString);
-      wildcard.totalCollected = steward.totalCollected(tokenIdBigInt);
+      // TODO: this totalCollected needs to be corrected always, we need to include the totalCollected from the vintage contract too.
+      wildcard.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
       wildcard.timeCollected = txTimestamp;
       wildcard.save();
     } else {
@@ -424,7 +420,10 @@ export function handleLogCollection(event: LogCollection): void {
   if (wildcard == null) {
     wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
   }
-  wildcard.totalCollected = steward.totalCollected(tokenIdBigInt);
+  wildcard.totalCollected = getTotalCollectedForWildcard(
+    steward,
+    tokenIdBigInt
+  );
   wildcard.timeCollected = txTimestamp;
   wildcard.save();
 
