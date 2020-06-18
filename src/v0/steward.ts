@@ -385,12 +385,17 @@ export function handleLogCollection(event: LogCollection): void {
   let txTimestamp = event.block.timestamp;
 
   let steward = Steward.bind(event.address);
-  let tokenId = getTokenIdFromTimestamp(steward, txTimestamp);
+  let tokenId = getTokenIdFromTimestamp(
+    steward,
+    txTimestamp,
+    event.transaction.hash
+  );
   if (tokenId == -1) {
     log.critical("This token could not be found. Transaction hash: {}", [
       event.block.hash.toHexString(),
     ]);
   }
+
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
@@ -402,12 +407,6 @@ export function handleLogCollection(event: LogCollection): void {
       // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
       // NOTE: there was an error on upgrading that set the token price to 20000000.. ETH instead of 20.
       //       so although there were a few transactions to fix this problem, all of them should be ignored.
-
-      let wildcard = Wildcard.load(tokenIdString);
-      // TODO: this totalCollected needs to be corrected always, we need to include the totalCollected from the vintage contract too.
-      wildcard.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
-      wildcard.timeCollected = txTimestamp;
-      wildcard.save();
     } else {
       return;
     }
@@ -501,7 +500,6 @@ export function handleAddToken(event: AddToken): void {
     globalState.timeLastCollected = txTimestamp;
     globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
     globalState.totalCollectedAccurate = globalState.totalCollected;
-    // log.warning("setting global state {} {}", [globalState.totalCollected.toString(), event.transaction.hash.toHexString()])
     // globalState.totalCollectedOrDue = globalState.totalCollected;
     globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
     // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);

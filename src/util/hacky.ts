@@ -17,6 +17,15 @@ export function getTotalCollectedAccurate(steward: Steward): BigInt {
     .plus(steward.totalCollected(BigInt.fromI32(10)))
     .plus(steward.totalCollected(BigInt.fromI32(11)))
     .plus(steward.totalCollected(BigInt.fromI32(12)))
+    .plus(steward.totalCollected(BigInt.fromI32(13)))
+    .plus(steward.totalCollected(BigInt.fromI32(14)))
+    .plus(steward.totalCollected(BigInt.fromI32(15)))
+    .plus(steward.totalCollected(BigInt.fromI32(16)))
+    .plus(steward.totalCollected(BigInt.fromI32(17)))
+    .plus(steward.totalCollected(BigInt.fromI32(18)))
+    .plus(steward.totalCollected(BigInt.fromI32(19)))
+    .plus(steward.totalCollected(BigInt.fromI32(20)))
+    .plus(steward.totalCollected(BigInt.fromI32(21)))
     .plus(steward.totalCollected(BigInt.fromI32(42)));
 }
 export function getTotalOwedAccurate(steward: Steward): BigInt {
@@ -33,6 +42,15 @@ export function getTotalOwedAccurate(steward: Steward): BigInt {
     .plus(steward.patronageOwed(BigInt.fromI32(10)))
     .plus(steward.patronageOwed(BigInt.fromI32(11)))
     .plus(steward.patronageOwed(BigInt.fromI32(12)))
+    .plus(steward.patronageOwed(BigInt.fromI32(13)))
+    .plus(steward.patronageOwed(BigInt.fromI32(14)))
+    .plus(steward.patronageOwed(BigInt.fromI32(15)))
+    .plus(steward.patronageOwed(BigInt.fromI32(16)))
+    .plus(steward.patronageOwed(BigInt.fromI32(17)))
+    .plus(steward.patronageOwed(BigInt.fromI32(18)))
+    .plus(steward.patronageOwed(BigInt.fromI32(19)))
+    .plus(steward.patronageOwed(BigInt.fromI32(20)))
+    .plus(steward.patronageOwed(BigInt.fromI32(21)))
     .plus(steward.patronageOwed(BigInt.fromI32(42)));
 }
 export function getTotalTokenCostScaledNumerator(steward: Steward): BigInt {

@@ -1,4 +1,4 @@
-import { BigInt, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Address, Bytes } from "@graphprotocol/graph-ts";
 import {
   Steward,
   LogBuy,
@@ -141,7 +141,8 @@ export function getTokenIdFromTxTokenPrice(
 // A token would need to be set to the same price
 export function getTokenIdFromTimestamp(
   steward: Steward,
-  timestamp: BigInt
+  timestamp: BigInt,
+  txHash: Bytes
   // TODO: might need to add a variable here of txhash, and match on txhash if the token was foreclosed (since foreclosed tokens have a different timeLastCollected to the trasnaction time stamp)
 ): i32 {
   // NOTE: this code is broken for token foreclosures!
@@ -174,8 +175,33 @@ export function getTokenIdFromTimestamp(
   } else if (timestamp.equals(steward.timeLastCollected(BigInt.fromI32(42)))) {
     return 42;
   } else {
-    // TODO: might need to add a variable here of txhash, and match on txhash if the token was foreclosed (since foreclosed tokens have a different timeLastCollected to the trasnaction time stamp)
-    return -1; // a random non-released token -- this normally means the token was foreclosed or something like that
+    // if it doesn't match the time last collected it means the token was foreclosed.
+    //   (since foreclosed tokens have a different timeLastCollected to the trasnaction time stamp)
+    //   - here as a last resort we match on transaction hash:
+    log.warning("WE ARE PROCESSING THIS HASH = {}", [txHash.toHexString()]);
+    if (
+      txHash.toHexString() ==
+      "0x355a2bd0c5e2432a12833ffc01435e18923c3b9dd3fe41353fd946366820df02"
+    ) {
+      // https://goerli.etherscan.io/tx/0x355a2bd0c5e2432a12833ffc01435e18923c3b9dd3fe41353fd946366820df02
+      return 11;
+    } else if (
+      txHash.toHexString() ==
+      "0x283f8cd6175afd6f9cf78b6ffe92173b3aeea53b3570629331ae3e152d5e22a9"
+    ) {
+      // https://goerli.etherscan.io/tx/0x283f8cd6175afd6f9cf78b6ffe92173b3aeea53b3570629331ae3e152d5e22a9
+      return 42;
+    } else if (
+      txHash.toHexString() ==
+      "0xc0e1c0a5707e803345b48419f90cec9d5308eff88b4e56196732455d6b53c4bf"
+    ) {
+      // Actually something strange happened in this transaction - not sure why it isn't catching. It is a buy transaction.
+      // https://goerli.etherscan.io/tx/0xc0e1c0a5707e803345b48419f90cec9d5308eff88b4e56196732455d6b53c4bf
+      return 3;
+    } else {
+      // This should case should never be reached, match on txHash first!
+      return -1;
+    }
   }
 }
 

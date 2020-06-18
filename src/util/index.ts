@@ -335,16 +335,17 @@ export function updateAllOfPatronsTokensLastUpdated(
 
     wildcard.save();
   }
-  log.warning("6 updateAllOfPatronsTokens, patron {}, -- {}", [
-    patron.id,
-    trackingString,
-  ]);
 }
 
 export function isVitalik(tokenId: BigInt): boolean {
   return tokenId.equals(BigInt.fromI32(42));
 }
 
+/*
+This function needs to be called in the following places:
+buy
+collection 
+*/
 export function getTotalCollectedForWildcard(
   steward: Steward,
   tokenId: BigInt

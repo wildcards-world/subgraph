@@ -38,6 +38,7 @@ import {
   updateForeclosedTokens,
   removeFromArrayAtIndex,
   updateAllOfPatronsTokensLastUpdated,
+  getTotalCollectedForWildcard,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -295,6 +296,12 @@ export function handleBuy(event: Buy): void {
   wildcard.owner = patron.id;
   wildcard.timeAcquired = txTimestamp;
 
+  wildcard.totalCollected = getTotalCollectedForWildcard(
+    steward,
+    tokenIdBigInt
+  );
+  wildcard.timeCollected = txTimestamp;
+
   wildcard.save();
 
   let buyEvent = new BuyEvent(txHashString);
@@ -525,6 +532,18 @@ export function handleCollectPatronage(event: CollectPatronage): void {
         "handleCollectPatronage"
       );
     }
+  }
+
+  let wildcard = Wildcard.load(collectedToken.toString());
+  if (wildcard != null) {
+    wildcard.totalCollected = getTotalCollectedForWildcard(
+      steward,
+      collectedToken
+    );
+    wildcard.timeCollected = txTimestamp;
+    wildcard.save();
+  } else {
+    log.critical("THE WILDCARD IS NULL??", []);
   }
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
