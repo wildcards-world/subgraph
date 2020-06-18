@@ -11,6 +11,7 @@ import {
 import { VOTES_MANAGER_ENTITY_ID } from "./CONSTANTS";
 
 export function handleLogVote(event: LogVote): void {
+  /*
   let proposalVotedFor = event.params.proposalVotedFor;
   let votesCast = event.params.votesCast;
   let totalVotesForProposal = event.params.totalVotesForProposal;
@@ -23,6 +24,25 @@ export function handleLogVote(event: LogVote): void {
     currentIterationString + "-" + proposalVotedFor.toString();
 
   let iteration = Iteration.load(currentIterationString);
+  if (iteration == null) {
+    iteration = new Iteration(currentIterationString);
+    iteration.totalVotes = BigInt.fromI32(0);
+    iteration.winningProposal = BigInt.fromI32(0);
+    iteration.fundsDistributed = BigInt.fromI32(0);
+    iteration.winningVotes = BigInt.fromI32(0);
+    iteration.projectVoteTallies = [];
+    iteration.individualVotes = [];
+  }
+  iteration.totalVotes = totalVotesAllProposals;
+
+  // TODO: create event in the initialize function.
+  let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
+  if (voteManager == null) {
+    voteManager = new VoteManager(VOTES_MANAGER_ENTITY_ID);
+
+    voteManager.currentIteration = iteration.id;
+    voteManager.save();
+  }
   iteration.totalVotes = totalVotesAllProposals;
 
   // TODO: create event in the initialize function.
@@ -49,6 +69,7 @@ export function handleLogVote(event: LogVote): void {
   vote.save();
   newVoteStatus.save();
   iteration.save();
+  */
 }
 
 export function handleLogFundsDistributed(event: LogFundsDistributed): void {
@@ -58,8 +79,8 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
   let totalVotes = event.params.totalVotes;
   let newIteration = event.params.newIteration;
 
-  // This block only runs on start-up to set up the vote Manager initially
   let voteManager = VoteManager.load(VOTES_MANAGER_ENTITY_ID);
+  // This block only runs on start-up to set up the vote Manager initially
   if (voteManager == null) {
     let iteration = new Iteration(newIteration.toString());
     iteration.totalVotes = BigInt.fromI32(0);
@@ -75,6 +96,25 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
 
     return;
   }
+  /*
+  let iteration = Iteration.load(voteManager.currentIteration);
+  if (iteration == null) {
+    iteration = new Iteration(voteManager.currentIteration);
+    iteration.totalVotes = BigInt.fromI32(0);
+    iteration.winningProposal = BigInt.fromI32(0);
+    iteration.fundsDistributed = BigInt.fromI32(0);
+    iteration.winningVotes = BigInt.fromI32(0);
+    iteration.projectVoteTallies = [];
+    iteration.individualVotes = [];
+  }
+
+  iteration.winningProposal = winningProposal;
+  iteration.fundsDistributed = fundsDistributed;
+  iteration.winningVotes = winningVotes;
+  iteration.totalVotes = totalVotes;
+  iteration.save();
+
+  voteManager.currentIteration = newIteration.toString();
   // Make current iteration into latestCompleteIteration, create a new current iteration.
   let completeIteration = Iteration.load(voteManager.currentIteration);
   completeIteration.winningProposal = winningProposal;
@@ -95,4 +135,5 @@ export function handleLogFundsDistributed(event: LogFundsDistributed): void {
 
   voteManager.currentIteration = currentIteration.id;
   voteManager.save();
+  */
 }

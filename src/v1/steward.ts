@@ -67,6 +67,8 @@ export function handleBuy(event: Buy): void {
     ]);
   }
 
+  let previousTimeWildcardWasAcquired = wildcard.timeAcquired;
+
   // Entity fields can be set using simple assignments
   wildcard.tokenId = tokenIdBigInt;
 
@@ -151,8 +153,8 @@ export function handleBuy(event: Buy): void {
   if (wildcard.owner !== "NO_OWNER") {
     let previousPatron = new PreviousPatron(ownerString);
     previousPatron.patron = patron.id;
-    previousPatron.timeAcquired = wildcard.timeAcquired;
-    previousPatron.timeSold = BigInt.fromI32(-1);
+    previousPatron.timeAcquired = previousTimeWildcardWasAcquired;
+    previousPatron.timeSold = event.block.timestamp;
     previousPatron.save();
 
     // TODO: update the `timeSold` of the previous token.

@@ -122,6 +122,8 @@ export function handleLogBuy(event: LogBuy): void {
     wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
   }
 
+  let previousTimeWildcardWasAcquired = wildcard.timeAcquired;
+
   // Entity fields can be set using simple assignments
   wildcard.tokenId = BigInt.fromI32(tokenId);
 
@@ -180,6 +182,7 @@ export function handleLogBuy(event: LogBuy): void {
       patronOld.address as Address
     );
     let heldUntil = minBigInt(patronOld.foreclosureTime, txTimestamp);
+
     let timeSinceLastUpdateOldPatron = heldUntil.minus(patronOld.lastUpdated);
     patronOld.totalTimeHeld = patron.totalTimeHeld.plus(
       timeSinceLastUpdateOldPatron.times(
@@ -211,8 +214,8 @@ export function handleLogBuy(event: LogBuy): void {
   if (wildcard.owner !== "NO_OWNER") {
     let previousPatron = new PreviousPatron(ownerString);
     previousPatron.patron = patron.id;
-    previousPatron.timeAcquired = wildcard.timeAcquired;
-    previousPatron.timeSold = BigInt.fromI32(-1); //event.block.timestamp;
+    previousPatron.timeAcquired = previousTimeWildcardWasAcquired;
+    previousPatron.timeSold = event.block.timestamp;
     previousPatron.save();
 
     // TODO: update the `timeSold` of the previous token.
