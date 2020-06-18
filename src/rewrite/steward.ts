@@ -5,7 +5,8 @@ import {
   Buy,
   CollectLoyalty,
 } from "../../generated/Steward/Steward";
-import { getTokenIdFromTxTokenPrice, isVintageVitalik } from "../v0/helpers";
+import { getTokenIdFromTxTokenPrice } from "../v0/helpers";
+import { isVintageVitalik } from "../v0/vitalikHandlers";
 import { PatronNew, WildcardNew, Patron } from "../../generated/schema";
 import {
   VitalikStewardLegacy,
@@ -202,7 +203,8 @@ export function handleLogBuy(event: LogBuy): void {
     steward,
     event.params.price,
     owner,
-    txTimestamp
+    txTimestamp,
+    event.transaction.hash
   );
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
@@ -331,6 +333,7 @@ export function handleLogBuy(event: LogBuy): void {
   wildcard.save();
 }
 
+// This has been replicated and can be removed.
 export function handleBuy(event: Buy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;

@@ -39,6 +39,8 @@ import {
   removeFromArrayAtIndex,
   handleAddTokenUtil,
   getTotalCollectedForWildcard,
+  initialiseDefaultPatronIfNull,
+  warnAndError,
 } from "../util";
 import {
   getTotalCollectedAccurate,
@@ -46,8 +48,12 @@ import {
   getTotalTokenCostScaledNumerator,
 } from "../util/hacky";
 import {
-  getTokenIdFromTxTokenPrice,
+  handleVitalikUpgradeLogic,
   isVintageVitalik,
+  isVintageVitalikUpgradeTx,
+} from "./vitalikHandlers";
+import {
+  getTokenIdFromTxTokenPrice,
   createWildcardIfDoesntExist,
   getTokenIdFromTimestamp,
   createCounterIfDoesntExist,
@@ -55,6 +61,7 @@ import {
 
 // TODO:: check on every block header if there are any foreclosures or do other updates to data. See how feasible this is.
 export function handleLogBuy(event: LogBuy): void {
+  // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
   let txTimestamp = event.block.timestamp;
@@ -66,56 +73,32 @@ export function handleLogBuy(event: LogBuy): void {
     steward,
     event.params.price,
     owner,
-    txTimestamp
+    txTimestamp,
+    event.transaction.hash
   );
-
   if (tokenId == -1) {
-    return;
-  } // Normal ly this means a foreclosed token was bought. Will need to fix in future versions of the smart contracts!
-
-  // Don't re-add the 'vintage' Vitalik...
-  // TODO:: this should be before a given block number - get this block number from when simon buys it!
+    // Normal ly this means a foreclosed token was bought. Will need to fix in future versions of the smart contracts! This should be accounted for (thus throwing the error)
+    warnAndError("Undefined token on transaction hash {}", [
+      event.transaction.hash.toHexString(),
+    ]);
+  }
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
 
-  // tokenId.equals(BigInt.fromI32(42)) && blockNumber.lt(BigInt.fromI32(9077429))
   if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
-    // This was the transaction that simon upgraded vitalik (so the deposit was updated!)
-    if (
-      event.transaction.hash.toHexString() ==
-      "0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90"
-    ) {
-      let VITALIK_PRICE = steward.price(tokenIdBigInt);
-      let patron = Patron.load(ownerString);
-      patron.availableDeposit = steward.depositAbleToWithdraw(owner);
-
-      // This is for Vitalik+Simon, so token didn't foreclose, and he only holds 1 token.
-      let timeSinceLastUpdate = txTimestamp.minus(patron.lastUpdated);
-      patron.totalTimeHeld = patron.totalTimeHeld.plus(timeSinceLastUpdate);
-      patron.totalContributed = patron.totalContributed.plus(
-        patron.patronTokenCostScaledNumerator
-          .times(timeSinceLastUpdate)
-          .div(VITALIK_PATRONAGE_DENOMINATOR)
-          .div(NUM_SECONDS_IN_YEAR_BIG_INT)
-      );
-      patron.patronTokenCostScaledNumerator = VITALIK_PRICE.times(
-        VITALIK_PATRONAGE_NUMERATOR
-      );
-
-      let patronagePerSecond = VITALIK_PRICE.times(VITALIK_PATRONAGE_NUMERATOR)
-        .div(VITALIK_PATRONAGE_DENOMINATOR)
-        .div(NUM_SECONDS_IN_YEAR_BIG_INT);
-
-      patron.foreclosureTime = txTimestamp.plus(
-        patron.availableDeposit.div(patronagePerSecond)
-      );
-      patron.lastUpdated = txTimestamp;
-      patron.save();
+    if (isVintageVitalikUpgradeTx(event.transaction.hash)) {
+      handleVitalikUpgradeLogic(steward, tokenIdBigInt, owner, txTimestamp);
     }
     return;
-  } //Temporarily before token is migrated
+  }
 
   let wildcard = Wildcard.load(tokenIdString);
+  if (wildcard == null) {
+    warnAndError(
+      "The wildcard doesn't exist. Check the 'addToken' logic. tx: {}",
+      [event.transaction.hash.toHexString()]
+    );
+  }
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
@@ -132,18 +115,19 @@ export function handleLogBuy(event: LogBuy): void {
 
   let previousTokenOwnerString = wildcard.owner;
 
+  // let patron = Patron.load(ownerString);
+  // if (patron == null) {
+  //   patron = createDefaultPatron(owner, txTimestamp);
+  // }
   let patron = Patron.load(ownerString);
   let patronOld = Patron.load(previousTokenOwnerString);
   if (patron == null) {
-    patron = new Patron(ownerString);
-    patron.address = owner;
-    patron.totalTimeHeld = BigInt.fromI32(0);
-    patron.totalContributed = BigInt.fromI32(0);
-    patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
-    patron.tokens = [];
-    patron.previouslyOwnedTokens = [];
-    patron.lastUpdated = txTimestamp;
-    patron.foreclosureTime = txTimestamp;
+    patron = initialiseDefaultPatronIfNull(steward, owner, txTimestamp);
+  }
+  if (patronOld == null) {
+    warnAndError("The previous patron should be defined. tx: {}", [
+      event.transaction.hash.toHexString(),
+    ]);
   }
 
   // Now even if the patron puts in extra deposit when they buy a new token this will foreclose their old tokens.
@@ -225,11 +209,11 @@ export function handleLogBuy(event: LogBuy): void {
     ]);
   }
 
-  let previousPrice = Price.load(wildcard.price);
+  // let previousPrice = Price.load(wildcard.price);
 
   let globalState = Global.load("1");
 
-  let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
+  // let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
   globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
@@ -285,7 +269,8 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     steward,
     event.params.newPrice,
     txOrigin,
-    txTimestamp
+    txTimestamp,
+    event.transaction.hash
   );
   if (tokenId == -1) {
     return;

@@ -31,6 +31,11 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
   }
 }
 
+export function warnAndError(msg: string, args: Array<string>): void {
+  log.warning(msg, args);
+  log.critical(msg, args);
+}
+
 // This currently only works with strings, because assembly script is shit... (the tests do pass when this is a template parameter though :) )
 export function removeFromArrayAtIndex(
   array: Array<string>,
