@@ -85,13 +85,6 @@ export function handleLogBuy(event: LogBuy): void {
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
 
-  if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
-    if (isVintageVitalikUpgradeTx(event.transaction.hash)) {
-      handleVitalikUpgradeLogic(steward, tokenIdBigInt, owner, txTimestamp);
-    }
-    return;
-  }
-
   let wildcard = Wildcard.load(tokenIdString);
   if (wildcard == null) {
     warnAndError(
@@ -114,21 +107,92 @@ export function handleLogBuy(event: LogBuy): void {
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
 
   let previousTokenOwnerString = wildcard.owner;
+  let previousTokenOwner = Address.fromString(previousTokenOwnerString);
 
-  // let patron = Patron.load(ownerString);
-  // if (patron == null) {
-  //   patron = createDefaultPatron(owner, txTimestamp);
-  // }
   let patron = Patron.load(ownerString);
-  let patronOld = Patron.load(previousTokenOwnerString);
   if (patron == null) {
     patron = initialiseDefaultPatronIfNull(steward, owner, txTimestamp);
   }
+
+  let patronOld = Patron.load(previousTokenOwnerString);
   if (patronOld == null) {
     warnAndError("The previous patron should be defined. tx: {}", [
       event.transaction.hash.toHexString(),
     ]);
   }
+
+  // Phase 2: calculate new values.
+  patron.lastUpdated = txTimestamp;
+  if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
+    if (isVintageVitalikUpgradeTx(event.transaction.hash)) {
+      handleVitalikUpgradeLogic(steward, tokenIdBigInt, owner, txTimestamp);
+    }
+    return;
+  }
+
+  let patronForeclosureTime = getForeclosureTimeSafe(steward, owner);
+  let patronOldForeclosureTime = getForeclosureTimeSafe(
+    steward,
+    previousTokenOwner
+  );
+
+  // Now even if the patron puts in extra deposit when they buy a new token this will foreclose their old tokens.
+  let heldUntilNewPatron = minBigInt(patronForeclosureTime, txTimestamp);
+  let heldUntilPreviousPatron = minBigInt(patronForeclosureTime, txTimestamp);
+
+  let timeSinceLastUpdatePatron = heldUntilNewPatron.minus(patron.lastUpdated);
+  let timeSinceLastUpdatePreviousPatron = heldUntilPreviousPatron.minus(
+    patronOld.lastUpdated
+  );
+
+  let newPatronTotalTimeHeld =
+    patron.id != "NO_OWNER"
+      ? patron.totalTimeHeld.plus(
+          timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
+        )
+      : BigInt.fromI32(0);
+  let oldPatronTotalTimeHeld =
+    patronOld.id != "NO_OWNER"
+      ? patronOld.totalTimeHeld.plus(
+          timeSinceLastUpdatePreviousPatron.times(
+            BigInt.fromI32(patronOld.tokens.length)
+          )
+        )
+      : BigInt.fromI32(0);
+
+  let newPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patron.totalContributed.plus(
+          patron.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let newPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
+  let oldPatronTotalContributed =
+    patronOld.id != "NO_OWNER"
+      ? patronOld.totalContributed.plus(
+          patronOld.patronTokenCostScaledNumerator
+            .times(timeSinceLastUpdatePatron)
+            .div(GLOBAL_PATRONAGE_DENOMINATOR)
+            .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+        )
+      : BigInt.fromI32(0);
+  let oldPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+    owner
+  );
+
+  let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
+  let itemIndex = patronOld.tokens.indexOf(wildcard.id);
+  let oldPatronTokenArray = removeFromArrayAtIndex(patronOld.tokens, itemIndex);
+
+  let timePatronLastUpdated = steward.timeLastCollectedPatron(owner);
+  let timePatronOldLastUpdated = steward.timeLastCollectedPatron(
+    patronOld.address as Address
+  );
 
   // Now even if the patron puts in extra deposit when they buy a new token this will foreclose their old tokens.
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
@@ -146,7 +210,6 @@ export function handleLogBuy(event: LogBuy): void {
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     owner
   );
-  patron.lastUpdated = txTimestamp;
 
   // Add to previouslyOwnedTokens if not already there
   patron.previouslyOwnedTokens =
@@ -161,7 +224,6 @@ export function handleLogBuy(event: LogBuy): void {
       ? patron.tokens.concat([wildcard.id])
       : patron.tokens;
 
-  let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   if (patronOld.id != "NO_OWNER") {
     patronOld.availableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
@@ -256,6 +318,25 @@ export function handleLogBuy(event: LogBuy): void {
   );
   eventCounter.buyEvents = eventCounter.buyEvents.concat([buyEvent.id]);
   eventCounter.save();
+
+  // Phase 3: set+save values.
+
+  patron.lastUpdated = timePatronLastUpdated;
+  patron.totalTimeHeld = newPatronTotalTimeHeld;
+  patron.tokens = newPatronTokenArray;
+  patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
+  patron.totalContributed = newPatronTotalContributed;
+  patron.save();
+
+  patronOld.lastUpdated = timePatronOldLastUpdated;
+  patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
+  patronOld.tokens = oldPatronTokenArray;
+  patronOld.patronTokenCostScaledNumerator = oldPatronTokenCostScaledNumerator;
+  patronOld.totalContributed = oldPatronTotalContributed;
+  patronOld.save();
+
+  wildcard.owner = ownerString;
+  wildcard.save();
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
