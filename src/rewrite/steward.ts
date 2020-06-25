@@ -179,6 +179,7 @@ export function handleLogBuyVitalikLegacy(event: LogBuyLegacy): void {
   wildcard.save();
 }
 
+// This has been replicated and can be removed.
 export function handleLogBuy(event: LogBuy): void {
   // This is a hack, but after spending 4 hours trying to work out why the
   //    "0x3ea1ecb8775a37fb797bb79f6c419176f15e35d4" wildcards address is
