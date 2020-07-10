@@ -14,10 +14,12 @@ import {
   Steward,
   CollectLoyalty,
   ArtistCommission,
+  UpgradeToV3,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
 import * as V1 from "./v1/steward";
 import * as V2 from "./v2/steward";
+import * as V3 from "./v3/steward";
 import * as NEW from "./rewrite/steward";
 
 // NOTE: Events labled with the latest version of the contracts (eg V1) will be the only events that will be called.
@@ -90,4 +92,12 @@ export function handleCollectLoyaltyV3(event: CollectLoyalty): void {
 }
 export function handleArtistCommission(event: ArtistCommission): void {
   // TODO
+}
+export function handleUpgradeToV3(event: UpgradeToV3): void {
+  log.warning("Outside - UpgradeToV3 was called!!! BLOCK - {}; HASH - {}.", [
+    event.block.number.toString(),
+    event.block.hash.toHexString(),
+  ]);
+
+  V3.handleUpgradeToV3(event);
 }

@@ -333,6 +333,8 @@ export function handleLogCollection(event: LogCollection): void {
 
   wildcard.totalCollected = steward.totalCollected();
 
+  wildcard.save();
+
   // globalState.totalCollected = globalState.totalCollected.plus(wildcard.totalCollected)
   // globalState.save()
 }

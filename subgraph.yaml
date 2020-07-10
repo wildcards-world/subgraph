@@ -27,6 +27,7 @@ dataSources:
         - RemainingDepositUpdate
         - CollectPatronage
         - CollectLoyalty
+        - UpgradeToV3
       abis:
         - name: Steward
           file: ./abis/Steward.json
@@ -63,6 +64,9 @@ dataSources:
           handler: handleAddTokenV2
         - event: CollectLoyalty(indexed uint256,indexed address,uint256)
           handler: handleCollectLoyalty
+        # v3 events
+        - event: UpgradeToV3()
+          handler: handleUpgradeToV3
       file: ./src/steward.ts
 
   - kind: ethereum/contract

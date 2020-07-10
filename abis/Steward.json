@@ -26,6 +26,12 @@
   },
   {
     "anonymous": false,
+    "inputs": [],
+    "name": "UpgradeToV3",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
     "inputs": [
       {
         "indexed": true,

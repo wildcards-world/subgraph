@@ -9,6 +9,7 @@ type EventCounter @entity {
 
 type Global @entity {
   id: ID! # will just be '1' since only one global namespace
+  version: BigInt! # NOTE: this will say version 0 for version 0-2, after v3 it will always be correct.
   totalCollected: BigInt!
   totalCollectedAccurate: BigInt!
   timeLastCollected: BigInt!

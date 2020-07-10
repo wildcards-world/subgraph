@@ -550,6 +550,7 @@ export function handleAddToken(event: AddToken): void {
   // // `null` checks allow to create entities on demand
   if (globalState == null) {
     globalState = new Global("1");
+    globalState.version = BigInt.fromI32(0);
     globalState.timeLastCollected = txTimestamp;
     globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
     globalState.totalCollectedAccurate = globalState.totalCollected;
