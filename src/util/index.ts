@@ -93,6 +93,21 @@ export function getForeclosureTimeSafe(
   }
 }
 
+export function initialiseNoOwnerPatronIfNull(): Patron {
+  let patron = new Patron("NO_OWNER");
+  patron.address = ZERO_ADDRESS;
+  patron.lastUpdated = BigInt.fromI32(0);
+  patron.availableDeposit = BigInt.fromI32(0);
+  patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+  patron.foreclosureTime = BigInt.fromI32(0);
+  patron.totalContributed = BigInt.fromI32(0);
+  patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.tokens = [];
+  patron.previouslyOwnedTokens = [];
+  patron.save();
+  return patron;
+}
+
 export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
@@ -255,6 +270,7 @@ export function handleAddTokenUtil(
 ): void {
   let tokenAddress = steward.assetToken();
   let erc721 = Token.bind(tokenAddress);
+  log.warning("token id - {}", [tokenId.toString()]);
 
   let tokenInfo = erc721.tokenURI(tokenId);
 
@@ -275,7 +291,7 @@ export function handleAddTokenUtil(
 
   let patron = Patron.load("NO_OWNER");
   if (patron == null) {
-    log.critical("This should definitely exist", []);
+    patron = initialiseNoOwnerPatronIfNull();
   }
 
   wildcard.price = price.id;
