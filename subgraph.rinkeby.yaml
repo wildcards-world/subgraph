@@ -6,7 +6,7 @@ dataSources:
     name: Steward
     network: rinkeby
     source:
-      address: "0xdC43693cDCdB669C0df9E6a4d9c7a0854640DB4D"
+      address: "0x229Cb219F056A9097b2744594Bc37597380854E8"
       abi: Steward
       startBlock: 6831416
     mapping:
@@ -78,7 +78,7 @@ dataSources:
   #   name: Token
   #   network: rinkeby
   #   source:
-  #     address: "0x6D1b3C168AF3F027A4D69532bE2DB1C95a65cb60"
+  #     address: "0x73d3e04eFA1F26861aa80D4b933484Ec2DbDF410"
   #     abi: Token
   #     startBlock: 6810838
   #   mapping:
