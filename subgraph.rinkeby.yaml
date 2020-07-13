@@ -6,9 +6,9 @@ dataSources:
     name: Steward
     network: rinkeby
     source:
-      address: "0x394D401eDBC651D62957E04B38B3aFf5c2B1984D"
+      address: "0xdC43693cDCdB669C0df9E6a4d9c7a0854640DB4D"
       abi: Steward
-      startBlock: 6810838
+      startBlock: 6831416
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

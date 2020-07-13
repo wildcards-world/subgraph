@@ -26,48 +26,61 @@ import * as NEW from "./rewrite/steward";
 //       The rest of the events need to be there to make sure that the graph can do a full sync of the history.
 //       Thus this is just an interface file with no logic in it.
 export function handleLogBuy(event: LogBuy): void {
+  log.warning("handle log by! {}", [event.block.hash.toHexString()]);
   V0.handleLogBuy(event);
   NEW.handleLogBuy(event);
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
+  log.warning("handle log price change! {}", [event.block.hash.toHexString()]);
   V0.handleLogPriceChange(event);
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
+  log.warning("handle log foreclosure! {}", [event.block.hash.toHexString()]);
   V0.handleLogForeclosure(event);
 }
 
 export function handleLogCollection(event: LogCollection): void {
+  log.warning("handle log collection! {}", [event.block.hash.toHexString()]);
   V0.handleLogCollection(event);
 }
 
 export function handleLogRemainingDepositUpdate(
   event: LogRemainingDepositUpdate
 ): void {
+  log.warning("handle log remaining deposit! {}", [
+    event.block.hash.toHexString(),
+  ]);
   V0.handleLogRemainingDepositUpdate(event);
 }
 
 export function handleAddToken(event: AddToken): void {
+  log.warning("handle add token (old)! {}", [event.block.hash.toHexString()]);
   V1.handleAddToken(event);
 }
 
 export function handleBuy(event: Buy): void {
+  log.warning("handle buy! {}", [event.block.hash.toHexString()]);
   V1.handleBuy(event);
   NEW.handleBuy(event);
 }
 export function handlePriceChange(event: PriceChange): void {
+  log.warning("handle price change! {}", [event.block.hash.toHexString()]);
   V1.handlePriceChange(event);
 }
 export function handleForeclosure(event: Foreclosure): void {
+  log.warning("handle foreclosure! {}", [event.block.hash.toHexString()]);
   V1.handleForeclosure(event);
 }
 export function handleRemainingDepositUpdate(
   event: RemainingDepositUpdate
 ): void {
+  log.warning("remaining deposit update! {}", [event.block.hash.toHexString()]);
   V1.handleRemainingDepositUpdate(event);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
+  log.warning("collect patronage! {}", [event.block.hash.toHexString()]);
   V1.handleCollectPatronage(event);
   NEW.genericUpdateTimeHeld(
     event.params.patron,
@@ -77,10 +90,12 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   );
 }
 export function handleAddTokenV2(event: AddToken): void {
+  log.warning("Add new token! {}", [event.transaction.hash.toHexString()]);
   V2.handleAddToken(event);
 }
 
 export function handleCollectLoyalty(event: CollectLoyalty): void {
+  log.warning("Collect loyalty! {}", [event.block.hash.toHexString()]);
   NEW.handleCollectLoyalty(event);
 }
 
