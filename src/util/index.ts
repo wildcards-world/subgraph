@@ -335,6 +335,26 @@ export function getTokenBalanceWithSteward(
   return getTokenBalance(user, loyaltyToken);
 }
 
+function newUpdateAllOfPatronsTokensLastUpdated(
+  steward: Steward,
+  tokenId: String
+;  ): void {
+    // load what version we are in (through global state)
+    let globalState = Global.load("1");
+    // TODO - get this from the erc721 token rather.
+     
+
+  // execure correct function based on on version.
+  // if version < 3
+  // if(globalState.version < 3){
+    
+  // }else{
+    
+  // }
+
+  // else if ()
+}
+
 export function updateAllOfPatronsTokensLastUpdated(
   patron: Patron | null,
   steward: Steward,
@@ -362,6 +382,12 @@ export function isVitalik(tokenId: BigInt): boolean {
   return tokenId.equals(BigInt.fromI32(42));
 }
 
+export function safeGetTotalCollected(
+  steward: Steward,
+  tokenId: BigInt
+): BigInt {
+  return BigInt.fromI32(5);
+}
 /*
 This function needs to be called in the following places:
 buy
@@ -374,11 +400,11 @@ export function getTotalCollectedForWildcard(
   let totalCollected: BigInt;
   if (isVitalik(tokenId)) {
     // Include the patronage from the legacy vitalik contract.
-    totalCollected = steward
-      .totalCollected(tokenId)
-      .plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
+    totalCollected = safeGetTotalCollected(steward, tokenId).plus(
+      AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT
+    );
   } else {
-    totalCollected = steward.totalCollected(tokenId);
+    totalCollected = safeGetTotalCollected(steward, tokenId);
   }
 
   return totalCollected;

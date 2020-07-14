@@ -34,6 +34,8 @@ dataSources:
         - name: Token
           file: ./abis/Token.json
       eventHandlers:
+        - event: UpgradeToV3()
+          handler: handleUpgradeToV3
         # v0 events
         - event: LogBuy(indexed address,indexed uint256)
           handler: handleLogBuy
@@ -71,8 +73,6 @@ dataSources:
         #   handler: handleCollectLoyaltyV3
         # - event: ArtistCommission(uint256 indexed,address,uint256)
         #   handler: handleArtistCommission
-        - event: UpgradeToV3()
-          handler: handleUpgradeToV3
       file: ./src/steward.ts
   # - kind: ethereum/contract
   #   name: Token

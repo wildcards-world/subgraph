@@ -82,6 +82,9 @@ export function handleRemainingDepositUpdate(
 export function handleCollectPatronage(event: CollectPatronage): void {
   log.warning("collect patronage! {}", [event.block.hash.toHexString()]);
   V1.handleCollectPatronage(event);
+  log.warning("THIS WON'T RUN IF IT FAILS! {}", [
+    event.block.hash.toHexString(),
+  ]);
   NEW.genericUpdateTimeHeld(
     event.params.patron,
     event.block.timestamp,
