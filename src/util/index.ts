@@ -270,7 +270,6 @@ export function handleAddTokenUtil(
 ): void {
   let tokenAddress = steward.assetToken();
   let erc721 = Token.bind(tokenAddress);
-  log.warning("token id - {}", [tokenId.toString()]);
 
   let tokenInfo = erc721.tokenURI(tokenId);
 
@@ -337,22 +336,20 @@ export function getTokenBalanceWithSteward(
 
 function newUpdateAllOfPatronsTokensLastUpdated(
   steward: Steward,
-  tokenId: String
-;  ): void {
-    // load what version we are in (through global state)
-    let globalState = Global.load("1");
-    // TODO - get this from the erc721 token rather.
-     
+  tokenId: BigInt
+): BigInt {
+  // load what version we are in (through global state)
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+  // TODO - get this from the erc721 token rather.
+  let wildcard = Wildcard.load(tokenId.toString());
 
   // execure correct function based on on version.
-  // if version < 3
-  // if(globalState.version < 3){
-    
-  // }else{
-    
-  // }
-
-  // else if ()
+  if (currentVersion.lt(BigInt.fromI32(3))) {
+    return steward.timeLastCollected(tokenId);
+  } else {
+    return steward.timeLastCollectedPatron(Address.fromString(wildcard.owner));
+  }
 }
 
 export function updateAllOfPatronsTokensLastUpdated(
@@ -372,7 +369,13 @@ export function updateAllOfPatronsTokensLastUpdated(
 
     let wildcard = Wildcard.load(wildcardId);
 
-    wildcard.timeCollected = steward.timeLastCollected(wildcard.tokenId);
+    log.warning("before...", []);
+    wildcard.timeCollected = newUpdateAllOfPatronsTokensLastUpdated(
+      steward,
+      wildcard.tokenId
+    );
+
+    log.warning("LETS CELEBRATE THAT WE CAN END THE STREAM", []);
 
     wildcard.save();
   }
@@ -384,27 +387,48 @@ export function isVitalik(tokenId: BigInt): boolean {
 
 export function safeGetTotalCollected(
   steward: Steward,
-  tokenId: BigInt
+  tokenId: BigInt,
+  timeSinceLastCollection: BigInt
 ): BigInt {
-  return BigInt.fromI32(5);
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
+  if (currentVersion.lt(BigInt.fromI32(3))) {
+    return steward.totalCollected(tokenId);
+  } else {
+    let wildcard = Wildcard.load(tokenId.toString());
+    // TODO: unfortunately this is being written to 'just' work and mathematical rigor is likely being lost.
+    let newlyCollected = timeSinceLastCollection
+      .times(wildcard.patronageNumeratorPriceScaled)
+      .div(GLOBAL_PATRONAGE_DENOMINATOR);
+    return wildcard.totalCollected.plus(newlyCollected);
+  }
 }
+
 /*
-This function needs to be called in the following places:
-buy
-collection 
+  This function needs to be called in the following places:
+  buy
+  collection 
 */
 export function getTotalCollectedForWildcard(
   steward: Steward,
-  tokenId: BigInt
+  tokenId: BigInt,
+  timeSinceLastCollection: BigInt
 ): BigInt {
   let totalCollected: BigInt;
   if (isVitalik(tokenId)) {
     // Include the patronage from the legacy vitalik contract.
-    totalCollected = safeGetTotalCollected(steward, tokenId).plus(
-      AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT
-    );
+    totalCollected = safeGetTotalCollected(
+      steward,
+      tokenId,
+      timeSinceLastCollection
+    ).plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
   } else {
-    totalCollected = safeGetTotalCollected(steward, tokenId);
+    totalCollected = safeGetTotalCollected(
+      steward,
+      tokenId,
+      timeSinceLastCollection
+    );
   }
 
   return totalCollected;

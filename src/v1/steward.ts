@@ -298,7 +298,8 @@ export function handleBuy(event: Buy): void {
 
   wildcard.totalCollected = getTotalCollectedForWildcard(
     steward,
-    tokenIdBigInt
+    tokenIdBigInt,
+    timeSinceLastUpdateOldPatron
   );
   wildcard.timeCollected = txTimestamp;
 
@@ -538,7 +539,8 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   if (wildcard != null) {
     wildcard.totalCollected = getTotalCollectedForWildcard(
       steward,
-      collectedToken
+      collectedToken,
+      event.block.timestamp.minus(wildcard.timeCollected)
     );
     wildcard.timeCollected = txTimestamp;
     wildcard.save();

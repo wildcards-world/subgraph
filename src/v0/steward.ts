@@ -474,7 +474,8 @@ export function handleLogCollection(event: LogCollection): void {
   }
   wildcard.totalCollected = getTotalCollectedForWildcard(
     steward,
-    tokenIdBigInt
+    tokenIdBigInt,
+    event.block.timestamp.minus(wildcard.timeCollected)
   );
   wildcard.timeCollected = txTimestamp;
   wildcard.save();

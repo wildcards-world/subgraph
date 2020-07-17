@@ -112,10 +112,5 @@ export function handleArtistCommission(event: ArtistCommission): void {
   // TODO
 }
 export function handleUpgradeToV3(event: UpgradeToV3): void {
-  log.warning("Outside - UpgradeToV3 was called!!! BLOCK - {}; HASH - {}.", [
-    event.block.number.toString(),
-    event.block.hash.toHexString(),
-  ]);
-
   V3.handleUpgradeToV3(event);
 }

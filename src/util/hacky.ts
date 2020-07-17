@@ -1,6 +1,7 @@
 import { AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT } from "../CONSTANTS";
 import { Steward } from "../../generated/Steward/Steward";
 import { BigInt } from "@graphprotocol/graph-ts";
+import { Global } from "../../generated/schema";
 
 export function getTotalCollectedAccurate(steward: Steward): BigInt {
   return AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT.plus(
@@ -29,6 +30,9 @@ export function getTotalCollectedAccurate(steward: Steward): BigInt {
     .plus(steward.totalCollected(BigInt.fromI32(42)));
 }
 export function getTotalOwedAccurate(steward: Steward): BigInt {
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
   return steward
     .patronageOwed(BigInt.fromI32(0))
     .plus(steward.patronageOwed(BigInt.fromI32(1)))

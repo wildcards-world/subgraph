@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0x229Cb219F056A9097b2744594Bc37597380854E8"
       abi: Steward
-      startBlock: 6831416
+      startBlock: 6845273
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -34,8 +34,6 @@ dataSources:
         - name: Token
           file: ./abis/Token.json
       eventHandlers:
-        - event: UpgradeToV3()
-          handler: handleUpgradeToV3
         # v0 events
         - event: LogBuy(indexed address,indexed uint256)
           handler: handleLogBuy
@@ -72,6 +70,8 @@ dataSources:
         # - event: CollectLoyalty(indexed address, uint256)
         #   handler: handleCollectLoyaltyV3
         # - event: ArtistCommission(uint256 indexed,address,uint256)
+        - event: UpgradeToV3()
+          handler: handleUpgradeToV3
         #   handler: handleArtistCommission
       file: ./src/steward.ts
   # - kind: ethereum/contract
@@ -80,7 +80,7 @@ dataSources:
   #   source:
   #     address: "0x73d3e04eFA1F26861aa80D4b933484Ec2DbDF410"
   #     abi: Token
-  #     startBlock: 6810838
+  #     startBlock: 6845273udo
   #   mapping:
   #     kind: ethereum/events
   #     apiVersion: 0.0.4

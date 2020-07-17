@@ -488,17 +488,12 @@ export function genericUpdateTimeHeld(
 }
 
 export function handleCollectLoyalty(event: CollectLoyalty): void {
-  log.warning("1", []);
   // Phase 1: reading and getting values.
   let collectedLoyaltyTokens = event.params.timeSinceLastMint;
-  log.warning("2", []);
   let patronAddress = event.params.patron;
-  log.warning("3 -- patron {}", [patronAddress.toHexString()]);
   // let tokenId = event.params.tokenId;
   let patron = PatronNew.load(patronAddress.toHexString());
-  log.warning("4 -- patron {}", [patronAddress.toHexString()]);
   let patronLegacy = Patron.load(patronAddress.toHexString());
-  log.warning("5 -- patron {}", [patronAddress.toHexString()]);
   // let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
   //   // NOTE: the value on the `PatronNew` for tokens is currently inaccurate.
   //   patronLegacy.tokens.length
@@ -506,18 +501,14 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   let steward = Steward.bind(event.address);
   let ownedTokens = patronLegacy.tokens;
   // var stewardAddress = event.address;
-  log.warning("6 -- patron {}", [patronAddress.toHexString()]);
   let foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
-  log.warning("7 -- patron {}", [patronAddress.toHexString()]);
   let txTimestamp = event.block.timestamp;
-  log.warning("8 -- patron {}", [patronAddress.toHexString()]);
   // let timeSinceLastUpdatePatron = patron.lastUpdated;
 
   // Phase 2: calculate new values.
   let newTotalCollectedLoyaltyTokens = patron.totalLoyaltyTokens.plus(
     collectedLoyaltyTokens.times(patronageTokenPerSecond)
   );
-  log.warning("9 -- patron {}", [patronAddress.toHexString()]);
 
   // let currentBalance = getTokenBalance(
   //   patronAddress,
@@ -527,25 +518,18 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   // // TODO: Investigate why the bollow line works, but line 499 doesn't.
   // var settlementTime: BigInt = txTimestamp;
   var settlementTime: BigInt = minBigInt(foreclosureTime, txTimestamp);
-  log.warning("10 -- patron {}", [patronAddress.toHexString()]);
 
   // let totalUnredeemed = BigInt.fromI32(0);
   let totalUnredeemed = BigInt.fromI32(0);
   for (let i = 0, len = ownedTokens.length; i < len; i++) {
     let currentTokenIdString: string = ownedTokens[i];
-    log.warning("11 -- {}", [currentTokenIdString]);
     // let currentTokenIdString: string = patronLegacy.tokens[i];
     let tokenId = WildcardNew.load(currentTokenIdString).tokenId;
-    log.warning("12 -- {}", [currentTokenIdString]);
     // let localSteward = Steward.bind(stewardAddress);
-    log.warning("LOADED STEWARD -- {}", [currentTokenIdString]);
     let timeTokenWasLastUpdated = steward.timeLastCollected(tokenId);
-    log.warning("13 -- {}", [currentTokenIdString]);
     let timeTokenHeldWithoutSettlement = settlementTime.minus(
       timeTokenWasLastUpdated
     );
-    log.warning("14 -- {}", [currentTokenIdString]);
-    log.warning("14 -- patron {}", [patronAddress.toHexString()]);
 
     // var totalLoyaltyTokenDueByToken: BigInt = timeTokenHeldWithoutSettlement.times(
     //   patronageTokenPerSecond
@@ -584,11 +568,9 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   //   },
   //   BigInt.fromI32(0)
   // );
-  log.warning("15 -- patron {}", [patronAddress.toHexString()]);
   let newTotalLoyaltyTokensIncludingUnRedeemed = newTotalCollectedLoyaltyTokens.plus(
     totalUnredeemed
   );
-  log.warning("16 -- patron {}", [patronAddress.toHexString()]);
 
   // Alturnate Calculation (that returns a different answer XD)
   // let timeSinceLastPatronCollection = txTimestamp.minus(
@@ -606,10 +588,7 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
 
   // Phase 3: set+save values.
   patron.totalLoyaltyTokens = newTotalCollectedLoyaltyTokens;
-  log.warning("18 -- patron {}", [patronAddress.toHexString()]);
   patron.totalLoyaltyTokensIncludingUnRedeemed = newTotalLoyaltyTokensIncludingUnRedeemed;
-  log.warning("19 -- patron {}", [patronAddress.toHexString()]);
 
   patron.save();
-  log.warning("20 -- patron {}", [patronAddress.toHexString()]);
 }
