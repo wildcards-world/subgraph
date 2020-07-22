@@ -158,7 +158,7 @@ export function handleBuy(event: Buy): void {
       : BigInt.fromI32(0);
 
   let newPatronTotalContributed =
-    patronOld.id != "NO_OWNER"
+    patron.id != "NO_OWNER"
       ? patron.totalContributed.plus(
           patron.patronTokenCostScaledNumerator
             .times(timeSinceLastUpdatePatron)
@@ -166,20 +166,22 @@ export function handleBuy(event: Buy): void {
             .div(NUM_SECONDS_IN_YEAR_BIG_INT)
         )
       : BigInt.fromI32(0);
-  let previousPatron = steward.totalPatronOwnedTokenCost(owner);
+  let newPatronTotalPatronOwnedCost = steward.totalPatronOwnedTokenCost(owner);
+
   let previousPatronTotalContributed =
     patronOld.id != "NO_OWNER"
       ? patronOld.totalContributed.plus(
           patronOld.patronTokenCostScaledNumerator
-            .times(timeSinceLastUpdatePatron)
+            .times(timeSinceLastUpdatePreviousPatron)
             .div(GLOBAL_PATRONAGE_DENOMINATOR)
             .div(NUM_SECONDS_IN_YEAR_BIG_INT)
         )
       : BigInt.fromI32(0);
 
-  let oldPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    owner
-  );
+  let oldPatronTokenCostScaledNumerator =
+    patronOld.id != "NO_OWNER"
+      ? steward.totalPatronOwnedTokenCost(patronOld.address as Address)
+      : BigInt.fromI32(0); // error
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
@@ -351,7 +353,7 @@ export function handleBuy(event: Buy): void {
   patron.previouslyOwnedTokens = patronPreviouslyOwnedTokens;
   patron.tokens = patronTokens;
   patron.availableDeposit = patronAvailableDeposit;
-  patron.patronTokenCostScaledNumerator = previousPatron;
+  patron.patronTokenCostScaledNumerator = newPatronTotalPatronOwnedCost;
   patron.foreclosureTime = patronForeclosureTime;
   patron.totalContributed = patronTotalContributed;
   patron.totalTimeHeld = patronTotalTimeHeld;
