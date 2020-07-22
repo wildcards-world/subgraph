@@ -99,6 +99,9 @@ export function handleBuy(event: Buy): void {
     patron.previouslyOwnedTokens = [];
     patron.lastUpdated = txTimestamp;
     patron.foreclosureTime = txTimestamp;
+    patron.totalLoyaltyTokens = BigInt.fromI32(0);
+    patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+    patron.currentBalance = BigInt.fromI32(0);
   }
 
   // Phase 2: calculate new values.

@@ -104,6 +104,9 @@ export function initialiseNoOwnerPatronIfNull(): Patron {
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
   patron.previouslyOwnedTokens = [];
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   patron.save();
   return patron;
 }
@@ -126,6 +129,9 @@ export function initialiseDefaultPatronIfNull(
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
   patron.previouslyOwnedTokens = [];
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   patron.save();
   return patron;
 }

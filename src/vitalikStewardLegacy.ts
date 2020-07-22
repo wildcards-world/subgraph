@@ -21,7 +21,6 @@ import {
   VITALIK_PATRONAGE_NUMERATOR,
 } from "./CONSTANTS";
 import { minBigInt, removeFromArrayAtIndex } from "./util";
-import { handleLogBuyVitalikLegacy } from "./rewrite/steward";
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
   return blockNumber.gt(BigInt.fromI32(9077271)); // block 9077272 is the block that Vitalik was "exit"ed from the old contract.
@@ -66,6 +65,9 @@ export function handleLogBuy(event: LogBuy): void {
     patron.tokens = [];
     patron.previouslyOwnedTokens = [];
     patron.lastUpdated = txTimestamp;
+    patron.totalLoyaltyTokens = BigInt.fromI32(0);
+    patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+    patron.currentBalance = BigInt.fromI32(0);
   }
 
   let steward = VitalikStewardLegacy.bind(event.address);

@@ -28,7 +28,6 @@ import * as NEW from "./rewrite/steward";
 export function handleLogBuy(event: LogBuy): void {
   log.warning("handle log by! {}", [event.block.hash.toHexString()]);
   V0.handleLogBuy(event);
-  NEW.handleLogBuy(event);
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
@@ -63,7 +62,6 @@ export function handleAddToken(event: AddToken): void {
 export function handleBuy(event: Buy): void {
   log.warning("handle buy! {}", [event.block.hash.toHexString()]);
   V1.handleBuy(event);
-  NEW.handleBuy(event);
 }
 export function handlePriceChange(event: PriceChange): void {
   log.warning("handle price change! {}", [event.block.hash.toHexString()]);
@@ -82,9 +80,7 @@ export function handleRemainingDepositUpdate(
 export function handleCollectPatronage(event: CollectPatronage): void {
   log.warning("collect patronage! {}", [event.block.hash.toHexString()]);
   V1.handleCollectPatronage(event);
-  log.warning("THIS WON'T RUN IF IT FAILS! {}", [
-    event.block.hash.toHexString(),
-  ]);
+
   NEW.genericUpdateTimeHeld(
     event.params.patron,
     event.block.timestamp,
@@ -99,7 +95,7 @@ export function handleAddTokenV2(event: AddToken): void {
 
 export function handleCollectLoyalty(event: CollectLoyalty): void {
   log.warning("Collect loyalty! {}", [event.block.hash.toHexString()]);
-  NEW.handleCollectLoyalty(event);
+  V3.handleCollectLoyalty(event);
 }
 
 export function handleAddTokenV3(event: AddToken): void {

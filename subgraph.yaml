@@ -10,6 +10,7 @@ dataSources:
     source:
       address: "0x6D47CF86F6A490c6410fC082Fd1Ad29CF61492d0"
       abi: Steward
+      startBlock: 8752677
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -75,6 +76,7 @@ dataSources:
     source:
       address: "0x6aD0f855c97eb80665F2D0C7d8204895e052C373"
       abi: Token
+      startBlock: 8752679
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -107,6 +109,7 @@ dataSources:
     source:
       address: "0x803445597c2a42114A527b0b6191936bC61b492f"
       abi: VitalikStewardLegacy
+      startBlock: 8041107
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -136,6 +139,7 @@ dataSources:
     source:
       address: "0x231570F1ea43DE41adb3Ee04188CE18c8d10dEED"
       abi: VitalikTokenLegacy
+      startBlock: 8041105
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -165,6 +169,7 @@ dataSources:
     source:
       address: "0x773c75c2277eD3e402BDEfd28Ec3b51A3AfbD8a4"
       abi: LoyaltyToken
+      startBlock: 9766767
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -189,6 +194,7 @@ dataSources:
     source:
       address: "0x03e051b7e42480Cc9D54F1caB525D2Fea2cF4d83" #this is wrong doesn't exist yet
       abi: Dao
+      startBlock: 10012315
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

@@ -69,6 +69,9 @@ type Patron @entity {
   # deposit: BigInt!
   totalContributed: BigInt!
   totalTimeHeld: BigInt!
+  totalLoyaltyTokens: BigInt!
+  totalLoyaltyTokensIncludingUnRedeemed: BigInt!
+  currentBalance: BigInt!
 }
 
 type BuyEvent @entity {
@@ -97,39 +100,6 @@ type ChangePriceEvent @entity {
 
 # Types for rewrite. Plan is to merge/replace the old entities when rewrite works.
 
-type PatronNew @entity {
-  id: ID! # Just the address
-  address: Bytes! # address
-  lastUpdated: BigInt!
-  # previouslyOwnedTokens: [Wildcard!]!
-  tokens: [WildcardNew!]!
-  # tokens: [Wildcard!]!
-  # availableDeposit: BigInt!
-  patronTokenCostScaledNumerator: BigInt!
-  # foreclosureTime: BigInt!
-  # deposit: BigInt!
-  totalContributed: BigInt!
-  totalTimeHeld: BigInt!
-  totalLoyaltyTokens: BigInt!
-  totalLoyaltyTokensIncludingUnRedeemed: BigInt!
-  currentBalance: BigInt!
-}
-
-type WildcardNew @entity {
-  id: ID! # Just the tokenId
-  tokenId: BigInt!
-  # price: Price!
-  owner: PatronNew! # address
-  # patronageNumerator: BigInt!
-  # patronageNumeratorPriceScaled: BigInt!
-  # timeAcquired: BigInt!
-  # previousOwners: [PreviousPatron!]
-  # priceHistory: [Price!]
-  # tokenUri: TokenUri!
-  # totalCollected: BigInt!
-  # timeCollected: BigInt!
-}
-
 type VoteStatus @entity {
   id: ID! # <iteration>-<projectId>
   projectVote: BigInt!
@@ -137,7 +107,7 @@ type VoteStatus @entity {
 type Vote @entity {
   id: ID! # <iteration>-<projectId>-<address>
   voteAmount: BigInt!
-  voter: PatronNew!
+  voter: Patron!
 }
 type Iteration @entity {
   id: ID! # the iteration number
