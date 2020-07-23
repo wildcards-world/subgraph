@@ -240,9 +240,13 @@ export function handleLogBuy(event: LogBuy): void {
 
   let globalState = Global.load("1");
 
-  let globalStateTotalCollectedAccurate = getTotalCollectedAccurate(steward);
   let globalStateTotalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
+  );
+  let globalStateTotalCollectedAccurate = getTotalCollectedAccurate(
+    steward,
+    globalStateTotalTokenCostScaledNumeratorAccurate,
+    txTimestamp
   );
   // let previousPrice = Price.load(wildcard.price);
   // globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
@@ -483,10 +487,15 @@ export function handleLogCollection(event: LogCollection): void {
   globalState.totalCollected = globalState.totalCollected.plus(
     event.params.collected
   );
-  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
-  globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
+  let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
   );
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(
+    steward,
+    totalTokenCostScaledNumeratorAccurate,
+    txTimestamp
+  );
+  globalState.totalTokenCostScaledNumeratorAccurate = totalTokenCostScaledNumeratorAccurate;
   let totalOwed = getTotalOwedAccurate(steward);
   globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
     totalOwed

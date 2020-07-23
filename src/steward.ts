@@ -1,4 +1,4 @@
-import { log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import {
   LogBuy,
   LogPriceChange,
@@ -21,6 +21,7 @@ import * as V1 from "./v1/steward";
 import * as V2 from "./v2/steward";
 import * as V3 from "./v3/steward";
 import * as NEW from "./rewrite/steward";
+import { Global } from "../generated/schema";
 
 // NOTE: Events labled with the latest version of the contracts (eg V1) will be the only events that will be called.
 //       The rest of the events need to be there to make sure that the graph can do a full sync of the history.
@@ -77,16 +78,51 @@ export function handleRemainingDepositUpdate(
   log.warning("remaining deposit update! {}", [event.block.hash.toHexString()]);
   V1.handleRemainingDepositUpdate(event);
 }
-export function handleCollectPatronage(event: CollectPatronage): void {
-  log.warning("collect patronage! {}", [event.block.hash.toHexString()]);
-  V1.handleCollectPatronage(event);
 
-  NEW.genericUpdateTimeHeld(
-    event.params.patron,
-    event.block.timestamp,
-    Steward.bind(event.address),
-    event.params.tokenId
+export function handleCollectPatronage(event: CollectPatronage): void {
+  log.warning(
+    "Hex string {} == 0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165??",
+    [event.transaction.hash.toHexString()]
   );
+
+  if (
+    event.transaction.hash.toHexString() ==
+    "0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165"
+  ) {
+    let globalState = Global.load("1");
+    if (globalState == null) {
+      log.critical("The global state is undefined!", []);
+    }
+
+    globalState.version = BigInt.fromI32(3);
+
+    globalState.save();
+    log.warning("YES - upgrading TO V3", []);
+    log.warning("YES - upgrading TO V3", []);
+    log.warning("YES - upgrading TO V3", []);
+    log.warning("YES - upgrading TO V3", []);
+    log.warning("YES - upgrading TO V3", []);
+    log.warning("YES - upgrading TO V3", []);
+  }
+
+  log.warning("BEFORE - collect patronage! {} --- did upgrade? {}", [
+    event.transaction.hash.toHexString(),
+    event.transaction.hash.toHexString() ==
+    "0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165"
+      ? "true"
+      : "false",
+  ]);
+  V1.handleCollectPatronage(event);
+  log.warning("AFTER - collect patronage! {}", [
+    event.transaction.hash.toHexString(),
+  ]);
+
+  // NEW.genericUpdateTimeHeld(
+  //   event.params.patron,
+  //   event.block.timestamp,
+  //   Steward.bind(event.address),
+  //   event.params.tokenId
+  // );
 }
 export function handleAddTokenV2(event: AddToken): void {
   log.warning("Add new token! {}", [event.transaction.hash.toHexString()]);

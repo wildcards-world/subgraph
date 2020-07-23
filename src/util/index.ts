@@ -49,28 +49,33 @@ export function removeFromArrayAtIndex(
 }
 
 export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
+  log.warning("GS 1", []);
   let globalState = Global.load("1");
-  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
-  globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
+  log.warning("GS 2", []);
+  let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
   );
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(
+    steward,
+    totalTokenCostScaledNumeratorAccurate,
+    txTimestamp
+  );
+  log.warning("GS 3", []);
+  log.warning("GS 4", []);
   let totalOwed = getTotalOwedAccurate(steward);
+  log.warning("GS 5", []);
   globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
     totalOwed
   );
+  log.warning("GS 6", []);
   // BUG!
   // This code below is inaccurate because the `timeLastCollected` isn't correct. Should have `timeLastCalculatedCollection` as separate variable
-  // globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
-  //   totalTokenCostScaledNumerator
-  //     .times(txTimestamp.minus(globalState.timeLastCollected))
-  //     .div(
-  //       steward
-  //         .patronageDenominator()
-  //         .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
-  //     )
-  // );
+
+  globalState.totalTokenCostScaledNumeratorAccurate = totalTokenCostScaledNumeratorAccurate;
   globalState.timeLastCollected = txTimestamp;
+  log.warning("GS 7", []);
   globalState.save();
+  log.warning("GS 8", []);
 }
 
 export function getForeclosureTimeSafe(
@@ -375,13 +380,10 @@ export function updateAllOfPatronsTokensLastUpdated(
 
     let wildcard = Wildcard.load(wildcardId);
 
-    log.warning("before...", []);
     wildcard.timeCollected = newUpdateAllOfPatronsTokensLastUpdated(
       steward,
       wildcard.tokenId
     );
-
-    log.warning("LETS CELEBRATE THAT WE CAN END THE STREAM", []);
 
     wildcard.save();
   }
