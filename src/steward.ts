@@ -80,11 +80,6 @@ export function handleRemainingDepositUpdate(
 }
 
 export function handleCollectPatronage(event: CollectPatronage): void {
-  log.warning(
-    "Hex string {} == 0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165??",
-    [event.transaction.hash.toHexString()]
-  );
-
   if (
     event.transaction.hash.toHexString() ==
     "0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165"
@@ -97,32 +92,16 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     globalState.version = BigInt.fromI32(3);
 
     globalState.save();
-    log.warning("YES - upgrading TO V3", []);
-    log.warning("YES - upgrading TO V3", []);
-    log.warning("YES - upgrading TO V3", []);
-    log.warning("YES - upgrading TO V3", []);
-    log.warning("YES - upgrading TO V3", []);
-    log.warning("YES - upgrading TO V3", []);
   }
 
-  log.warning("BEFORE - collect patronage! {} --- did upgrade? {}", [
-    event.transaction.hash.toHexString(),
-    event.transaction.hash.toHexString() ==
-    "0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165"
-      ? "true"
-      : "false",
-  ]);
   V1.handleCollectPatronage(event);
-  log.warning("AFTER - collect patronage! {}", [
-    event.transaction.hash.toHexString(),
-  ]);
 
-  // NEW.genericUpdateTimeHeld(
-  //   event.params.patron,
-  //   event.block.timestamp,
-  //   Steward.bind(event.address),
-  //   event.params.tokenId
-  // );
+  NEW.genericUpdateTimeHeld(
+    event.params.patron,
+    event.block.timestamp,
+    Steward.bind(event.address),
+    event.params.tokenId
+  );
 }
 export function handleAddTokenV2(event: AddToken): void {
   log.warning("Add new token! {}", [event.transaction.hash.toHexString()]);

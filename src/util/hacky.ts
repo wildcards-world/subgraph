@@ -4,7 +4,7 @@ import {
   NUM_SECONDS_IN_YEAR_BIG_INT,
 } from "../CONSTANTS";
 import { Steward } from "../../generated/Steward/Steward";
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import { Global } from "../../generated/schema";
 
 export function getTotalCollectedAccurate(
@@ -17,7 +17,7 @@ export function getTotalCollectedAccurate(
   let currentVersion = globalState.version;
 
   // execure correct function based on on version.
-  if (currentVersion.lt(BigInt.fromI32(3))) {
+  if (currentVersion.ge(BigInt.fromI32(3))) {
     return globalState.totalCollectedOrDueAccurate.plus(
       totalTokenCostScaledNumerator
         .times(txTimestamp.minus(globalState.timeLastCollected))
@@ -58,7 +58,7 @@ export function getTotalOwedAccurate(steward: Steward): BigInt {
   let currentVersion = globalState.version;
 
   // execure correct function based on on version.
-  if (currentVersion.lt(BigInt.fromI32(3))) {
+  if (currentVersion.ge(BigInt.fromI32(3))) {
     return BigInt.fromI32(0);
   } else {
     return steward

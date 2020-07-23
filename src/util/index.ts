@@ -55,6 +55,7 @@ export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
   let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward
   );
+  log.warning("GS 2.5", []);
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(
     steward,
     totalTokenCostScaledNumeratorAccurate,
