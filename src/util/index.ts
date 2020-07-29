@@ -31,6 +31,33 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
   }
 }
 
+export function getTokenContract(): Token {
+  let globalState = Global.load("1");
+  if (globalState == null) {
+    log.critical("Global state must be defined before using this function", []);
+  }
+  return Token.bind(globalState.erc20Address as Address);
+}
+
+export function timeLastCollectedWildcardSafe(
+  steward: Steward,
+  wildcardId: BigInt
+): BigInt {
+  // load what version we are in (through global state)
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
+  // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
+  // execure correct function based on on version.
+  if (currentVersion.ge(BigInt.fromI32(3))) {
+    let tokenContract = getTokenContract();
+    let currentOwner = tokenContract.ownerOf(wildcardId);
+    return steward.timeLastCollectedPatron(currentOwner);
+  } else {
+    return steward.timeLastCollected(wildcardId);
+  }
+}
+
 export function warnAndError(msg: string, args: Array<string>): void {
   log.warning(msg, args);
   log.critical(msg, args);
@@ -346,24 +373,6 @@ export function getTokenBalanceWithSteward(
   return getTokenBalance(user, loyaltyToken);
 }
 
-function newUpdateAllOfPatronsTokensLastUpdated(
-  steward: Steward,
-  tokenId: BigInt
-): BigInt {
-  // load what version we are in (through global state)
-  let globalState = Global.load("1");
-  let currentVersion = globalState.version;
-  // TODO - get this from the erc721 token rather.
-  let wildcard = Wildcard.load(tokenId.toString());
-
-  // execure correct function based on on version.
-  if (currentVersion.lt(BigInt.fromI32(3))) {
-    return steward.timeLastCollected(tokenId);
-  } else {
-    return steward.timeLastCollectedPatron(Address.fromString(wildcard.owner));
-  }
-}
-
 export function updateAllOfPatronsTokensLastUpdated(
   patron: Patron | null,
   steward: Steward,
@@ -381,7 +390,7 @@ export function updateAllOfPatronsTokensLastUpdated(
 
     let wildcard = Wildcard.load(wildcardId);
 
-    wildcard.timeCollected = newUpdateAllOfPatronsTokensLastUpdated(
+    wildcard.timeCollected = timeLastCollectedWildcardSafe(
       steward,
       wildcard.tokenId
     );

@@ -17,6 +17,8 @@ type Global @entity {
   totalCollectedOrDueAccurate: BigInt!
   # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
+  stewardAddress: Bytes!
+  erc20Address: Bytes!
 }
 
 type Wildcard @entity {

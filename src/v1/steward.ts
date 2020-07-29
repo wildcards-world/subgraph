@@ -39,6 +39,7 @@ import {
   removeFromArrayAtIndex,
   updateAllOfPatronsTokensLastUpdated,
   getTotalCollectedForWildcard,
+  timeLastCollectedWildcardSafe,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -84,7 +85,14 @@ export function handleBuy(event: Buy): void {
   wildcard.tokenId = tokenIdBigInt;
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
-  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  log.warning("Before time collected... {}", [
+    event.transaction.hash.toHexString(),
+  ]);
+  wildcard.timeCollected = timeLastCollectedWildcardSafe(
+    steward,
+    tokenIdBigInt
+  );
+  log.warning("Before time collected...", []);
 
   let previousTokenOwnerString = wildcard.owner;
 
@@ -385,7 +393,10 @@ export function handlePriceChange(event: PriceChange): void {
   let txTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
-  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  wildcard.timeCollected = timeLastCollectedWildcardSafe(
+    steward,
+    tokenIdBigInt
+  );
 
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [

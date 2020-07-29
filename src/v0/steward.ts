@@ -556,18 +556,11 @@ export function handleAddToken(event: AddToken): void {
 
   let globalState = Global.load("1");
 
-  // // Entities only exist after they have been saved to the store;
-  // // `null` checks allow to create entities on demand
   if (globalState == null) {
-    globalState = new Global("1");
-    globalState.version = BigInt.fromI32(0);
-    globalState.timeLastCollected = txTimestamp;
-    globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
-    globalState.totalCollectedAccurate = globalState.totalCollected;
-    // globalState.totalCollectedOrDue = globalState.totalCollected;
-    globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
-    // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
-    globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
+    log.critical("The global state should be defined", []);
+  }
+  if (globalState.stewardAddress.equals(ZERO_ADDRESS)) {
+    globalState.stewardAddress = event.address;
     globalState.save();
   }
 }

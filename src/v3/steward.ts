@@ -11,6 +11,7 @@ import {
   recognizeStateChange,
   getForeclosureTimeSafe,
   minBigInt,
+  timeLastCollectedWildcardSafe,
 } from "../util";
 import { patronageTokenPerSecond } from "../CONSTANTS";
 /*
@@ -79,7 +80,10 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
     // let currentTokenIdString: string = patronLegacy.tokens[i];
     let tokenId = Wildcard.load(currentTokenIdString).tokenId;
     // let localSteward = Steward.bind(stewardAddress);
-    let timeTokenWasLastUpdated = steward.timeLastCollected(tokenId);
+    let timeTokenWasLastUpdated = timeLastCollectedWildcardSafe(
+      steward,
+      tokenId
+    );
     let timeTokenHeldWithoutSettlement = settlementTime.minus(
       timeTokenWasLastUpdated
     );
