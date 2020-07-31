@@ -23,12 +23,17 @@ export function handleAddToken(event: AddToken): void {
     steward,
     txHashStr
   );
+
+  let eventParamsString = "['" + event.params.tokenId.toString()  + "', '" + event.params.patronageNumerator.toString()  + "', '" + event.params.tokenGenerationRate.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "handleAddToken",
-    // NOTE: leaving these null because they will be updated by the other tokens
+    eventParamsString,
     [],
     [],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    2
   );
 }

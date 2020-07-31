@@ -220,6 +220,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
   if (stateChange == null) {
     stateChange = new StateChange(txId);
     stateChange.txEventList = [];
+    stateChange.txEventParamList = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChanges = [];
 
@@ -237,13 +238,17 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
 
 export function recognizeStateChange(
   txHash: string,
-  changeType: string,
+  eventName: string,
+  eventParameters: string,
   changedPatrons: string[],
   changedWildcards: string[],
-  txTimestamp: BigInt
+  txTimestamp: BigInt,
+  txBlockNumber: BigInt,
+  contractVersion: i32
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
-  stateChange.txEventList = stateChange.txEventList.concat([changeType]);
+  stateChange.txEventList = stateChange.txEventList.concat([eventName]);
+  stateChange.txEventParamList = stateChange.txEventParamList.concat([eventParameters]);
 
   for (let i = 0, len = changedPatrons.length; i < len; i++) {
     stateChange.patronChanges =
@@ -260,6 +265,8 @@ export function recognizeStateChange(
   }
 
   stateChange.timestamp = txTimestamp;
+  stateChange.blockNumber = txBlockNumber;
+  stateChange.contractVersion = contractVersion;
   stateChange.save();
 }
 

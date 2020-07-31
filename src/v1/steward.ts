@@ -326,12 +326,17 @@ export function handleBuy(event: Buy): void {
   buyEvent.timestamp = txTimestamp;
   buyEvent.save();
 
+  let eventParamsString = "['" + tokenIdString  + "', '" + event.params.owner.toHexString()  + "', '" + event.params.price.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "Buy",
+    eventParamsString,
     [patronOld.id, patron.id],
     [wildcard.id],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
 
   let eventCounter = EventCounter.load("1");
@@ -450,12 +455,17 @@ export function handlePriceChange(event: PriceChange): void {
   priceChange.timestamp = txTimestamp;
   priceChange.save();
 
+  let eventParamsString = "['" + tokenIdString  + "', '" + event.params.newPrice.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "PriceChange",
+    eventParamsString,
     [patron.id],
     [wildcard.id],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
 
   let eventCounter = EventCounter.load("1");
@@ -488,13 +498,22 @@ export function handleForeclosure(event: Foreclosure): void {
     foreclosedPatron,
     txTimestamp
   );
+
+  let foreclosureTime = getForeclosureTimeSafe(steward, foreclosedPatron);
+
+  let eventParamsString = "['" + event.params.prevOwner.toHexString()  + "', '" + foreclosureTime.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "Foreclosure",
+    eventParamsString,
     [patronString],
     foreclosedTokens,
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
+
   updateGlobalState(steward, txTimestamp);
   updateForeclosedTokens(foreclosedPatron, steward);
 }
@@ -522,13 +541,20 @@ export function handleRemainingDepositUpdate(
   }
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+
+  let eventParamsString = "['" + event.params.tokenPatron.toHexString()  + "', '" + event.params.remainingDeposit.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "RemainingDepositUpdate",
+    eventParamsString,
     [patronString],
     [],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
+
   updateGlobalState(steward, txTimestamp);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
@@ -565,12 +591,19 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   }
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+
+  let eventParamsString = "['" + event.params.tokenId.toHexString()  + "', '" + event.params.patron.toHexString()  + "', '" + event.params.remainingDeposit.toString() + "', '" + event.params.amountReceived.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "CollectPatronage",
+    eventParamsString,
     [patronString],
     [collectedToken.toString()],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
+
   updateGlobalState(steward, txTimestamp);
 }

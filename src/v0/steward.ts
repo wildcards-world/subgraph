@@ -270,12 +270,17 @@ export function handleLogBuy(event: LogBuy): void {
   let wildcardOwner = patron.id;
   let wildcardTimeAcquired = txTimestamp;
 
+  let eventParamsString = "['" + tokenIdString  + "', '" + event.params.owner.toHexString()  + "', '" + event.params.price.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "Buy",
+    eventParamsString,
     [patronOld.id, patron.id],
     [wildcard.id],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    0
   );
 
   // Phase 3: set+save values.
