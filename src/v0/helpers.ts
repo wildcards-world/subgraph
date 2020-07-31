@@ -244,9 +244,11 @@ export function createCounterIfDoesntExist(): void {
 // TODO: this creation function should be shared between all the code.
 export function createWildcardIfDoesntExist(
   steward: Steward,
-  tokenId: BigInt
+  tokenId: BigInt,
+  time: BigInt
 ): Wildcard {
   let wildcard = new Wildcard(tokenId.toString());
+  wildcard.launchTime = time;
 
   let tokenAddress = steward.assetToken();
   let erc721 = Token.bind(tokenAddress);

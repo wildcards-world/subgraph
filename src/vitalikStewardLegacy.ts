@@ -234,6 +234,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   if (wildcard == null) {
     wildcard = new Wildcard(tokenIdString);
     wildcard.totalCollected = BigInt.fromI32(0);
+    wildcard.launchTime = txTimestamp;
   }
 
   // let globalState = Global.load("1")

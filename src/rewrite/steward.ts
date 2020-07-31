@@ -21,7 +21,7 @@ export function genericUpdateTimeHeld(
 
   let wildcard = Wildcard.load(tokenIdString);
   if (wildcard == null) {
-    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt, txTimestamp);
   }
 
   // Phase 2: calculate new values.

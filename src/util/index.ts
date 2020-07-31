@@ -248,7 +248,9 @@ export function recognizeStateChange(
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
   stateChange.txEventList = stateChange.txEventList.concat([eventName]);
-  stateChange.txEventParamList = stateChange.txEventParamList.concat([eventParameters]);
+  stateChange.txEventParamList = stateChange.txEventParamList.concat([
+    eventParameters,
+  ]);
 
   for (let i = 0, len = changedPatrons.length; i < len; i++) {
     stateChange.patronChanges =
