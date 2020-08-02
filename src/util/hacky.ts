@@ -1,6 +1,5 @@
 import {
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
-  NUM_SECONDS_IN_YEAR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
 } from "../CONSTANTS";
 import { Steward } from "../../generated/Steward/Steward";
@@ -34,6 +33,7 @@ export function getTotalCollectedAccurate(
       .plus(steward.totalCollected(BigInt.fromI32(5)))
       .plus(steward.totalCollected(BigInt.fromI32(6)))
       .plus(steward.totalCollected(BigInt.fromI32(7)))
+      .plus(steward.totalCollected(BigInt.fromI32(8)))
       .plus(steward.totalCollected(BigInt.fromI32(9)))
       .plus(steward.totalCollected(BigInt.fromI32(10)))
       .plus(steward.totalCollected(BigInt.fromI32(11)))
@@ -49,6 +49,8 @@ export function getTotalCollectedAccurate(
       .plus(steward.totalCollected(BigInt.fromI32(21)))
       .plus(steward.totalCollected(BigInt.fromI32(22)))
       .plus(steward.totalCollected(BigInt.fromI32(23)))
+      .plus(steward.totalCollected(BigInt.fromI32(24)))
+      .plus(steward.totalCollected(BigInt.fromI32(25)))
       .plus(steward.totalCollected(BigInt.fromI32(42)));
   }
 }
@@ -70,6 +72,7 @@ export function getTotalOwedAccurate(steward: Steward): BigInt {
       .plus(steward.patronageOwed(BigInt.fromI32(5)))
       .plus(steward.patronageOwed(BigInt.fromI32(6)))
       .plus(steward.patronageOwed(BigInt.fromI32(7)))
+      .plus(steward.patronageOwed(BigInt.fromI32(8)))
       .plus(steward.patronageOwed(BigInt.fromI32(9)))
       .plus(steward.patronageOwed(BigInt.fromI32(10)))
       .plus(steward.patronageOwed(BigInt.fromI32(11)))
@@ -85,6 +88,8 @@ export function getTotalOwedAccurate(steward: Steward): BigInt {
       .plus(steward.patronageOwed(BigInt.fromI32(21)))
       .plus(steward.patronageOwed(BigInt.fromI32(22)))
       .plus(steward.patronageOwed(BigInt.fromI32(23)))
+      .plus(steward.patronageOwed(BigInt.fromI32(24)))
+      .plus(steward.patronageOwed(BigInt.fromI32(25)))
       .plus(steward.patronageOwed(BigInt.fromI32(42)));
   }
 }
@@ -126,6 +131,11 @@ export function getTotalTokenCostScaledNumerator(steward: Steward): BigInt {
       steward
         .patronageNumerator(BigInt.fromI32(7))
         .times(steward.price(BigInt.fromI32(7)))
+    )
+    .plus(
+      steward
+        .patronageNumerator(BigInt.fromI32(8))
+        .times(steward.price(BigInt.fromI32(8)))
     )
     .plus(
       steward
@@ -203,9 +213,18 @@ export function getTotalTokenCostScaledNumerator(steward: Steward): BigInt {
         .times(steward.price(BigInt.fromI32(23)))
     )
     .plus(
+      steward
+        .patronageNumerator(BigInt.fromI32(24))
+        .times(steward.price(BigInt.fromI32(24)))
+    )
+    .plus(
+      steward
+        .patronageNumerator(BigInt.fromI32(25))
+        .times(steward.price(BigInt.fromI32(25)))
+    )
+    .plus(
       BigInt.fromI32(300)
         .times(BigInt.fromI32(1000000000))
         .times(steward.price(BigInt.fromI32(42)))
     );
-  // .plus(steward.patronageNumerator(BigInt.fromI32(42)).times(steward.price(BigInt.fromI32(42))))
 }
