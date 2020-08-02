@@ -100,7 +100,7 @@ export function handleLogBuy(event: LogBuy): void {
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (wildcard == null) {
-    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt, txTimestamp);
   }
 
   let previousTimeWildcardWasAcquired = wildcard.timeAcquired;
@@ -270,7 +270,14 @@ export function handleLogBuy(event: LogBuy): void {
   let wildcardOwner = patron.id;
   let wildcardTimeAcquired = txTimestamp;
 
-  let eventParamsString = "['" + tokenIdString  + "', '" + event.params.owner.toHexString()  + "', '" + event.params.price.toString() + "']";
+  let eventParamsString =
+    "['" +
+    tokenIdString +
+    "', '" +
+    event.params.owner.toHexString() +
+    "', '" +
+    event.params.price.toString() +
+    "']";
 
   recognizeStateChange(
     txHashString,
@@ -367,7 +374,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   // Entities only exist after they have been saved to the store;
   // `null` checks allow to create entities on demand
   if (wildcard == null) {
-    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt, txTimestamp);
   }
 
   // Entity fields can be set using simple assignments
@@ -479,7 +486,7 @@ export function handleLogCollection(event: LogCollection): void {
   // Entities only exist after they have been saved to the store;
   // `null` checks allow to create entities on demand
   if (wildcard == null) {
-    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt);
+    wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt, txTimestamp);
   }
   wildcard.totalCollected = getTotalCollectedForWildcard(
     steward,
@@ -545,6 +552,7 @@ export function handleAddToken(event: AddToken): void {
   let patronageNumerator = event.params.patronageNumerator;
 
   let wildcard = new Wildcard(tokenId.toString());
+  wildcard.launchTime = txTimestamp;
 
   let steward = Steward.bind(event.address);
 

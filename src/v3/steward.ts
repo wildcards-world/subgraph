@@ -2,6 +2,7 @@ import {
   AddToken,
   Steward,
   UpgradeToV3,
+  AddTokenV3,
   CollectLoyalty,
 } from "../../generated/Steward/Steward";
 import { log, BigInt } from "@graphprotocol/graph-ts";
@@ -36,7 +37,15 @@ export function handleUpgradeToV3(event: UpgradeToV3): void {
     log.critical("The global state is undefined!", []);
   }
 
+  let steward = Steward.bind(event.address);
+  let startPrice = steward.auctionStartPrice();
+  let endPrice = steward.auctionEndPrice();
+  let length = steward.auctionLength();
+
   globalState.version = BigInt.fromI32(3);
+  globalState.defaultAuctionStartPrice = startPrice;
+  globalState.defaultAuctionEndPrice = endPrice;
+  globalState.defaultAuctionLength = length;
 
   globalState.save();
 }
@@ -148,4 +157,49 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   patron.totalLoyaltyTokensIncludingUnRedeemed = newTotalLoyaltyTokensIncludingUnRedeemed;
 
   patron.save();
+}
+
+export function handleAddTokenV3(event: AddTokenV3): void {
+  let tokenId = event.params.tokenId;
+  let txTimestamp = event.block.timestamp;
+  let txHashString = event.transaction.hash.toHexString();
+  let launchTime = event.params.unixTimestampOfTokenAuctionStart;
+
+  let patronageNumerator = event.params.patronageNumerator;
+
+  let wildcard = new Wildcard(tokenId.toString());
+  wildcard.launchTime = launchTime;
+
+  let steward = Steward.bind(event.address);
+
+  let txHashStr = event.transaction.hash.toHexString();
+
+  handleAddTokenUtil(
+    tokenId,
+    txTimestamp,
+    patronageNumerator,
+    wildcard,
+    steward,
+    txHashStr
+  );
+
+  let eventParamsString =
+    "['" +
+    tokenId.toString() +
+    "', '" +
+    patronageNumerator.toString() +
+    "', '" +
+    launchTime.toString() +
+    "']";
+
+  recognizeStateChange(
+    txHashString,
+    "handleAddToken",
+    eventParamsString,
+    [],
+    [],
+    txTimestamp,
+    event.block.number,
+    2
+  );
 }

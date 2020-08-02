@@ -27,6 +27,7 @@ dataSources:
         - CollectPatronage
         - CollectLoyalty
         - ArtistCommission
+        - AddTokenV3
         - UpgradeToV3
       abis:
         - name: Steward
@@ -65,8 +66,8 @@ dataSources:
         - event: CollectLoyalty(indexed uint256,indexed address,uint256)
           handler: handleCollectLoyalty
         # v3 events
-        # - event: AddToken(indexed uint256,uint256,uint256,uint256)
-        #   handler: handleAddTokenV3
+        - event: AddTokenV3(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV3
         # - event: CollectLoyalty(indexed address, uint256)
         #   handler: handleCollectLoyaltyV3
         # - event: ArtistCommission(uint256 indexed,address,uint256)

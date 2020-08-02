@@ -14,6 +14,7 @@ import {
   Steward,
   CollectLoyalty,
   ArtistCommission,
+  AddTokenV3,
   UpgradeToV3,
 } from "../generated/Steward/Steward";
 import * as V0 from "./v0/steward";
@@ -113,8 +114,8 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   V3.handleCollectLoyalty(event);
 }
 
-export function handleAddTokenV3(event: AddToken): void {
-  // TODO
+export function handleAddTokenV3(event: AddTokenV3): void {
+  V3.handleAddTokenV3(event);
 }
 export function handleCollectLoyaltyV3(event: CollectLoyalty): void {
   // TODO

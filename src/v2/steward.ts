@@ -10,6 +10,7 @@ export function handleAddToken(event: AddToken): void {
   let patronageNumerator = event.params.patronageNumerator;
 
   let wildcard = new Wildcard(tokenId.toString());
+  wildcard.launchTime = txTimestamp;
 
   let steward = Steward.bind(event.address);
 
@@ -24,7 +25,14 @@ export function handleAddToken(event: AddToken): void {
     txHashStr
   );
 
-  let eventParamsString = "['" + event.params.tokenId.toString()  + "', '" + event.params.patronageNumerator.toString()  + "', '" + event.params.tokenGenerationRate.toString() + "']";
+  let eventParamsString =
+    "['" +
+    event.params.tokenId.toString() +
+    "', '" +
+    event.params.patronageNumerator.toString() +
+    "', '" +
+    event.params.tokenGenerationRate.toString() +
+    "']";
 
   recognizeStateChange(
     txHashString,

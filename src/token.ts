@@ -30,6 +30,9 @@ export function handleMinterAdded(event: MinterAdded): void {
     globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
     globalState.erc20Address = event.address;
     globalState.stewardAddress = ZERO_ADDRESS;
+    globalState.defaultAuctionStartPrice = BigInt.fromI32(0);
+    globalState.defaultAuctionEndPrice = BigInt.fromI32(0);
+    globalState.defaultAuctionLength = BigInt.fromI32(0);
     globalState.save();
   }
 }

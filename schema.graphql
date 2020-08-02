@@ -19,6 +19,9 @@ type Global @entity {
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
   stewardAddress: Bytes!
   erc20Address: Bytes!
+  defaultAuctionStartPrice: BigInt!
+  defaultAuctionEndPrice: BigInt!
+  defaultAuctionLength: BigInt!
 }
 
 type Wildcard @entity {
@@ -34,6 +37,8 @@ type Wildcard @entity {
   tokenUri: TokenUri!
   totalCollected: BigInt!
   timeCollected: BigInt!
+  auctionStartPrice: BigInt
+  launchTime: BigInt!
 }
 
 type TokenUri @entity {

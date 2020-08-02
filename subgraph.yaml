@@ -28,6 +28,7 @@ dataSources:
         - RemainingDepositUpdate
         - CollectPatronage
         - CollectLoyalty
+        - AddTokenV3
         - UpgradeToV3
       abis:
         - name: Steward
@@ -66,6 +67,8 @@ dataSources:
         - event: CollectLoyalty(indexed uint256,indexed address,uint256)
           handler: handleCollectLoyalty
         # v3 events
+        - event: AddTokenV3(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV3
         - event: UpgradeToV3()
           handler: handleUpgradeToV3
       file: ./src/steward.ts

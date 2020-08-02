@@ -22,6 +22,7 @@ export function handleTransfer(event: Transfer): void {
     let patronageNumerator = VITALIK_PATRONAGE_NUMERATOR;
 
     let wildcard = new Wildcard(tokenId.toString());
+    wildcard.launchTime = event.block.timestamp;
 
     // Entity fields can be set using simple assignments
     wildcard.tokenId = tokenId;
