@@ -1,4 +1,4 @@
-import { BigInt, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   Steward,
   LogBuy,
@@ -241,7 +241,8 @@ export function handleLogBuy(event: LogBuy): void {
   let globalState = Global.load("1");
 
   let globalStateTotalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
-    steward
+    steward,
+    BigInt.fromI32(0)
   );
   let globalStateTotalCollectedAccurate = getTotalCollectedAccurate(
     steward,
@@ -500,7 +501,8 @@ export function handleLogCollection(event: LogCollection): void {
     event.params.collected
   );
   let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
-    steward
+    steward,
+    BigInt.fromI32(0)
   );
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(
     steward,
