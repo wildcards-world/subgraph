@@ -168,9 +168,23 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   let patronageNumerator = event.params.patronageNumerator;
 
   let wildcard = new Wildcard(tokenId.toString());
-  wildcard.launchTime = launchTime;
 
   let steward = Steward.bind(event.address);
+
+  // NOTE: this is only the case for a few tokens launched from goerli:
+  if (launchTime.equals(BigInt.fromI32(0))) {
+    // TAKE ZERO NOTICE OF THE BELOW CODE, only test purposes, not needed for mainnet.
+    if (tokenId.equals(BigInt.fromI32(22))) {
+      launchTime = BigInt.fromI32(1596541800);
+    } else if (tokenId.equals(BigInt.fromI32(23))) {
+      launchTime = BigInt.fromI32(1596551800);
+    } else if (tokenId.equals(BigInt.fromI32(24))) {
+      launchTime = BigInt.fromI32(1596591800);
+    } else if (tokenId.equals(BigInt.fromI32(25))) {
+      launchTime = BigInt.fromI32(1596690305);
+    }
+  }
+  wildcard.launchTime = launchTime;
 
   let txHashStr = event.transaction.hash.toHexString();
 

@@ -39,6 +39,20 @@ export function getTokenContract(): Token {
   return Token.bind(globalState.erc20Address as Address);
 }
 
+export function getCurrentOwner(steward: Steward, wildcardId: BigInt): Address {
+  // load what version we are in (through global state)
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
+  if (currentVersion.ge(BigInt.fromI32(3))) {
+    let tokenContract = getTokenContract();
+    let currentOwner = tokenContract.ownerOf(wildcardId);
+    return currentOwner;
+  } else {
+    return steward.currentPatron(wildcardId);
+  }
+}
+
 export function timeLastCollectedWildcardSafe(
   steward: Steward,
   wildcardId: BigInt
@@ -50,8 +64,7 @@ export function timeLastCollectedWildcardSafe(
   // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
   // execure correct function based on on version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
-    let tokenContract = getTokenContract();
-    let currentOwner = tokenContract.ownerOf(wildcardId);
+    let currentOwner = getCurrentOwner(steward, wildcardId);
     return steward.timeLastCollectedPatron(currentOwner);
   } else {
     return steward.timeLastCollected(wildcardId);
