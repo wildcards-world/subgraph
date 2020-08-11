@@ -1,6 +1,6 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { LoyaltyToken } from "../../generated/LoyaltyToken/LoyaltyToken";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log, BigInt } from "@graphprotocol/graph-ts";
 import {
   Patron,
   StateChange,
@@ -88,12 +88,17 @@ export function removeFromArrayAtIndex(
   }
 }
 
-export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
+export function updateGlobalState(
+  steward: Steward,
+  txTimestamp: BigInt,
+  TotalTokenCostScaledNumeratorDelta: BigInt
+): void {
   log.warning("GS 1", []);
   let globalState = Global.load("1");
   log.warning("GS 2", []);
   let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
-    steward
+    steward,
+    TotalTokenCostScaledNumeratorDelta
   );
   log.warning("GS 2.5", []);
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(

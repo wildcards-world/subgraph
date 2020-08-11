@@ -296,6 +296,7 @@ export function handleBuy(event: Buy): void {
 
   // globalState.save();
   // updateGlobalState(steward, txTimestamp);
+  // TODO ADD ME BACK IN SO totalTokenCostScaledNumerator is correct
 
   let price = new Price(txHashString);
   price.price = event.params.price;
@@ -425,6 +426,11 @@ export function handlePriceChange(event: PriceChange): void {
   price.timeSet = txTimestamp;
   price.save();
 
+  let OldPrice = Price.load(wildcard.price);
+  let scaledDelta = wildcard.patronageNumerator.times(
+    price.price.minus(OldPrice.price)
+  );
+
   wildcard.price = price.id;
   wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
     price.price
@@ -483,7 +489,7 @@ export function handlePriceChange(event: PriceChange): void {
   );
   eventCounter.save();
 
-  updateGlobalState(steward, txTimestamp);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
@@ -493,12 +499,17 @@ export function handleForeclosure(event: Foreclosure): void {
   let patronString = foreclosedPatron.toHexString();
   let foreclosedTokens: Array<string> = [];
 
+  // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
+  let scaledDelta = BigInt.fromI32(0);
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
     let patron = Patron.load(patronString);
     if (patron != null) {
       foreclosedTokens = patron.tokens;
       updateAllOfPatronsTokensLastUpdated(patron, steward, "handleForeclosure");
+      scaledDelta = patron.patronTokenCostScaledNumerator.times(
+        BigInt.fromI32(-1)
+      );
     }
   }
 
@@ -528,7 +539,7 @@ export function handleForeclosure(event: Foreclosure): void {
     1
   );
 
-  updateGlobalState(steward, txTimestamp);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
   updateForeclosedTokens(foreclosedPatron, steward);
 }
 
@@ -574,7 +585,9 @@ export function handleRemainingDepositUpdate(
     1
   );
 
-  updateGlobalState(steward, txTimestamp);
+  // Here totalTokenCostScaledNumeratorAccurate not updated
+  let scaledDelta = BigInt.fromI32(0);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
@@ -633,5 +646,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     1
   );
 
-  updateGlobalState(steward, txTimestamp);
+  // Here totalTokenCostScaledNumeratorAccurate not updated
+  let scaledDelta = BigInt.fromI32(0);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }
