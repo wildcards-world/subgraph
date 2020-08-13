@@ -39,6 +39,8 @@ import {
   removeFromArrayAtIndex,
   updateAllOfPatronsTokensLastUpdated,
   getTotalCollectedForWildcard,
+  timeLastCollectedWildcardSafe,
+  getCurrentOwner,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -84,7 +86,14 @@ export function handleBuy(event: Buy): void {
   wildcard.tokenId = tokenIdBigInt;
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
-  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  log.warning("Before time collected... {}", [
+    event.transaction.hash.toHexString(),
+  ]);
+  wildcard.timeCollected = timeLastCollectedWildcardSafe(
+    steward,
+    tokenIdBigInt
+  );
+  log.warning("Before time collected...", []);
 
   let previousTokenOwnerString = wildcard.owner;
 
@@ -99,6 +108,9 @@ export function handleBuy(event: Buy): void {
     patron.previouslyOwnedTokens = [];
     patron.lastUpdated = txTimestamp;
     patron.foreclosureTime = txTimestamp;
+    patron.totalLoyaltyTokens = BigInt.fromI32(0);
+    patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+    patron.currentBalance = BigInt.fromI32(0);
   }
 
   // Phase 2: calculate new values.
@@ -158,7 +170,7 @@ export function handleBuy(event: Buy): void {
       : BigInt.fromI32(0);
 
   let newPatronTotalContributed =
-    patronOld.id != "NO_OWNER"
+    patron.id != "NO_OWNER"
       ? patron.totalContributed.plus(
           patron.patronTokenCostScaledNumerator
             .times(timeSinceLastUpdatePatron)
@@ -166,20 +178,22 @@ export function handleBuy(event: Buy): void {
             .div(NUM_SECONDS_IN_YEAR_BIG_INT)
         )
       : BigInt.fromI32(0);
-  let previousPatron = steward.totalPatronOwnedTokenCost(owner);
+  let newPatronTotalPatronOwnedCost = steward.totalPatronOwnedTokenCost(owner);
+
   let previousPatronTotalContributed =
     patronOld.id != "NO_OWNER"
       ? patronOld.totalContributed.plus(
           patronOld.patronTokenCostScaledNumerator
-            .times(timeSinceLastUpdatePatron)
+            .times(timeSinceLastUpdatePreviousPatron)
             .div(GLOBAL_PATRONAGE_DENOMINATOR)
             .div(NUM_SECONDS_IN_YEAR_BIG_INT)
         )
       : BigInt.fromI32(0);
 
-  let oldPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    owner
-  );
+  let oldPatronTokenCostScaledNumerator =
+    patronOld.id != "NO_OWNER"
+      ? steward.totalPatronOwnedTokenCost(patronOld.address as Address)
+      : BigInt.fromI32(0); // error
 
   let newPatronTokenArray = patron.tokens.concat([wildcard.id]);
   let itemIndex = patronOld.tokens.indexOf(wildcard.id);
@@ -282,6 +296,7 @@ export function handleBuy(event: Buy): void {
 
   // globalState.save();
   // updateGlobalState(steward, txTimestamp);
+  // TODO ADD ME BACK IN SO totalTokenCostScaledNumerator is correct
 
   let price = new Price(txHashString);
   price.price = event.params.price;
@@ -298,7 +313,8 @@ export function handleBuy(event: Buy): void {
 
   wildcard.totalCollected = getTotalCollectedForWildcard(
     steward,
-    tokenIdBigInt
+    tokenIdBigInt,
+    timeSinceLastUpdateOldPatron
   );
   wildcard.timeCollected = txTimestamp;
 
@@ -312,12 +328,24 @@ export function handleBuy(event: Buy): void {
   buyEvent.timestamp = txTimestamp;
   buyEvent.save();
 
+  let eventParamsString =
+    "['" +
+    tokenIdString +
+    "', '" +
+    event.params.owner.toHexString() +
+    "', '" +
+    event.params.price.toString() +
+    "']";
+
   recognizeStateChange(
     txHashString,
     "Buy",
+    eventParamsString,
     [patronOld.id, patron.id],
     [wildcard.id],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
 
   let eventCounter = EventCounter.load("1");
@@ -350,7 +378,7 @@ export function handleBuy(event: Buy): void {
   patron.previouslyOwnedTokens = patronPreviouslyOwnedTokens;
   patron.tokens = patronTokens;
   patron.availableDeposit = patronAvailableDeposit;
-  patron.patronTokenCostScaledNumerator = previousPatron;
+  patron.patronTokenCostScaledNumerator = newPatronTotalPatronOwnedCost;
   patron.foreclosureTime = patronForeclosureTime;
   patron.totalContributed = patronTotalContributed;
   patron.totalTimeHeld = patronTotalTimeHeld;
@@ -374,12 +402,15 @@ export function handlePriceChange(event: PriceChange): void {
   let txHashString = event.transaction.hash.toHexString();
 
   let steward = Steward.bind(event.address);
-  let owner = steward.currentPatron(tokenIdBigInt);
+  let owner = getCurrentOwner(steward, tokenIdBigInt);
   let ownerString = owner.toHexString();
   let txTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(tokenIdString);
-  wildcard.timeCollected = steward.timeLastCollected(tokenIdBigInt);
+  wildcard.timeCollected = timeLastCollectedWildcardSafe(
+    steward,
+    tokenIdBigInt
+  );
 
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [
@@ -394,6 +425,11 @@ export function handlePriceChange(event: PriceChange): void {
   price.price = event.params.newPrice;
   price.timeSet = txTimestamp;
   price.save();
+
+  let OldPrice = Price.load(wildcard.price);
+  let scaledDelta = wildcard.patronageNumerator.times(
+    price.price.minus(OldPrice.price)
+  );
 
   wildcard.price = price.id;
   wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
@@ -433,12 +469,18 @@ export function handlePriceChange(event: PriceChange): void {
   priceChange.timestamp = txTimestamp;
   priceChange.save();
 
+  let eventParamsString =
+    "['" + tokenIdString + "', '" + event.params.newPrice.toString() + "']";
+
   recognizeStateChange(
     txHashString,
     "PriceChange",
+    eventParamsString,
     [patron.id],
     [wildcard.id],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
 
   let eventCounter = EventCounter.load("1");
@@ -447,7 +489,7 @@ export function handlePriceChange(event: PriceChange): void {
   );
   eventCounter.save();
 
-  updateGlobalState(steward, txTimestamp);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
@@ -457,12 +499,17 @@ export function handleForeclosure(event: Foreclosure): void {
   let patronString = foreclosedPatron.toHexString();
   let foreclosedTokens: Array<string> = [];
 
+  // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
+  let scaledDelta = BigInt.fromI32(0);
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
     let patron = Patron.load(patronString);
     if (patron != null) {
       foreclosedTokens = patron.tokens;
       updateAllOfPatronsTokensLastUpdated(patron, steward, "handleForeclosure");
+      scaledDelta = patron.patronTokenCostScaledNumerator.times(
+        BigInt.fromI32(-1)
+      );
     }
   }
 
@@ -471,14 +518,28 @@ export function handleForeclosure(event: Foreclosure): void {
     foreclosedPatron,
     txTimestamp
   );
+
+  let foreclosureTime = getForeclosureTimeSafe(steward, foreclosedPatron);
+
+  let eventParamsString =
+    "['" +
+    event.params.prevOwner.toHexString() +
+    "', '" +
+    foreclosureTime.toString() +
+    "']";
+
   recognizeStateChange(
     txHashString,
     "Foreclosure",
+    eventParamsString,
     [patronString],
     foreclosedTokens,
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
-  updateGlobalState(steward, txTimestamp);
+
+  updateGlobalState(steward, txTimestamp, scaledDelta);
   updateForeclosedTokens(foreclosedPatron, steward);
 }
 
@@ -505,14 +566,28 @@ export function handleRemainingDepositUpdate(
   }
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+
+  let eventParamsString =
+    "['" +
+    event.params.tokenPatron.toHexString() +
+    "', '" +
+    event.params.remainingDeposit.toString() +
+    "']";
+
   recognizeStateChange(
     txHashString,
     "RemainingDepositUpdate",
+    eventParamsString,
     [patronString],
     [],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
-  updateGlobalState(steward, txTimestamp);
+
+  // Here totalTokenCostScaledNumeratorAccurate not updated
+  let scaledDelta = BigInt.fromI32(0);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
@@ -538,7 +613,8 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   if (wildcard != null) {
     wildcard.totalCollected = getTotalCollectedForWildcard(
       steward,
-      collectedToken
+      collectedToken,
+      event.block.timestamp.minus(wildcard.timeCollected)
     );
     wildcard.timeCollected = txTimestamp;
     wildcard.save();
@@ -547,12 +623,30 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   }
 
   updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+
+  let eventParamsString =
+    "['" +
+    event.params.tokenId.toHexString() +
+    "', '" +
+    event.params.patron.toHexString() +
+    "', '" +
+    event.params.remainingDeposit.toString() +
+    "', '" +
+    event.params.amountReceived.toString() +
+    "']";
+
   recognizeStateChange(
     txHashString,
     "CollectPatronage",
+    eventParamsString,
     [patronString],
     [collectedToken.toString()],
-    txTimestamp
+    txTimestamp,
+    event.block.number,
+    1
   );
-  updateGlobalState(steward, txTimestamp);
+
+  // Here totalTokenCostScaledNumeratorAccurate not updated
+  let scaledDelta = BigInt.fromI32(0);
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }

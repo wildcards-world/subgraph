@@ -1,6 +1,6 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { LoyaltyToken } from "../../generated/LoyaltyToken/LoyaltyToken";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log, BigInt } from "@graphprotocol/graph-ts";
 import {
   Patron,
   StateChange,
@@ -31,6 +31,51 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
   }
 }
 
+export function getTokenContract(): Token {
+  let globalState = Global.load("1");
+  if (globalState == null) {
+    log.critical("Global state must be defined before using this function", []);
+  }
+  return Token.bind(globalState.erc20Address as Address);
+}
+
+export function getCurrentOwner(steward: Steward, wildcardId: BigInt): Address {
+  // load what version we are in (through global state)
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
+  if (currentVersion.ge(BigInt.fromI32(3))) {
+    let tokenContract = getTokenContract();
+    let currentOwner = tokenContract.ownerOf(wildcardId);
+    return currentOwner;
+  } else {
+    return steward.currentPatron(wildcardId);
+  }
+}
+
+export function timeLastCollectedWildcardSafe(
+  steward: Steward,
+  wildcardId: BigInt
+): BigInt {
+  // load what version we are in (through global state)
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
+  // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
+  // execure correct function based on on version.
+  if (currentVersion.ge(BigInt.fromI32(3))) {
+    let currentOwner = getCurrentOwner(steward, wildcardId);
+    return steward.timeLastCollectedPatron(currentOwner);
+  } else {
+    return steward.timeLastCollected(wildcardId);
+  }
+}
+
+export function warnAndError(msg: string, args: Array<string>): void {
+  log.warning(msg, args);
+  log.critical(msg, args);
+}
+
 // This currently only works with strings, because assembly script is shit... (the tests do pass when this is a template parameter though :) )
 export function removeFromArrayAtIndex(
   array: Array<string>,
@@ -43,29 +88,40 @@ export function removeFromArrayAtIndex(
   }
 }
 
-export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
+export function updateGlobalState(
+  steward: Steward,
+  txTimestamp: BigInt,
+  TotalTokenCostScaledNumeratorDelta: BigInt
+): void {
+  log.warning("GS 1", []);
   let globalState = Global.load("1");
-  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
-  globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
-    steward
+  log.warning("GS 2", []);
+  let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
+    steward,
+    TotalTokenCostScaledNumeratorDelta
   );
+  log.warning("GS 2.5", []);
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(
+    steward,
+    totalTokenCostScaledNumeratorAccurate,
+    txTimestamp
+  );
+  log.warning("GS 3", []);
+  log.warning("GS 4", []);
   let totalOwed = getTotalOwedAccurate(steward);
+  log.warning("GS 5", []);
   globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
     totalOwed
   );
+  log.warning("GS 6", []);
   // BUG!
   // This code below is inaccurate because the `timeLastCollected` isn't correct. Should have `timeLastCalculatedCollection` as separate variable
-  // globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
-  //   totalTokenCostScaledNumerator
-  //     .times(txTimestamp.minus(globalState.timeLastCollected))
-  //     .div(
-  //       steward
-  //         .patronageDenominator()
-  //         .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
-  //     )
-  // );
+
+  globalState.totalTokenCostScaledNumeratorAccurate = totalTokenCostScaledNumeratorAccurate;
   globalState.timeLastCollected = txTimestamp;
+  log.warning("GS 7", []);
   globalState.save();
+  log.warning("GS 8", []);
 }
 
 export function getForeclosureTimeSafe(
@@ -88,6 +144,24 @@ export function getForeclosureTimeSafe(
   }
 }
 
+export function initialiseNoOwnerPatronIfNull(): Patron {
+  let patron = new Patron("NO_OWNER");
+  patron.address = ZERO_ADDRESS;
+  patron.lastUpdated = BigInt.fromI32(0);
+  patron.availableDeposit = BigInt.fromI32(0);
+  patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+  patron.foreclosureTime = BigInt.fromI32(0);
+  patron.totalContributed = BigInt.fromI32(0);
+  patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.tokens = [];
+  patron.previouslyOwnedTokens = [];
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
+  patron.save();
+  return patron;
+}
+
 export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
@@ -106,6 +180,9 @@ export function initialiseDefaultPatronIfNull(
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
   patron.previouslyOwnedTokens = [];
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   patron.save();
   return patron;
 }
@@ -161,6 +238,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
   if (stateChange == null) {
     stateChange = new StateChange(txId);
     stateChange.txEventList = [];
+    stateChange.txEventParamList = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChanges = [];
 
@@ -178,13 +256,19 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
 
 export function recognizeStateChange(
   txHash: string,
-  changeType: string,
+  eventName: string,
+  eventParameters: string,
   changedPatrons: string[],
   changedWildcards: string[],
-  txTimestamp: BigInt
+  txTimestamp: BigInt,
+  txBlockNumber: BigInt,
+  contractVersion: i32
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
-  stateChange.txEventList = stateChange.txEventList.concat([changeType]);
+  stateChange.txEventList = stateChange.txEventList.concat([eventName]);
+  stateChange.txEventParamList = stateChange.txEventParamList.concat([
+    eventParameters,
+  ]);
 
   for (let i = 0, len = changedPatrons.length; i < len; i++) {
     stateChange.patronChanges =
@@ -201,6 +285,8 @@ export function recognizeStateChange(
   }
 
   stateChange.timestamp = txTimestamp;
+  stateChange.blockNumber = txBlockNumber;
+  stateChange.contractVersion = contractVersion;
   stateChange.save();
 }
 
@@ -270,7 +356,7 @@ export function handleAddTokenUtil(
 
   let patron = Patron.load("NO_OWNER");
   if (patron == null) {
-    log.critical("This should definitely exist", []);
+    patron = initialiseNoOwnerPatronIfNull();
   }
 
   wildcard.price = price.id;
@@ -331,7 +417,10 @@ export function updateAllOfPatronsTokensLastUpdated(
 
     let wildcard = Wildcard.load(wildcardId);
 
-    wildcard.timeCollected = steward.timeLastCollected(wildcard.tokenId);
+    wildcard.timeCollected = timeLastCollectedWildcardSafe(
+      steward,
+      wildcard.tokenId
+    );
 
     wildcard.save();
   }
@@ -341,23 +430,50 @@ export function isVitalik(tokenId: BigInt): boolean {
   return tokenId.equals(BigInt.fromI32(42));
 }
 
+export function safeGetTotalCollected(
+  steward: Steward,
+  tokenId: BigInt,
+  timeSinceLastCollection: BigInt
+): BigInt {
+  let globalState = Global.load("1");
+  let currentVersion = globalState.version;
+
+  if (currentVersion.lt(BigInt.fromI32(3))) {
+    return steward.totalCollected(tokenId);
+  } else {
+    let wildcard = Wildcard.load(tokenId.toString());
+    // TODO: unfortunately this is being written to 'just' work and mathematical rigor is likely being lost.
+    let newlyCollected = timeSinceLastCollection
+      .times(wildcard.patronageNumeratorPriceScaled)
+      .div(GLOBAL_PATRONAGE_DENOMINATOR);
+    return wildcard.totalCollected.plus(newlyCollected);
+  }
+}
+
 /*
-This function needs to be called in the following places:
-buy
-collection 
+  This function needs to be called in the following places:
+  buy
+  collection 
 */
 export function getTotalCollectedForWildcard(
   steward: Steward,
-  tokenId: BigInt
+  tokenId: BigInt,
+  timeSinceLastCollection: BigInt
 ): BigInt {
   let totalCollected: BigInt;
   if (isVitalik(tokenId)) {
     // Include the patronage from the legacy vitalik contract.
-    totalCollected = steward
-      .totalCollected(tokenId)
-      .plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
+    totalCollected = safeGetTotalCollected(
+      steward,
+      tokenId,
+      timeSinceLastCollection
+    ).plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
   } else {
-    totalCollected = steward.totalCollected(tokenId);
+    totalCollected = safeGetTotalCollected(
+      steward,
+      tokenId,
+      timeSinceLastCollection
+    );
   }
 
   return totalCollected;

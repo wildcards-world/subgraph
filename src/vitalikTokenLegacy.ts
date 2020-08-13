@@ -6,6 +6,7 @@ import {
 } from "../generated/VitalikTokenLegacy/VitalikTokenLegacy";
 import { Wildcard, Patron, Price, TokenUri, Global } from "../generated/schema";
 import { ZERO_ADDRESS, VITALIK_PATRONAGE_NUMERATOR } from "./CONSTANTS";
+import { initialiseNoOwnerPatronIfNull } from "./util";
 
 // NOTE: I commented out the below code since it is VEEERY slow (it has to scan each transaction for the `setup` function)
 //       AND call handlers aren't supported by the graph on goerli testnet
@@ -21,6 +22,7 @@ export function handleTransfer(event: Transfer): void {
     let patronageNumerator = VITALIK_PATRONAGE_NUMERATOR;
 
     let wildcard = new Wildcard(tokenId.toString());
+    wildcard.launchTime = event.block.timestamp;
 
     // Entity fields can be set using simple assignments
     wildcard.tokenId = tokenId;
@@ -39,17 +41,7 @@ export function handleTransfer(event: Transfer): void {
 
     let patron = Patron.load("NO_OWNER");
     if (patron == null) {
-      patron = new Patron("NO_OWNER");
-      patron.address = ZERO_ADDRESS;
-      patron.lastUpdated = event.block.timestamp;
-      patron.availableDeposit = BigInt.fromI32(0);
-      patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
-      patron.foreclosureTime = BigInt.fromI32(0);
-      patron.totalContributed = BigInt.fromI32(0);
-      patron.totalTimeHeld = BigInt.fromI32(0);
-      patron.tokens = [];
-      patron.previouslyOwnedTokens = [];
-      patron.save();
+      patron = initialiseNoOwnerPatronIfNull();
     }
 
     wildcard.price = price.id;

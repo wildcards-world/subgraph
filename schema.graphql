@@ -9,6 +9,7 @@ type EventCounter @entity {
 
 type Global @entity {
   id: ID! # will just be '1' since only one global namespace
+  version: BigInt! # NOTE: this will say version 0 for version 0-2, after v3 it will always be correct.
   totalCollected: BigInt!
   totalCollectedAccurate: BigInt!
   timeLastCollected: BigInt!
@@ -16,6 +17,11 @@ type Global @entity {
   totalCollectedOrDueAccurate: BigInt!
   # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
+  stewardAddress: Bytes!
+  erc20Address: Bytes!
+  defaultAuctionStartPrice: BigInt!
+  defaultAuctionEndPrice: BigInt!
+  defaultAuctionLength: BigInt!
 }
 
 type Wildcard @entity {
@@ -31,6 +37,8 @@ type Wildcard @entity {
   tokenUri: TokenUri!
   totalCollected: BigInt!
   timeCollected: BigInt!
+  auctionStartPrice: BigInt
+  launchTime: BigInt!
 }
 
 type TokenUri @entity {
@@ -68,6 +76,9 @@ type Patron @entity {
   # deposit: BigInt!
   totalContributed: BigInt!
   totalTimeHeld: BigInt!
+  totalLoyaltyTokens: BigInt!
+  totalLoyaltyTokensIncludingUnRedeemed: BigInt!
+  currentBalance: BigInt!
 }
 
 type BuyEvent @entity {
@@ -82,7 +93,10 @@ type BuyEvent @entity {
 type StateChange @entity {
   id: ID! # tx
   timestamp: BigInt!
+  blockNumber: BigInt!
+  contractVersion: Int!
   txEventList: [String!]! #call event logs or something
+  txEventParamList: [String!]!
   patronChanges: [Patron!]!
   wildcardChanges: [Wildcard!]!
 }
@@ -96,39 +110,6 @@ type ChangePriceEvent @entity {
 
 # Types for rewrite. Plan is to merge/replace the old entities when rewrite works.
 
-type PatronNew @entity {
-  id: ID! # Just the address
-  address: Bytes! # address
-  lastUpdated: BigInt!
-  # previouslyOwnedTokens: [Wildcard!]!
-  tokens: [WildcardNew!]!
-  # tokens: [Wildcard!]!
-  # availableDeposit: BigInt!
-  patronTokenCostScaledNumerator: BigInt!
-  # foreclosureTime: BigInt!
-  # deposit: BigInt!
-  totalContributed: BigInt!
-  totalTimeHeld: BigInt!
-  totalLoyaltyTokens: BigInt!
-  totalLoyaltyTokensIncludingUnRedeemed: BigInt!
-  currentBalance: BigInt!
-}
-
-type WildcardNew @entity {
-  id: ID! # Just the tokenId
-  tokenId: BigInt!
-  # price: Price!
-  owner: PatronNew! # address
-  # patronageNumerator: BigInt!
-  # patronageNumeratorPriceScaled: BigInt!
-  # timeAcquired: BigInt!
-  # previousOwners: [PreviousPatron!]
-  # priceHistory: [Price!]
-  # tokenUri: TokenUri!
-  # totalCollected: BigInt!
-  # timeCollected: BigInt!
-}
-
 type VoteStatus @entity {
   id: ID! # <iteration>-<projectId>
   projectVote: BigInt!
@@ -136,7 +117,7 @@ type VoteStatus @entity {
 type Vote @entity {
   id: ID! # <iteration>-<projectId>-<address>
   voteAmount: BigInt!
-  voter: PatronNew!
+  voter: Patron!
 }
 type Iteration @entity {
   id: ID! # the iteration number
