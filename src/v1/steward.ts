@@ -45,6 +45,8 @@ import {
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
+  EVENT_COUNTER_ID,
+  ID_PREFIX,
 } from "../CONSTANTS";
 
 export function handleAddToken(event: AddToken): void {
@@ -62,7 +64,7 @@ export function handleBuy(event: Buy): void {
   let tokenIdBigInt = event.params.tokenId;
   let tokenIdString = tokenIdBigInt.toString();
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [
       tokenIdString,
@@ -100,7 +102,7 @@ export function handleBuy(event: Buy): void {
   let patron = Patron.load(ownerString);
   // let patronOld = Patron.load(previousTokenOwnerString);
   if (patron == null) {
-    patron = new Patron(ownerString);
+    patron = new Patron(ID_PREFIX + ownerString);
     patron.address = owner;
     patron.totalTimeHeld = BigInt.fromI32(0);
     patron.totalContributed = BigInt.fromI32(0);
@@ -287,7 +289,7 @@ export function handleBuy(event: Buy): void {
 
   let previousPrice = Price.load(wildcard.price);
 
-  // let globalState = Global.load("1");
+  // let globalState = Global.load(GLOBAL_ID);
   // let tokenPatronageNumerator = steward.patronageNumerator(tokenIdBigInt);
 
   // globalState.totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator
@@ -348,7 +350,7 @@ export function handleBuy(event: Buy): void {
     1
   );
 
-  let eventCounter = EventCounter.load("1");
+  let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
   eventCounter.buyEventCount = eventCounter.buyEventCount.plus(
     BigInt.fromI32(1)
   );
@@ -406,7 +408,7 @@ export function handlePriceChange(event: PriceChange): void {
   let ownerString = owner.toHexString();
   let txTimestamp = event.block.timestamp;
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   wildcard.timeCollected = timeLastCollectedWildcardSafe(
     steward,
     tokenIdBigInt
@@ -483,7 +485,7 @@ export function handlePriceChange(event: PriceChange): void {
     1
   );
 
-  let eventCounter = EventCounter.load("1");
+  let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
   eventCounter.changePriceEventCount = eventCounter.changePriceEventCount.plus(
     BigInt.fromI32(1)
   );
@@ -609,7 +611,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     }
   }
 
-  let wildcard = Wildcard.load(collectedToken.toString());
+  let wildcard = Wildcard.load(ID_PREFIX + collectedToken.toString());
   if (wildcard != null) {
     wildcard.totalCollected = getTotalCollectedForWildcard(
       steward,

@@ -1,5 +1,7 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
+export const networkId = 80001;
+
 export let ZERO_ADDRESS = Address.fromString(
   "0x0000000000000000000000000000000000000000"
 );
@@ -44,3 +46,36 @@ export const SIMON_DLR_ADDRESS = "0x0cacc6104d8cd9d7b2850b4f35c65c1ecdeece03";
 
 export let VOTES_MANAGER_ENTITY_ID = "VOTE_MANAGER";
 export let NO_OWNER = "NO_OWNER";
+
+function getGlobalId(networkId: i32): string {
+  switch (networkId) {
+    case 80001:
+    case 137:
+      return "Matic-Global";
+    default:
+      return "1";
+  }
+}
+export let GLOBAL_ID = getGlobalId(networkId);
+
+function getEventCounterId(networkId: i32): string {
+  switch (networkId) {
+    case 80001:
+    case 137:
+      return "Matic-Events";
+    default:
+      return "1";
+  }
+}
+export let EVENT_COUNTER_ID = getGlobalId(networkId);
+
+function getIdPrefix(networkId: i32): string {
+  switch (networkId) {
+    case 80001:
+    case 137:
+      return "matic";
+    default:
+      return "";
+  }
+}
+export let ID_PREFIX = getIdPrefix(networkId);

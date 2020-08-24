@@ -19,6 +19,7 @@ import {
   VITALIK_TOKEN_ID,
   GLOBAL_PATRONAGE_DENOMINATOR,
   VITALIK_PATRONAGE_NUMERATOR,
+  ID_PREFIX,
 } from "./CONSTANTS";
 import { minBigInt, removeFromArrayAtIndex } from "./util";
 
@@ -49,7 +50,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let tokenIdString = "42";
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
 
   // Entity fields can be set using simple assignments
   let wildcardPriceHistory = wildcard.priceHistory.concat([wildcard.price]);
@@ -57,7 +58,7 @@ export function handleLogBuy(event: LogBuy): void {
   let patron = Patron.load(ownerString);
   let patronOld = Patron.load(wildcard.owner);
   if (patron == null) {
-    patron = new Patron(ownerString);
+    patron = new Patron(ID_PREFIX + ownerString);
     patron.address = owner;
     patron.totalTimeHeld = BigInt.fromI32(0);
     patron.totalContributed = BigInt.fromI32(0);
@@ -227,22 +228,22 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   let newPrice = event.params.newPrice;
   let txTimestamp = event.block.timestamp;
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (wildcard == null) {
-    wildcard = new Wildcard(tokenIdString);
+    wildcard = new Wildcard(ID_PREFIX + tokenIdString);
     wildcard.totalCollected = BigInt.fromI32(0);
     wildcard.launchTime = txTimestamp;
   }
 
-  // let globalState = Global.load("1")
+  // let globalState = Global.load(GLOBAL_ID)
 
   // // // Entities only exist after they have been saved to the store;
   // // // `null` checks allow to create entities on demand
   // if (globalState == null) {
-  //   globalState = new Global("1")
+  //   globalState = new Global(GLOBAL_ID)
   //   globalState.totalCollected = BigInt.fromI32(0)
   // }
 
@@ -326,13 +327,13 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 }
 
 export function handleLogCollection(event: LogCollection): void {
-  // let globalState = Global.load("1")
+  // let globalState = Global.load(GLOBAL_ID)
 
   let steward = VitalikStewardLegacy.bind(event.address);
 
   let tokenIdString = "42";
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
 
   wildcard.totalCollected = steward.totalCollected();
 
