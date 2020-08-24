@@ -11,15 +11,16 @@ import { Global } from "../generated/schema";
 import {
   ZERO_ADDRESS,
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
+  GLOBAL_ID,
 } from "./CONSTANTS";
 
 export function handleMinterAdded(event: MinterAdded): void {
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (globalState == null) {
-    globalState = new Global("1");
+    globalState = new Global(GLOBAL_ID);
     globalState.version = BigInt.fromI32(0);
     globalState.timeLastCollected = event.block.timestamp;
     globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;

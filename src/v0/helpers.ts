@@ -30,6 +30,8 @@ import {
   VITALIK_PATRONAGE_NUMERATOR,
   VITALIK_PATRONAGE_DENOMINATOR,
   GLOBAL_PATRONAGE_DENOMINATOR,
+  EVENT_COUNTER_ID,
+  ID_PREFIX,
 } from "../CONSTANTS";
 import { getForeclosureTimeSafe, minBigInt } from "../util";
 import {
@@ -228,12 +230,12 @@ export function getTokenIdFromTimestamp(
 }
 
 export function createCounterIfDoesntExist(): void {
-  let eventCounter = EventCounter.load("1");
+  let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
   if (eventCounter != null) {
     // if eventCounter has already been created return it
     return;
   }
-  eventCounter = new EventCounter("1");
+  eventCounter = new EventCounter(EVENT_COUNTER_ID);
   eventCounter.buyEventCount = BigInt.fromI32(0);
   eventCounter.changePriceEventCount = BigInt.fromI32(0);
   eventCounter.buyEvents = [];
@@ -247,7 +249,7 @@ export function createWildcardIfDoesntExist(
   tokenId: BigInt,
   time: BigInt
 ): Wildcard {
-  let wildcard = new Wildcard(tokenId.toString());
+  let wildcard = new Wildcard(ID_PREFIX + tokenId.toString());
   wildcard.launchTime = time;
 
   let tokenAddress = steward.assetToken();

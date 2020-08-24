@@ -1,0 +1,109 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Steward
+    network: matic
+    source:
+      address: "0xD1c8FC18cdE1Cc82807bdBBdF46b3Ef7abC593Ac"
+      abi: Steward
+      startBlock: 3332577
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - LogBuy
+        - LogPriceChange
+        - LogForeclosure
+        - LogCollection
+        - LogRemainingDepositUpdate
+        - AddToken
+        - Buy
+        - PriceChange
+        - Foreclosure
+        - RemainingDepositUpdate
+        - CollectPatronage
+        - CollectLoyalty
+        - ArtistCommission
+        - AddTokenV3
+        - UpgradeToV3
+      abis:
+        - name: Steward
+          file: ./abis/Steward.json
+        - name: Token
+          file: ./abis/Token.json
+      eventHandlers:
+        # v0 events
+        - event: LogBuy(indexed address,indexed uint256)
+          handler: handleLogBuy
+        - event: LogPriceChange(indexed uint256)
+          handler: handleLogPriceChange
+        - event: LogForeclosure(indexed address)
+          handler: handleLogForeclosure
+        - event: LogCollection(indexed uint256)
+          handler: handleLogCollection
+        - event: LogRemainingDepositUpdate(indexed address,indexed uint256)
+          handler: handleLogRemainingDepositUpdate
+        # v0 and v1 events
+        - event: AddToken(indexed uint256,uint256)
+          handler: handleAddToken
+        # v1 and v2 events
+        - event: Buy(indexed uint256,indexed address,uint256)
+          handler: handleBuy
+        - event: PriceChange(indexed uint256,uint256)
+          handler: handlePriceChange
+        - event: Foreclosure(indexed address)
+          handler: handleForeclosure
+        - event: RemainingDepositUpdate(indexed address,uint256)
+          handler: handleRemainingDepositUpdate
+        - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
+          handler: handleCollectPatronage
+        # v2 events
+        - event: AddToken(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV2
+        - event: CollectLoyalty(indexed uint256,indexed address,uint256)
+          handler: handleCollectLoyalty
+        # v3 events
+        - event: AddTokenV3(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV3
+        # - event: CollectLoyalty(indexed address, uint256)
+        #   handler: handleCollectLoyaltyV3
+        # - event: ArtistCommission(uint256 indexed,address,uint256)
+        - event: UpgradeToV3()
+          handler: handleUpgradeToV3
+        #   handler: handleArtistCommission
+      file: ./src/steward.ts
+  # - kind: ethereum/contract
+  #   name: Token
+  #   network: rinkeby
+  #   source:
+  #     address: "0xde959bb373da2Ba2c28F5B404463413e7AE5B265"
+  #     abi: Token
+  #     startBlock: 3332577
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.4
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - MinterAdded
+  #       - MinterRemoved
+  #       - Transfer
+  #       - Approval
+  #       - ApprovalForAll
+  #     abis:
+  #       - name: Token
+  #         file: ./abis/Token.json
+  #     eventHandlers:
+  #       - event: MinterAdded(indexed address)
+  #         handler: handleMinterAdded
+  #       - event: MinterRemoved(indexed address)
+  #         handler: handleMinterRemoved
+  #       - event: Transfer(indexed address,indexed address,indexed uint256)
+  #         handler: handleTransfer
+  #       - event: Approval(indexed address,indexed address,indexed uint256)
+  #         handler: handleApproval
+  #       - event: ApprovalForAll(indexed address,indexed address,bool)
+  #         handler: handleApprovalForAll
+  #     file: ./src/token.ts

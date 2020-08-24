@@ -23,6 +23,7 @@ import * as V2 from "./v2/steward";
 import * as V3 from "./v3/steward";
 import * as NEW from "./rewrite/steward";
 import { Global } from "../generated/schema";
+import { GLOBAL_ID } from "./CONSTANTS";
 
 // NOTE: Events labled with the latest version of the contracts (eg V1) will be the only events that will be called.
 //       The rest of the events need to be there to make sure that the graph can do a full sync of the history.
@@ -85,7 +86,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     event.transaction.hash.toHexString() ==
     "0x870e216e388072cc375d6ebd90e503675b0d544f7662366352a236ac22527165"
   ) {
-    let globalState = Global.load("1");
+    let globalState = Global.load(GLOBAL_ID);
     if (globalState == null) {
       log.critical("The global state is undefined!", []);
     }

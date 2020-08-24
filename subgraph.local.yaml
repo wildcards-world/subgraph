@@ -1,0 +1,153 @@
+specVersion: 0.0.2
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Steward
+    network: ganache
+    source:
+      address: "0xd14700e0b2aA1dB6F02c4c5469C4D6a0a94fA87a"
+      abi: Steward
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - LogBuy
+        - LogPriceChange
+        - LogForeclosure
+        - LogCollection
+        - LogRemainingDepositUpdate
+        - AddToken
+        - Buy
+        - PriceChange
+        - Foreclosure
+        - RemainingDepositUpdate
+        - CollectPatronage
+        - CollectLoyalty
+        # - ArtistCommission
+      abis:
+        - name: Steward
+          file: ./abis/Steward.json
+        - name: Token
+          file: ./abis/Token.json
+      eventHandlers:
+        # v0 events
+        - event: LogBuy(indexed address,indexed uint256)
+          handler: handleLogBuy
+        - event: LogPriceChange(indexed uint256)
+          handler: handleLogPriceChange
+        - event: LogForeclosure(indexed address)
+          handler: handleLogForeclosure
+        - event: LogCollection(indexed uint256)
+          handler: handleLogCollection
+        - event: LogRemainingDepositUpdate(indexed address,indexed uint256)
+          handler: handleLogRemainingDepositUpdate
+        # v0 and v1 events
+        - event: AddToken(indexed uint256,uint256)
+          handler: handleAddToken
+        # v1 and v2 events
+        - event: Buy(indexed uint256,indexed address,uint256)
+          handler: handleBuy
+        - event: PriceChange(indexed uint256,uint256)
+          handler: handlePriceChange
+        - event: Foreclosure(indexed address)
+          handler: handleForeclosure
+        - event: RemainingDepositUpdate(indexed address,uint256)
+          handler: handleRemainingDepositUpdate
+        - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
+          handler: handleCollectPatronage
+        # v2 events
+        - event: AddToken(indexed uint256,uint256,uint256)
+          handler: handleAddTokenV2
+        - event: CollectLoyalty(indexed uint256,indexed address,uint256)
+          handler: handleCollectLoyalty
+        # v3 events
+        - event: AddToken(indexed uint256,uint256,uint256,uint256)
+          handler: handleAddTokenV3
+        # - event: CollectLoyalty(indexed address, uint256)
+        #   handler: handleCollectLoyaltyV3
+        # - event: ArtistCommission(uint256 indexed,address,uint256)
+        #   handler: handleArtistCommission
+      file: ./src/steward.ts
+
+  - kind: ethereum/contract
+    name: Token
+    network: ganache
+    source:
+      address: "0xB601159B96C9D7ACE79F70E24a7Ca12F007e667e"
+      abi: Token
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - MinterAdded
+        - MinterRemoved
+        - Transfer
+        - Approval
+        - ApprovalForAll
+      abis:
+        - name: Token
+          file: ./abis/Token.json
+      eventHandlers:
+        - event: MinterAdded(indexed address)
+          handler: handleMinterAdded
+        - event: MinterRemoved(indexed address)
+          handler: handleMinterRemoved
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+      file: ./src/token.ts
+
+  - kind: ethereum/contract
+    name: LoyaltyToken
+    network: ganache
+    source:
+      address: "0xd7D8c42Ab5B83aA3D4114e5297989DC27BDfb715"
+      abi: LoyaltyToken
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: LoyaltyToken
+          file: ./abis/LoyaltyToken.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        #   - event: MinterAdded(indexed address)
+        #   - event: MinterRemoved(indexed address)
+        # - event: Transfer(indexed address,indexed address,uint256)
+      # callHandlers:
+      file: ./src/LoyaltyToken.ts
+
+  - kind: ethereum/contract
+    name: Dao
+    network: ganache
+    source:
+      address: "0x316C5f8867B21923db8A0Bd6890A6BFE0Ab6F9d2"
+      abi: Dao
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+      abis:
+        - name: Dao
+          file: ./abis/Dao.json
+      eventHandlers:
+        - event: LogVote(indexed uint256,indexed uint256,uint256,uint256,indexed address)
+          handler: handleLogVote
+        - event: LogFundsDistributed(indexed uint256,indexed uint256,uint256,indexed uint256,uint256,uint256)
+          handler: handleLogFundsDistributed
+        #   - event: MinterRemoved(indexed address)
+        # - event: Transfer(indexed address,indexed address,uint256)
+      # callHandlers:
+      file: ./src/dao.ts
