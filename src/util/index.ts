@@ -293,7 +293,7 @@ export function recognizeStateChange(
 export function updateForeclosedTokens(
   foreclosedPatron: Address,
   steward: Steward
-): void {
+): string[] {
   /**
    * PHASE 1 - load data
    */
@@ -324,6 +324,8 @@ export function updateForeclosedTokens(
    * PHASE 3 - save data
    */
   patronOld.save();
+
+  return prevTokens;
 }
 
 export function handleAddTokenUtil(
