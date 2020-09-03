@@ -272,13 +272,13 @@ export function handleLogBuy(event: LogBuy): void {
   let wildcardTimeAcquired = txTimestamp;
 
   let eventParamsString =
-    "['" +
+    "[\"" +
     tokenIdString +
-    "', '" +
+    "\", \"" +
     event.params.owner.toHexString() +
-    "', '" +
+    "\", \"" +
     event.params.price.toString() +
-    "']";
+    "\"]";
 
   recognizeStateChange(
     txHashString,
@@ -430,11 +430,11 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   let txHashString = event.transaction.hash.toHexString();
 
   let eventParamsString =
-    "['" +
+    "[\"" +
     tokenIdString +
-    "', '" +
+    "\", \"" +
     event.params.newPrice.toString();
-    "']";
+    "\"]";
 
   recognizeStateChange(
     txHashString,
@@ -471,9 +471,9 @@ export function handleLogForeclosure(event: LogForeclosure): void {
   let txHashString = event.transaction.hash.toHexString();
 
   let eventParamsString =
-    "['" +
+    "[\"" +
     event.params.prevOwner.toString() +
-    "']";
+    "\"]";
 
   recognizeStateChange(
     txHashString,
@@ -570,11 +570,11 @@ export function handleLogCollection(event: LogCollection): void {
   let txHashString = event.transaction.hash.toHexString();
 
   let eventParamsString =
-    "['" +
+    "[\"" +
     tokenIdString +
-    "', '" +
+    "\", \"" +
     event.params.collected.toString() +
-    "']";
+    "\"]";
 
   recognizeStateChange(
     txHashString,
