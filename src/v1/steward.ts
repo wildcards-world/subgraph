@@ -72,7 +72,7 @@ export function handleBuy(event: Buy): void {
   }
 
   let previousTokenOwner = wildcard.owner;
-  let patronOld = Patron.load(previousTokenOwner);
+  let patronOld = Patron.load(ID_PREFIX + previousTokenOwner);
   if (patronOld == null) {
     log.critical("Patron didn't exist with id: {} - THIS IS A FATAL ERROR", [
       previousTokenOwner,
@@ -88,19 +88,15 @@ export function handleBuy(event: Buy): void {
   wildcard.tokenId = tokenIdBigInt;
 
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
-  log.warning("Before time collected... {}", [
-    event.transaction.hash.toHexString(),
-  ]);
   wildcard.timeCollected = timeLastCollectedWildcardSafe(
     steward,
     tokenIdBigInt
   );
-  log.warning("Before time collected...", []);
 
   let previousTokenOwnerString = wildcard.owner;
 
-  let patron = Patron.load(ownerString);
-  // let patronOld = Patron.load(previousTokenOwnerString);
+  let patron = Patron.load(ID_PREFIX + ownerString);
+  // let patronOld = Patron.load(ID_PREFIX + previousTokenOwnerString);
   if (patron == null) {
     patron = new Patron(ID_PREFIX + ownerString);
     patron.address = owner;
@@ -260,10 +256,14 @@ export function handleBuy(event: Buy): void {
     previousPatronAvailableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
     );
-    previousPatronForeclosureTime = getForeclosureTimeSafe(
-      steward,
-      patronOld.address as Address
-    );
+    if (patronOld.foreclosureTime.gt(txTimestamp)) {
+      previousPatronForeclosureTime = getForeclosureTimeSafe(
+        steward,
+        patronOld.address as Address
+      );
+    } else {
+      previousPatronForeclosureTime = patronOld.foreclosureTime;
+    }
   }
   // Remove token to the previous patron's tokens
   let previousPatronTokens = removeFromArrayAtIndex(
@@ -409,16 +409,17 @@ export function handlePriceChange(event: PriceChange): void {
   let txTimestamp = event.block.timestamp;
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
-  wildcard.timeCollected = timeLastCollectedWildcardSafe(
-    steward,
-    tokenIdBigInt
-  );
 
   if (wildcard == null) {
     log.critical("Wildcard didn't exist with id: {} - THIS IS A FATAL ERROR", [
       tokenIdString,
     ]);
   }
+
+  wildcard.timeCollected = timeLastCollectedWildcardSafe(
+    steward,
+    tokenIdBigInt
+  );
 
   // Entity fields can be set using simple assignments
   wildcard.tokenId = tokenIdBigInt;
@@ -439,7 +440,7 @@ export function handlePriceChange(event: PriceChange): void {
   );
   wildcard.save();
 
-  let patron = Patron.load(wildcard.owner);
+  let patron = Patron.load(ID_PREFIX + wildcard.owner);
 
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
   let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
@@ -503,10 +504,12 @@ export function handleForeclosure(event: Foreclosure): void {
 
   // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
   let scaledDelta = BigInt.fromI32(0);
+  let foreclosureTime = BigInt.fromI32(0);
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
-    let patron = Patron.load(patronString);
+    let patron = Patron.load(ID_PREFIX + patronString);
     if (patron != null) {
+      foreclosureTime = patron.foreclosureTime;
       foreclosedTokens = patron.tokens;
       updateAllOfPatronsTokensLastUpdated(patron, steward, "handleForeclosure");
       scaledDelta = patron.patronTokenCostScaledNumerator.times(
@@ -518,10 +521,11 @@ export function handleForeclosure(event: Foreclosure): void {
   updateAvailableDepositAndForeclosureTime(
     steward,
     foreclosedPatron,
-    txTimestamp
+    txTimestamp,
+    false
   );
 
-  let foreclosureTime = getForeclosureTimeSafe(steward, foreclosedPatron);
+  // let foreclosureTime = getForeclosureTimeSafe(steward, foreclosedPatron);
 
   let eventParamsString =
     "['" +
@@ -554,11 +558,16 @@ export function handleRemainingDepositUpdate(
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
+  let updatePatronForeclosureTime = false;
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   // Also, the below code is totally redundant, just there for safety.
   if (patronString != event.address.toHexString()) {
-    let patron = Patron.load(patronString);
+    let patron = Patron.load(ID_PREFIX + patronString);
     if (patron != null) {
+      updatePatronForeclosureTime = getForeclosureTimeSafe(
+        steward,
+        tokenPatron
+      ).gt(BigInt.fromI32(0));
       updateAllOfPatronsTokensLastUpdated(
         patron,
         steward,
@@ -567,7 +576,12 @@ export function handleRemainingDepositUpdate(
     }
   }
 
-  updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+  updateAvailableDepositAndForeclosureTime(
+    steward,
+    tokenPatron,
+    txTimestamp,
+    updatePatronForeclosureTime
+  );
 
   let eventParamsString =
     "['" +
@@ -601,7 +615,7 @@ export function handleCollectPatronage(event: CollectPatronage): void {
 
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
-    let patron = Patron.load(patronString);
+    let patron = Patron.load(ID_PREFIX + patronString);
     if (patron != null) {
       updateAllOfPatronsTokensLastUpdated(
         patron,
@@ -624,7 +638,12 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     log.critical("THE WILDCARD IS NULL??", []);
   }
 
-  updateAvailableDepositAndForeclosureTime(steward, tokenPatron, txTimestamp);
+  updateAvailableDepositAndForeclosureTime(
+    steward,
+    tokenPatron,
+    txTimestamp,
+    false
+  );
 
   let eventParamsString =
     "['" +

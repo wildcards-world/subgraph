@@ -1,6 +1,7 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
-export const networkId = 80001;
+// MAKE SURE THIS IS SET CORRECTLY BEFORE DEPLOY
+export const networkId = 1;
 
 export let ZERO_ADDRESS = Address.fromString(
   "0x0000000000000000000000000000000000000000"

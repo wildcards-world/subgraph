@@ -96,35 +96,26 @@ export function updateGlobalState(
   txTimestamp: BigInt,
   TotalTokenCostScaledNumeratorDelta: BigInt
 ): void {
-  log.warning("GS 1", []);
   let globalState = Global.load(GLOBAL_ID);
-  log.warning("GS 2", []);
   let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward,
     TotalTokenCostScaledNumeratorDelta
   );
-  log.warning("GS 2.5", []);
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(
     steward,
     totalTokenCostScaledNumeratorAccurate,
     txTimestamp
   );
-  log.warning("GS 3", []);
-  log.warning("GS 4", []);
   let totalOwed = getTotalOwedAccurate(steward);
-  log.warning("GS 5", []);
   globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
     totalOwed
   );
-  log.warning("GS 6", []);
   // BUG!
   // This code below is inaccurate because the `timeLastCollected` isn't correct. Should have `timeLastCalculatedCollection` as separate variable
 
   globalState.totalTokenCostScaledNumeratorAccurate = totalTokenCostScaledNumeratorAccurate;
   globalState.timeLastCollected = txTimestamp;
-  log.warning("GS 7", []);
   globalState.save();
-  log.warning("GS 8", []);
 }
 
 export function getForeclosureTimeSafe(
@@ -193,7 +184,8 @@ export function initialiseDefaultPatronIfNull(
 export function updateAvailableDepositAndForeclosureTime(
   steward: Steward,
   tokenPatron: Address,
-  txTimestamp: BigInt
+  txTimestamp: BigInt,
+  updatePatronForeclosureTime: boolean
 ): void {
   // if the token patron is the zero address, return! (for example it will be the zero address if the token is foreclosed and )
   if (tokenPatron.equals(ZERO_ADDRESS)) {
@@ -207,7 +199,7 @@ export function updateAvailableDepositAndForeclosureTime(
 
   let tokenPatronStr = tokenPatron.toHexString();
 
-  let patron = Patron.load(tokenPatronStr);
+  let patron = Patron.load(ID_PREFIX + tokenPatronStr);
 
   if (patron == null) {
     patron = initialiseDefaultPatronIfNull(steward, tokenPatron, txTimestamp);
@@ -229,7 +221,9 @@ export function updateAvailableDepositAndForeclosureTime(
     patron.address as Address
   );
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
-  patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  if (updatePatronForeclosureTime) {
+    patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  }
   patron.lastUpdated = txTimestamp;
   patron.save();
 }
@@ -303,7 +297,7 @@ export function updateForeclosedTokens(
 
   // TODO: this function isn't complete. Revisit.
   let foreclosedPatronString = foreclosedPatron.toHexString();
-  let patronOld = Patron.load(foreclosedPatronString);
+  let patronOld = Patron.load(ID_PREFIX + foreclosedPatronString);
 
   /**
    * PHASE 2 - update data
@@ -357,7 +351,7 @@ export function handleAddTokenUtil(
   price.timeSet = txTimestamp;
   price.save();
 
-  let patron = Patron.load("NO_OWNER");
+  let patron = Patron.load(ID_PREFIX + "NO_OWNER");
   if (patron == null) {
     patron = initialiseNoOwnerPatronIfNull();
   }

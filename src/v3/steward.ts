@@ -16,6 +16,7 @@ import {
 } from "../util";
 import { patronageTokenPerSecond, ID_PREFIX } from "../CONSTANTS";
 import { GLOBAL_ID } from "../CONSTANTS";
+import { createCounterIfDoesntExist } from "../v0/helpers";
 /*
 // deprecated_totalCollected; // THIS VALUE IS DEPRECATED
     - 
@@ -56,8 +57,8 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   let collectedLoyaltyTokens = event.params.timeSinceLastMint;
   let patronAddress = event.params.patron;
   // let tokenId = event.params.tokenId;
-  let patron = Patron.load(patronAddress.toHexString());
-  // let patronLegacy = Patron.load(patronAddress.toHexString());
+  let patron = Patron.load(ID_PREFIX + patronAddress.toHexString());
+  // let patronLegacy = Patron.load(ID_PREFIX + patronAddress.toHexString());
   // let numberOfTokensHeldByUserAtBeginningOfTx = BigInt.fromI32(
   //   // NOTE: the value on the `PatronNew` for tokens is currently inaccurate.
   //   patronLegacy.tokens.length
@@ -66,6 +67,9 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   let ownedTokens = patron.tokens;
   // var stewardAddress = event.address;
   let foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
+  if (foreclosureTime.equals(BigInt.fromI32(0))) {
+    foreclosureTime = patron.foreclosureTime;
+  }
   let txTimestamp = event.block.timestamp;
   // let timeSinceLastUpdatePatron = patron.lastUpdated;
 
@@ -161,6 +165,8 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
 }
 
 export function handleAddTokenV3(event: AddTokenV3): void {
+  createCounterIfDoesntExist();
+
   let tokenId = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();

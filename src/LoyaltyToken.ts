@@ -13,8 +13,8 @@ export function handleTransfer(event: Transfer): void {
   // let loyaltyToken = LoyaltyToken.bind(tokenAddress);
   // let fromNewBalance = getTokenBalance(from, loyaltyToken);
   // let toNewBalance = getTokenBalance(to, loyaltyToken);
-  // let patronFrom = Patron.load(fromString);
-  // let patronTo = Patron.load(toString);
+  // let patronFrom = Patron.load(ID_PREFIX + fromString);
+  // let patronTo = Patron.load(ID_PREFIX + toString);
   // if (patronFrom == null) {
   //   patronFrom = initialiseDefaultPatronIfNull(steward, from, event.block.timestamp);
   // }

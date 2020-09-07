@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0xD1c8FC18cdE1Cc82807bdBBdF46b3Ef7abC593Ac"
       abi: Steward
-      startBlock: 3332577
+      startBlock: 3332570
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -75,35 +75,35 @@ dataSources:
           handler: handleUpgradeToV3
         #   handler: handleArtistCommission
       file: ./src/steward.ts
-  # - kind: ethereum/contract
-  #   name: Token
-  #   network: rinkeby
-  #   source:
-  #     address: "0xde959bb373da2Ba2c28F5B404463413e7AE5B265"
-  #     abi: Token
-  #     startBlock: 3332577
-  #   mapping:
-  #     kind: ethereum/events
-  #     apiVersion: 0.0.4
-  #     language: wasm/assemblyscript
-  #     entities:
-  #       - MinterAdded
-  #       - MinterRemoved
-  #       - Transfer
-  #       - Approval
-  #       - ApprovalForAll
-  #     abis:
-  #       - name: Token
-  #         file: ./abis/Token.json
-  #     eventHandlers:
-  #       - event: MinterAdded(indexed address)
-  #         handler: handleMinterAdded
-  #       - event: MinterRemoved(indexed address)
-  #         handler: handleMinterRemoved
-  #       - event: Transfer(indexed address,indexed address,indexed uint256)
-  #         handler: handleTransfer
-  #       - event: Approval(indexed address,indexed address,indexed uint256)
-  #         handler: handleApproval
-  #       - event: ApprovalForAll(indexed address,indexed address,bool)
-  #         handler: handleApprovalForAll
-  #     file: ./src/token.ts
+  - kind: ethereum/contract
+    name: Token
+    network: matic
+    source:
+      address: "0xde959bb373da2Ba2c28F5B404463413e7AE5B265"
+      abi: Token
+      startBlock: 3332570
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - MinterAdded
+        - MinterRemoved
+        - Transfer
+        - Approval
+        - ApprovalForAll
+      abis:
+        - name: Token
+          file: ./abis/Token.json
+      eventHandlers:
+        - event: MinterAdded(indexed address)
+          handler: handleMinterAdded
+        - event: MinterRemoved(indexed address)
+          handler: handleMinterRemoved
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+      file: ./src/token.ts

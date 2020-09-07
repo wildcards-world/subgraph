@@ -119,12 +119,12 @@ export function handleLogBuy(event: LogBuy): void {
       ? Address.fromString(previousTokenOwnerString)
       : ZERO_ADDRESS;
 
-  let patron = Patron.load(ownerString);
+  let patron = Patron.load(ID_PREFIX + ownerString);
   if (patron == null) {
     patron = initialiseDefaultPatronIfNull(steward, owner, txTimestamp);
   }
 
-  let patronOld = Patron.load(previousTokenOwnerString);
+  let patronOld = Patron.load(ID_PREFIX + previousTokenOwnerString);
   if (patronOld == null) {
     warnAndError("The previous patron should be defined. tx: {}", [
       event.transaction.hash.toHexString(),
@@ -395,7 +395,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   );
   wildcard.save();
 
-  let patron = Patron.load(wildcard.owner);
+  let patron = Patron.load(ID_PREFIX + wildcard.owner);
 
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
   let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
@@ -535,7 +535,7 @@ export function handleLogCollection(event: LogCollection): void {
 export function handleLogRemainingDepositUpdate(
   event: LogRemainingDepositUpdate
 ): void {
-  let patron = Patron.load(event.params.tokenPatron.toHexString());
+  let patron = Patron.load(ID_PREFIX + event.params.tokenPatron.toHexString());
   if (patron == null) {
   } else {
     patron.availableDeposit = event.params.remainingDeposit;

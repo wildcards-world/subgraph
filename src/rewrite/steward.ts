@@ -15,7 +15,7 @@ export function genericUpdateTimeHeld(
 
   let tokenIdString = tokenIdBigInt.toString();
 
-  let patron = Patron.load(ownerString);
+  let patron = Patron.load(ID_PREFIX + ownerString);
   if (patron == null) {
     patron = initialiseDefaultPatronIfNull(steward, owner, txTimestamp);
   }
