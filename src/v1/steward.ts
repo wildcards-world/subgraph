@@ -60,8 +60,21 @@ export function handleBuy(event: Buy): void {
   let ownerString = owner.toHexString();
   let txTimestamp = event.block.timestamp;
 
-  let steward = Steward.bind(event.address);
   let tokenIdBigInt = event.params.tokenId;
+  let steward = Steward.bind(event.address);
+  let totalCollected = steward.totalCollected(tokenIdBigInt);
+  log.warning("first", []);
+  let currentCollected = steward.currentCollected(tokenIdBigInt);
+  log.warning("second", []);
+  let timeLastCollected = steward.timeLastCollected(tokenIdBigInt);
+  log.warning(" final {} - {} -{}", [
+    totalCollected.toString(),
+    currentCollected.toString(),
+    timeLastCollected.toString()
+  ]);
+  // mapping(uint256 => uint256) public totalCollected; // all patronage ever collected
+  // mapping(uint256 => uint256) public currentCollected; // amount currently collected for patron
+  // mapping(uint256 => uint256) public timeLastCollected;
   let tokenIdString = tokenIdBigInt.toString();
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
@@ -606,25 +619,38 @@ export function handleRemainingDepositUpdate(
   updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
+  
+  log.warning("THIS SHOULD NOT EXECUTE",[]);
+  log.warning("THIS SHOULD NOT EXECUTE",[]);
+  log.warning("THIS SHOULD NOT EXECUTE",[]);
+  log.warning("THIS SHOULD NOT EXECUTE",[]);
+  return;
   let steward = Steward.bind(event.address);
+  log.warning("steward address: {} / {}", [event.address.toString(), event.address.toHexString()]);
   let tokenPatron = event.params.patron;
   let collectedToken = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let patronString = tokenPatron.toHexString();
 
+  log.warning("1",[]);
+  
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
+    log.warning("2 - {}",[ID_PREFIX]);
     let patron = Patron.load(ID_PREFIX + patronString);
     if (patron != null) {
+      log.warning("THE PATRON IS NOT NULL", []);
+
       updateAllOfPatronsTokensLastUpdated(
         patron,
         steward,
         "handleCollectPatronage"
-      );
-    }
+        );
+      }
   }
-
+  
+  log.warning("3",[]);
   let wildcard = Wildcard.load(ID_PREFIX + collectedToken.toString());
   if (wildcard != null) {
     wildcard.totalCollected = getTotalCollectedForWildcard(
@@ -637,15 +663,17 @@ export function handleCollectPatronage(event: CollectPatronage): void {
   } else {
     log.critical("THE WILDCARD IS NULL??", []);
   }
-
+  log.warning("4",[]);
+  
   updateAvailableDepositAndForeclosureTime(
     steward,
     tokenPatron,
     txTimestamp,
     false
-  );
-
-  let eventParamsString =
+    );
+    
+    log.warning("5",[]);
+    let eventParamsString =
     "['" +
     event.params.tokenId.toHexString() +
     "', '" +
@@ -655,17 +683,19 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     "', '" +
     event.params.amountReceived.toString() +
     "']";
-
-  recognizeStateChange(
-    txHashString,
-    "CollectPatronage",
-    eventParamsString,
-    [patronString],
-    [collectedToken.toString()],
-    txTimestamp,
-    event.block.number,
-    1
-  );
+    
+    log.warning("6",[]);
+    recognizeStateChange(
+      txHashString,
+      "CollectPatronage",
+      eventParamsString,
+      [patronString],
+      [collectedToken.toString()],
+      txTimestamp,
+      event.block.number,
+      1
+      );
+      log.warning("7",[]);
 
   // Here totalTokenCostScaledNumeratorAccurate not updated
   let scaledDelta = BigInt.fromI32(0);

@@ -61,16 +61,28 @@ export function timeLastCollectedWildcardSafe(
   wildcardId: BigInt
 ): BigInt {
   // load what version we are in (through global state)
+  log.warning("a - 1", []);
   let globalState = Global.load(GLOBAL_ID);
+  log.warning("a - 2", []);
   let currentVersion = globalState.version;
-
+  log.warning("a - 3 -- version {}", [currentVersion.toString()]);
+  
   // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
-  // execure correct function based on on version.
+  // execute correct function based on the version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
+    log.warning("a - 4", []);
     let currentOwner = getCurrentOwner(steward, wildcardId);
+    log.warning("a - 5", []);
     return steward.timeLastCollectedPatron(currentOwner);
   } else {
-    return steward.timeLastCollected(wildcardId);
+    log.warning("a - 6 - wcId = {}", [wildcardId.toString()]);
+    let toReturn =  steward.try_timeLastCollected(wildcardId);
+    if(toReturn.reverted) {
+      log.warning("IT REVERTED", [])
+      return BigInt.fromI32(0);
+    }
+    log.warning("a - 7 - {}", [toReturn.value.toString()]);
+    return toReturn.value;
   }
 }
 
@@ -235,7 +247,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
   if (stateChange == null) {
     stateChange = new StateChange(txId);
     stateChange.txEventList = [];
-    stateChange.txEventParamList = [];
+    stateChange.txEventParamListDeprecated = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChanges = [];
 
@@ -263,7 +275,7 @@ export function recognizeStateChange(
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash);
   stateChange.txEventList = stateChange.txEventList.concat([eventName]);
-  stateChange.txEventParamList = stateChange.txEventParamList.concat([
+  stateChange.txEventParamListDeprecated = stateChange.txEventParamListDeprecated.concat([
     eventParameters,
   ]);
 
@@ -404,25 +416,32 @@ export function updateAllOfPatronsTokensLastUpdated(
   steward: Steward,
   trackingString: string
 ): void {
+  log.warning("--1",[])
   if (patron == null) {
     log.critical("patron should always be defined", []);
     return;
   }
-
+  log.warning("--2",[])
+  
   let patronsTokens: Array<string> = patron.tokens;
-
+  log.warning("--3",[])
+  
   for (let i = 0, len = patronsTokens.length; i < len; i++) {
+    log.warning("--4",[])
     let wildcardId = patronsTokens[i];
-
+    
     let wildcard = Wildcard.load(ID_PREFIX + wildcardId);
-
+    
+    log.warning("--5",[])
     wildcard.timeCollected = timeLastCollectedWildcardSafe(
       steward,
       wildcard.tokenId
-    );
-
-    wildcard.save();
-  }
+      );
+      
+      wildcard.save();
+      log.warning("--6",[])
+    }
+    log.warning("--7",[])
 }
 
 export function isVitalik(tokenId: BigInt): boolean {

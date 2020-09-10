@@ -81,6 +81,19 @@ export function handleLogBuy(event: LogBuy): void {
     txTimestamp,
     event.transaction.hash
   );
+  log.warning("TOKEN ID: {}", [tokenId.toString()]);
+
+  let totalCollected = steward.totalCollected(BigInt.fromI32(tokenId));
+  log.warning("first", []);
+  let currentCollected = steward.currentCollected(BigInt.fromI32(tokenId));
+  log.warning("second", []);
+  let timeLastCollected = steward.timeLastCollected(BigInt.fromI32(tokenId));
+  log.warning(" final {} - {} -{}", [
+    totalCollected.toString(),
+    currentCollected.toString(),
+    timeLastCollected.toString()
+  ]);
+
   let txHashString = event.transaction.hash.toHexString();
 
   if (tokenId == -1) {
@@ -94,6 +107,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
+    log.warning("tokenIdString: {}",[tokenIdString]);
     warnAndError(
       "The wildcard doesn't exist. Check the 'addToken' logic. tx: {}",
       [event.transaction.hash.toHexString()]
@@ -605,14 +619,19 @@ export function handleLogRemainingDepositUpdate(
 export function handleAddToken(event: AddToken): void {
   createCounterIfDoesntExist();
 
+  
   let tokenId = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
-
+  
   // Don't re-add the 'vintage' Vitalik...
   if (isVintageVitalik(tokenId, event.block.number)) {
-    return;
+    // If the vitalik doesn't exist then continue adding it (eg. relevant for a test environment)
+    let token = Wildcard.load(tokenId.toString());
+    if (token != null) {
+      return;
+    }
   } //Temporarily before token is migrated
-
+  
   let patronageNumerator = event.params.patronageNumerator;
 
   let wildcard = new Wildcard(ID_PREFIX + tokenId.toString());
