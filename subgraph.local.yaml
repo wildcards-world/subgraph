@@ -6,7 +6,7 @@ dataSources:
     name: Steward
     network: ganache
     source:
-      address: "0xd14700e0b2aA1dB6F02c4c5469C4D6a0a94fA87a"
+      address: "0xc665ED33F49b8a1Aa80bDC5B99512cb971009D2f"
       abi: Steward
     mapping:
       kind: ethereum/events
@@ -63,19 +63,17 @@ dataSources:
         - event: CollectLoyalty(indexed uint256,indexed address,uint256)
           handler: handleCollectLoyalty
         # v3 events
-        - event: AddToken(indexed uint256,uint256,uint256,uint256)
+        - event: AddTokenV3(indexed uint256,uint256,uint256)
           handler: handleAddTokenV3
-        # - event: CollectLoyalty(indexed address, uint256)
-        #   handler: handleCollectLoyaltyV3
-        # - event: ArtistCommission(uint256 indexed,address,uint256)
-        #   handler: handleArtistCommission
+        - event: UpgradeToV3()
+          handler: handleUpgradeToV3
       file: ./src/steward.ts
 
   - kind: ethereum/contract
     name: Token
     network: ganache
     source:
-      address: "0xB601159B96C9D7ACE79F70E24a7Ca12F007e667e"
+      address: "0x9Ff7c346E704F084d707A51AAfa6F8D5084Db7f5"
       abi: Token
     mapping:
       kind: ethereum/events

@@ -275,13 +275,13 @@ export function handleLogBuy(event: LogBuy): void {
   let wildcardTimeAcquired = txTimestamp;
 
   let eventParamsString =
-    "['" +
+    "[\"" +
     tokenIdString +
-    "', '" +
+    "\", \"" +
     event.params.owner.toHexString() +
-    "', '" +
+    "\", \"" +
     event.params.price.toString() +
-    "']";
+    "\"]";
 
   recognizeStateChange(
     txHashString,
@@ -429,6 +429,26 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     BigInt.fromI32(1)
   );
   eventCounter.save();
+
+  let txHashString = event.transaction.hash.toHexString();
+
+  let eventParamsString =
+    "[\"" +
+    tokenIdString +
+    "\", \"" +
+    event.params.newPrice.toString();
+    "\"]";
+
+  recognizeStateChange(
+    txHashString,
+    "PriceChange",
+    eventParamsString,
+    [patron.id],
+    [wildcard.id],
+    txTimestamp,
+    event.block.number,
+    0
+  );
 }
 
 export function handleLogForeclosure(event: LogForeclosure): void {
@@ -449,7 +469,25 @@ export function handleLogForeclosure(event: LogForeclosure): void {
    */
   let steward = Steward.bind(event.address);
 
-  updateForeclosedTokens(foreclosedPatron, steward);
+  let changedTokens = updateForeclosedTokens(foreclosedPatron, steward);
+
+  let txHashString = event.transaction.hash.toHexString();
+
+  let eventParamsString =
+    "[\"" +
+    event.params.prevOwner.toString() +
+    "\"]";
+
+  recognizeStateChange(
+    txHashString,
+    "Foreclosure",
+    eventParamsString,
+    [event.params.prevOwner.toString()],
+    changedTokens,
+    event.block.timestamp,
+    event.block.number,
+    0
+  );
 }
 
 export function handleLogCollection(event: LogCollection): void {
@@ -530,6 +568,27 @@ export function handleLogCollection(event: LogCollection): void {
   globalState.timeLastCollected = txTimestamp;
 
   globalState.save();
+
+
+  let txHashString = event.transaction.hash.toHexString();
+
+  let eventParamsString =
+    "[\"" +
+    tokenIdString +
+    "\", \"" +
+    event.params.collected.toString() +
+    "\"]";
+
+  recognizeStateChange(
+    txHashString,
+    "CollectPatronage",
+    eventParamsString,
+    [wildcard.owner],
+    [],
+    event.block.timestamp,
+    event.block.number,
+    0
+  );
 }
 
 export function handleLogRemainingDepositUpdate(
