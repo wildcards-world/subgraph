@@ -7,6 +7,20 @@ type EventCounter @entity {
   changePriceEventCount: BigInt
 }
 
+type EventParam @entity {
+  id: ID!
+  index: Int!
+  param: String!
+  paramType: String!
+}
+
+type EventParams @entity {
+  id: ID!
+  index: Int!
+  eventName: String!
+  params: [EventParam!]!
+}
+
 type Global @entity {
   id: ID! # will just be '1' since only one global namespace
   version: BigInt! # NOTE: this will say version 0 for version 0-2, after v3 it will always be correct.
@@ -96,7 +110,8 @@ type StateChange @entity {
   blockNumber: BigInt!
   contractVersion: Int!
   txEventList: [String!]! #call event logs or something
-  txEventParamList: [String!]!
+  txEventParamListDeprecated: [String!]!
+  txEventParamList: [EventParams!]
   patronChanges: [Patron!]!
   wildcardChanges: [Wildcard!]!
 }
