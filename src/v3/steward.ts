@@ -14,7 +14,8 @@ import {
   minBigInt,
   timeLastCollectedWildcardSafe,
 } from "../util";
-import { patronageTokenPerSecond } from "../CONSTANTS";
+import { patronageTokenPerSecond, ID_PREFIX } from "../CONSTANTS";
+import { GLOBAL_ID } from "../CONSTANTS";
 /*
 // deprecated_totalCollected; // THIS VALUE IS DEPRECATED
     - 
@@ -32,7 +33,7 @@ export function handleUpgradeToV3(event: UpgradeToV3): void {
     event.block.hash.toHexString(),
   ]);
 
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   if (globalState == null) {
     log.critical("The global state is undefined!", []);
   }
@@ -87,7 +88,7 @@ export function handleCollectLoyalty(event: CollectLoyalty): void {
   for (let i = 0, len = ownedTokens.length; i < len; i++) {
     let currentTokenIdString: string = ownedTokens[i];
     // let currentTokenIdString: string = patronLegacy.tokens[i];
-    let tokenId = Wildcard.load(currentTokenIdString).tokenId;
+    let tokenId = Wildcard.load(ID_PREFIX + currentTokenIdString).tokenId;
     // let localSteward = Steward.bind(stewardAddress);
     let timeTokenWasLastUpdated = timeLastCollectedWildcardSafe(
       steward,
@@ -167,7 +168,7 @@ export function handleAddTokenV3(event: AddTokenV3): void {
 
   let patronageNumerator = event.params.patronageNumerator;
 
-  let wildcard = new Wildcard(tokenId.toString());
+  let wildcard = new Wildcard(ID_PREFIX + tokenId.toString());
 
   let steward = Steward.bind(event.address);
 

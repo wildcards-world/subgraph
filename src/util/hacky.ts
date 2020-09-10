@@ -1,6 +1,7 @@
 import {
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
   NUM_SECONDS_IN_YEAR_BIG_INT,
+  GLOBAL_ID,
 } from "../CONSTANTS";
 import { Steward } from "../../generated/Steward/Steward";
 import { BigInt, log } from "@graphprotocol/graph-ts";
@@ -12,7 +13,7 @@ export function getTotalCollectedAccurate(
   txTimestamp: BigInt
 ): BigInt {
   // load what version we are in (through global state)
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
   // execute correct function based on on version.
@@ -56,7 +57,7 @@ export function getTotalCollectedAccurate(
 }
 export function getTotalOwedAccurate(steward: Steward): BigInt {
   // load what version we are in (through global state)
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
   // execure correct function based on on version.
@@ -97,7 +98,7 @@ export function getTotalTokenCostScaledNumerator(
   steward: Steward,
   delta: BigInt
 ): BigInt {
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
   // execure correct function based on on version.

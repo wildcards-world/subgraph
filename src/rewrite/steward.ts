@@ -3,6 +3,7 @@ import { Steward } from "../../generated/Steward/Steward";
 import { Patron, Wildcard } from "../../generated/schema";
 import { initialiseDefaultPatronIfNull } from "../util";
 import { createWildcardIfDoesntExist } from "../v0/helpers";
+import { ID_PREFIX } from "../CONSTANTS";
 export function genericUpdateTimeHeld(
   owner: Address,
   txTimestamp: BigInt,
@@ -19,7 +20,7 @@ export function genericUpdateTimeHeld(
     patron = initialiseDefaultPatronIfNull(steward, owner, txTimestamp);
   }
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
     wildcard = createWildcardIfDoesntExist(steward, tokenIdBigInt, txTimestamp);
   }

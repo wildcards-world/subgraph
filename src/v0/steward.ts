@@ -32,6 +32,9 @@ import {
   GLOBAL_PATRONAGE_DENOMINATOR,
   SIMON_DLR_ADDRESS,
   NO_OWNER,
+  GLOBAL_ID,
+  EVENT_COUNTER_ID,
+  ID_PREFIX,
 } from "../CONSTANTS";
 import {
   getForeclosureTimeSafe,
@@ -89,7 +92,7 @@ export function handleLogBuy(event: LogBuy): void {
   let tokenIdString = tokenId.toString();
   let tokenIdBigInt = BigInt.fromI32(tokenId);
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
     warnAndError(
       "The wildcard doesn't exist. Check the 'addToken' logic. tx: {}",
@@ -238,7 +241,7 @@ export function handleLogBuy(event: LogBuy): void {
     ]);
   }
 
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
 
   let globalStateTotalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward,
@@ -335,7 +338,7 @@ export function handleLogBuy(event: LogBuy): void {
   buyEvent.timestamp = txTimestamp;
   buyEvent.save();
 
-  let eventCounter = EventCounter.load("1");
+  let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
   eventCounter.buyEventCount = eventCounter.buyEventCount.plus(
     BigInt.fromI32(1)
   );
@@ -370,7 +373,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     return;
   } // only continue if it is past the blocknumber that vitalik was migrated to the new smartcontract
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
 
   // Entities only exist after they have been saved to the store;
   // `null` checks allow to create entities on demand
@@ -421,7 +424,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   priceChange.timestamp = txTimestamp;
   priceChange.save();
 
-  let eventCounter = EventCounter.load("1");
+  let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
   eventCounter.changePriceEventCount = eventCounter.changePriceEventCount.plus(
     BigInt.fromI32(1)
   );
@@ -488,7 +491,7 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 }
 
 export function handleLogCollection(event: LogCollection): void {
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   // let totalTokenCostScaledNumerator = globalState.totalTokenCostScaledNumerator;
   let txTimestamp = event.block.timestamp;
 
@@ -520,7 +523,7 @@ export function handleLogCollection(event: LogCollection): void {
     }
   }
 
-  let wildcard = Wildcard.load(tokenIdString);
+  let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
 
   // Entities only exist after they have been saved to the store;
   // `null` checks allow to create entities on demand
@@ -612,7 +615,7 @@ export function handleAddToken(event: AddToken): void {
 
   let patronageNumerator = event.params.patronageNumerator;
 
-  let wildcard = new Wildcard(tokenId.toString());
+  let wildcard = new Wildcard(ID_PREFIX + tokenId.toString());
   wildcard.launchTime = txTimestamp;
 
   let steward = Steward.bind(event.address);
@@ -628,7 +631,7 @@ export function handleAddToken(event: AddToken): void {
     txHashStr
   );
 
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
 
   if (globalState == null) {
     log.critical("The global state should be defined", []);

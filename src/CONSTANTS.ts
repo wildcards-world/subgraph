@@ -1,4 +1,6 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
+
+const network = dataSource.network(); // e.g. "mainnet", "ropsten", "poa-core"
 
 export let ZERO_ADDRESS = Address.fromString(
   "0x0000000000000000000000000000000000000000"
@@ -44,3 +46,30 @@ export const SIMON_DLR_ADDRESS = "0x0cacc6104d8cd9d7b2850b4f35c65c1ecdeece03";
 
 export let VOTES_MANAGER_ENTITY_ID = "VOTE_MANAGER";
 export let NO_OWNER = "NO_OWNER";
+
+function getGlobalId(network: string): string {
+  if (network == "matic" || network == "mumbai") {
+    return "Matic-Global";
+  } else {
+    return "1";
+  }
+}
+export let GLOBAL_ID = getGlobalId(network);
+
+function getEventCounterId(network: string): string {
+  if (network == "matic" || network == "mumbai") {
+    return "Matic-Events";
+  } else {
+    return "1";
+  }
+}
+export let EVENT_COUNTER_ID = getGlobalId(network);
+
+function getIdPrefix(network: string): string {
+  if (network == "matic" || network == "mumbai") {
+    return "matic";
+  } else {
+    return "";
+  }
+}
+export let ID_PREFIX = getIdPrefix(network);

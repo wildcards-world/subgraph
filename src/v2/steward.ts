@@ -1,6 +1,7 @@
 import { AddToken, Steward } from "../../generated/Steward/Steward";
 import { Wildcard } from "../../generated/schema";
 import { handleAddTokenUtil, recognizeStateChange } from "../util";
+import { ID_PREFIX } from "../CONSTANTS";
 
 export function handleAddToken(event: AddToken): void {
   let tokenId = event.params.tokenId;
@@ -9,7 +10,7 @@ export function handleAddToken(event: AddToken): void {
 
   let patronageNumerator = event.params.patronageNumerator;
 
-  let wildcard = new Wildcard(tokenId.toString());
+  let wildcard = new Wildcard(ID_PREFIX + tokenId.toString());
   wildcard.launchTime = txTimestamp;
 
   let steward = Steward.bind(event.address);

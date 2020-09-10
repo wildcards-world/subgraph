@@ -15,6 +15,9 @@ import {
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
+  EVENT_COUNTER_ID,
+  GLOBAL_ID,
+  ID_PREFIX,
 } from "../CONSTANTS";
 import {
   getTotalOwedAccurate,
@@ -32,7 +35,7 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
 }
 
 export function getTokenContract(): Token {
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   if (globalState == null) {
     log.critical("Global state must be defined before using this function", []);
   }
@@ -41,7 +44,7 @@ export function getTokenContract(): Token {
 
 export function getCurrentOwner(steward: Steward, wildcardId: BigInt): Address {
   // load what version we are in (through global state)
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
   if (currentVersion.ge(BigInt.fromI32(3))) {
@@ -58,7 +61,7 @@ export function timeLastCollectedWildcardSafe(
   wildcardId: BigInt
 ): BigInt {
   // load what version we are in (through global state)
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
   // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
@@ -94,7 +97,7 @@ export function updateGlobalState(
   TotalTokenCostScaledNumeratorDelta: BigInt
 ): void {
   log.warning("GS 1", []);
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   log.warning("GS 2", []);
   let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward,
@@ -145,7 +148,7 @@ export function getForeclosureTimeSafe(
 }
 
 export function initialiseNoOwnerPatronIfNull(): Patron {
-  let patron = new Patron("NO_OWNER");
+  let patron = new Patron(ID_PREFIX + "NO_OWNER");
   patron.address = ZERO_ADDRESS;
   patron.lastUpdated = BigInt.fromI32(0);
   patron.availableDeposit = BigInt.fromI32(0);
@@ -168,7 +171,7 @@ export function initialiseDefaultPatronIfNull(
   txTimestamp: BigInt
 ): Patron {
   let patronId = patronAddress.toHexString();
-  let patron = new Patron(patronId);
+  let patron = new Patron(ID_PREFIX + patronId);
   patron.address = patronAddress;
   patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw(patronAddress);
@@ -242,7 +245,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
     stateChange.patronChanges = [];
     stateChange.wildcardChanges = [];
 
-    let eventCounter = EventCounter.load("1");
+    let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
     eventCounter.stateChanges = eventCounter.stateChanges.concat([
       stateChange.id,
     ]);
@@ -417,7 +420,7 @@ export function updateAllOfPatronsTokensLastUpdated(
   for (let i = 0, len = patronsTokens.length; i < len; i++) {
     let wildcardId = patronsTokens[i];
 
-    let wildcard = Wildcard.load(wildcardId);
+    let wildcard = Wildcard.load(ID_PREFIX + wildcardId);
 
     wildcard.timeCollected = timeLastCollectedWildcardSafe(
       steward,
@@ -437,13 +440,13 @@ export function safeGetTotalCollected(
   tokenId: BigInt,
   timeSinceLastCollection: BigInt
 ): BigInt {
-  let globalState = Global.load("1");
+  let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
   if (currentVersion.lt(BigInt.fromI32(3))) {
     return steward.totalCollected(tokenId);
   } else {
-    let wildcard = Wildcard.load(tokenId.toString());
+    let wildcard = Wildcard.load(ID_PREFIX + tokenId.toString());
     // TODO: unfortunately this is being written to 'just' work and mathematical rigor is likely being lost.
     let newlyCollected = timeSinceLastCollection
       .times(wildcard.patronageNumeratorPriceScaled)
