@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, log, Address } from "@graphprotocol/graph-ts";
 import {
   Token,
   MinterAdded,
@@ -14,27 +14,34 @@ import {
   GLOBAL_ID,
 } from "./CONSTANTS";
 
+export function createGlobalState(
+  timestamp: BigInt,
+  erc20Address: Address
+): Global {
+  let globalState = new Global(GLOBAL_ID);
+  globalState.version = BigInt.fromI32(0);
+  globalState.timeLastCollected = timestamp;
+  globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
+  globalState.totalCollectedAccurate = globalState.totalCollected;
+  // globalState.totalCollectedOrDue = globalState.totalCollected;
+  globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
+  // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
+  globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
+  globalState.erc20Address = erc20Address;
+  globalState.stewardAddress = ZERO_ADDRESS;
+  globalState.defaultAuctionStartPrice = BigInt.fromI32(0);
+  globalState.defaultAuctionEndPrice = BigInt.fromI32(0);
+  globalState.defaultAuctionLength = BigInt.fromI32(0);
+  globalState.save();
+  return globalState;
+}
 export function handleMinterAdded(event: MinterAdded): void {
   let globalState = Global.load(GLOBAL_ID);
 
   // // Entities only exist after they have been saved to the store;
   // // `null` checks allow to create entities on demand
   if (globalState == null) {
-    globalState = new Global(GLOBAL_ID);
-    globalState.version = BigInt.fromI32(0);
-    globalState.timeLastCollected = event.block.timestamp;
-    globalState.totalCollected = AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT;
-    globalState.totalCollectedAccurate = globalState.totalCollected;
-    // globalState.totalCollectedOrDue = globalState.totalCollected;
-    globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
-    // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
-    globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
-    globalState.erc20Address = event.address;
-    globalState.stewardAddress = ZERO_ADDRESS;
-    globalState.defaultAuctionStartPrice = BigInt.fromI32(0);
-    globalState.defaultAuctionEndPrice = BigInt.fromI32(0);
-    globalState.defaultAuctionLength = BigInt.fromI32(0);
-    globalState.save();
+    globalState = createGlobalState(event.block.timestamp, event.address);
   }
 }
 

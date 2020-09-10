@@ -21,7 +21,11 @@ import {
   VITALIK_PATRONAGE_NUMERATOR,
   ID_PREFIX,
 } from "./CONSTANTS";
-import { minBigInt, removeFromArrayAtIndex } from "./util";
+import {
+  minBigInt,
+  removeFromArrayAtIndex,
+  initialiseNoOwnerPatronIfNull,
+} from "./util";
 
 function returnIfNewVitalik(blockNumber: BigInt): boolean {
   return blockNumber.gt(BigInt.fromI32(9077271)); // block 9077272 is the block that Vitalik was "exit"ed from the old contract.
@@ -55,8 +59,12 @@ export function handleLogBuy(event: LogBuy): void {
   // Entity fields can be set using simple assignments
   let wildcardPriceHistory = wildcard.priceHistory.concat([wildcard.price]);
 
-  let patron = Patron.load(ownerString);
-  let patronOld = Patron.load(wildcard.owner);
+  let patron = Patron.load(ID_PREFIX + ownerString);
+  let patronOld = Patron.load(ID_PREFIX + wildcard.owner);
+  if (patronOld == null) {
+    patronOld = initialiseNoOwnerPatronIfNull();
+  }
+
   if (patron == null) {
     patron = new Patron(ID_PREFIX + ownerString);
     patron.address = owner;
@@ -220,6 +228,7 @@ export function handleLogBuy(event: LogBuy): void {
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
+  log.warning("Vitalik price change", []);
   if (returnIfNewVitalik(event.block.number)) {
     return;
   }
@@ -264,8 +273,12 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   wildcard.save();
 
-  let patron = Patron.load(wildcard.owner);
-  let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
+  let patron = Patron.load(ID_PREFIX + wildcard.owner);
+  if (patron == null) {
+    log.warning("The patron PATRON, {}", [wildcard.owner]);
+  }
+  // TODO: this is wrong, it should be foreclosure time!
+  let heldUntil = txTimestamp; //minBigInt(patron.foreclosureTime, txTimestamp);
   let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
@@ -297,7 +310,7 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 
   // TODO: this function isn't complete. Revisit.
   let foreclosedPatron = event.params.prevOwner.toHexString();
-  let patronOld = Patron.load(foreclosedPatron);
+  let patronOld = Patron.load(ID_PREFIX + foreclosedPatron);
 
   let steward = VitalikStewardLegacy.bind(event.address);
   let wildcardIndexInPatronTokens = patronOld.tokens.indexOf(VITALIK_TOKEN_ID);

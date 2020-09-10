@@ -5,6 +5,7 @@ import {
   VITALIK_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
   VITALIK_PATRONAGE_NUMERATOR,
+  ID_PREFIX,
 } from "../CONSTANTS";
 
 export function isVintageVitalik(
@@ -31,7 +32,7 @@ export function handleVitalikUpgradeLogic(
   txTimestamp: BigInt
 ): void {
   let VITALIK_PRICE = steward.price(tokenIdBigInt);
-  let vitaliksPatron = Patron.load(owner.toHexString());
+  let vitaliksPatron = Patron.load(ID_PREFIX + owner.toHexString());
   vitaliksPatron.availableDeposit = steward.depositAbleToWithdraw(owner);
 
   // This is for Vitalik+Simon, so token didn't foreclose, and he only holds 1 token.

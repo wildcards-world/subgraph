@@ -43,7 +43,7 @@ export function handleTransfer(event: Transfer): void {
     price.timeSet = event.block.timestamp;
     price.save();
 
-    let patron = Patron.load("NO_OWNER");
+    let patron = Patron.load(ID_PREFIX + "NO_OWNER");
     if (patron == null) {
       patron = initialiseNoOwnerPatronIfNull();
     }
