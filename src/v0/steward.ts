@@ -1,4 +1,4 @@
-import { BigInt, Address, BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, Address } from "@graphprotocol/graph-ts";
 import {
   Steward,
   LogBuy,
@@ -35,6 +35,7 @@ import {
   GLOBAL_ID,
   EVENT_COUNTER_ID,
   ID_PREFIX,
+  network
 } from "../CONSTANTS";
 import {
   getForeclosureTimeSafe,
@@ -46,6 +47,7 @@ import {
   initialiseDefaultPatronIfNull,
   warnAndError,
   recognizeStateChange,
+  saveEventToStateChange
 } from "../util";
 import {
   getTotalCollectedAccurate,
@@ -84,16 +86,9 @@ export function handleLogBuy(event: LogBuy): void {
   log.warning("TOKEN ID: {}", [tokenId.toString()]);
 
   let totalCollected = steward.totalCollected(BigInt.fromI32(tokenId));
-  log.warning("first", []);
   let currentCollected = steward.currentCollected(BigInt.fromI32(tokenId));
-  log.warning("second", []);
   let timeLastCollected = steward.timeLastCollected(BigInt.fromI32(tokenId));
-  log.warning(" final {} - {} -{}", [
-    totalCollected.toString(),
-    currentCollected.toString(),
-    timeLastCollected.toString()
-  ]);
-
+  
   let txHashString = event.transaction.hash.toHexString();
 
   if (tokenId == -1) {
@@ -107,7 +102,6 @@ export function handleLogBuy(event: LogBuy): void {
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
-    log.warning("tokenIdString: {}",[tokenIdString]);
     warnAndError(
       "The wildcard doesn't exist. Check the 'addToken' logic. tx: {}",
       [event.transaction.hash.toHexString()]
@@ -147,7 +141,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   // Phase 2: calculate new values.
   // patron.lastUpdated = txTimestamp;
-  if (isVintageVitalik(tokenIdBigInt, event.block.number)) {
+  if (isVintageVitalik(tokenIdBigInt, event.block.number) && network != "ganache") {
     if (isVintageVitalikUpgradeTx(event.transaction.hash)) {
       // TODO: check functionality from rewrite
       handleVitalikUpgradeLogic(steward, tokenIdBigInt, owner, txTimestamp);
@@ -288,23 +282,33 @@ export function handleLogBuy(event: LogBuy): void {
   let wildcardOwner = patron.id;
   let wildcardTimeAcquired = txTimestamp;
 
-  let eventParamsString =
-    "[\"" +
-    tokenIdString +
-    "\", \"" +
-    event.params.owner.toHexString() +
-    "\", \"" +
-    event.params.price.toString() +
-    "\"]";
+  let eventParamValues: Array<string> = [
+    tokenIdString,
+    event.params.owner.toHexString(),
+    event.params.price.toString(),
+    ];
+  let eventParamNames: Array<string> = [
+    "tokenid",
+    "owner",
+    "price",
+    ];
 
-  recognizeStateChange(
-    txHashString,
-    "Buy",
-    eventParamsString,
-    [patronOld.id, patron.id],
-    [wildcard.id],
+  let eventParamTypes: Array<string> = [
+    "int256",
+    "address",
+    "int256",
+    ];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "Buy",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patronOld.id, patron.id],
+    [wildcard.id],
     0
   );
 
@@ -361,6 +365,7 @@ export function handleLogBuy(event: LogBuy): void {
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
+  log.warning("PRICE CHANGE!!", []);
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address);
@@ -446,28 +451,40 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   let txHashString = event.transaction.hash.toHexString();
 
-  let eventParamsString =
-    "[\"" +
-    tokenIdString +
-    "\", \"" +
-    event.params.newPrice.toString();
-    "\"]";
+  let eventParamValues: Array<string> = [
+      tokenIdString,
+      event.params.newPrice.toString()
+    ];
+    
+  let eventParamNames: Array<string> = [
+    "tokenid",
+    "newPrice",
+  ];
 
-  recognizeStateChange(
-    txHashString,
-    "PriceChange",
-    eventParamsString,
-    [patron.id],
-    [wildcard.id],
+  let eventParamTypes: Array<string> = [
+    "int256",
+    "int256",
+  ];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "PriceChange",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patron.id],
+    [wildcard.id],
     0
-  );
-}
-
-export function handleLogForeclosure(event: LogForeclosure): void {
-  let foreclosedPatron = event.params.prevOwner;
-  let blockNumber = event.block.number.toI32();
+    );
+    
+  }
+  
+  export function handleLogForeclosure(event: LogForeclosure): void {
+    let foreclosedPatron = event.params.prevOwner;
+    let blockNumber = event.block.number.toI32();
+    let txTimestamp = event.block.timestamp;
   // If it is simon foreclosing, and it was at the time that we were fixing the bad migration.
   //      https://etherscan.io/tx/0xc5e2a5de2a49543b1ddf542dbfaf0f537653b91bc8cb0f913d0bc3193ed0cfd4
   //      https://etherscan.io/tx/0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90
@@ -487,21 +504,31 @@ export function handleLogForeclosure(event: LogForeclosure): void {
 
   let txHashString = event.transaction.hash.toHexString();
 
-  let eventParamsString =
-    "[\"" +
-    event.params.prevOwner.toString() +
-    "\"]";
+  let eventParamValues: Array<string> = [
+    event.params.prevOwner.toString()
+  ];
+  
+  let eventParamNames: Array<string> = [
+    "prevOwner"
+  ];
 
-  recognizeStateChange(
-    txHashString,
+  let eventParamTypes: Array<string> = [
+    "address",
+  ];
+  
+  saveEventToStateChange(
+    event.transaction.hash,
+    txTimestamp,
+    event.block.number,
     "Foreclosure",
-    eventParamsString,
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
     [event.params.prevOwner.toString()],
     changedTokens,
-    event.block.timestamp,
-    event.block.number,
     0
   );
+
 }
 
 export function handleLogCollection(event: LogCollection): void {

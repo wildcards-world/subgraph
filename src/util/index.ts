@@ -1,9 +1,11 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { LoyaltyToken } from "../../generated/LoyaltyToken/LoyaltyToken";
-import { Address, BigInt, log, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log, Bytes } from "@graphprotocol/graph-ts";
 import {
   Patron,
   StateChange,
+  EventParam,
+  EventParams,
   EventCounter,
   Global,
   Wildcard,
@@ -246,8 +248,7 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
 
   if (stateChange == null) {
     stateChange = new StateChange(txId);
-    stateChange.txEventList = [];
-    stateChange.txEventParamListDeprecated = [];
+    stateChange.txEventParamList = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChanges = [];
 
@@ -263,6 +264,142 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
   }
 }
 
+function getEventIndex(txHash: Bytes): i32 {
+  let stateChange = StateChange.load(txHash.toHex());
+  if (stateChange == null) {
+    return 0;
+  }
+  return stateChange.txEventParamList.length;
+}
+
+function createEventParams(
+  txHash: Bytes,
+  argValues: Array<string>,
+  argNames: Array<string>,
+  argTypes: Array<string>
+): Array<string> {
+  let eventIndex: i32 = getEventIndex(txHash);
+
+  let eventParamsArr: Array<string> = [];
+
+  for (let index = 0; index < argValues.length; index++) {
+    let eventParamFund = new EventParam(
+      txHash.toHex() + "-" + eventIndex.toString() + "-" + index.toString()
+    );
+    eventParamFund.index = index;
+    eventParamFund.param = argValues[index];
+    eventParamFund.paramName = argNames[index];
+    eventParamFund.paramType = argTypes[index];
+    eventParamFund.save();
+
+    eventParamsArr.push(eventParamFund.id);
+  }
+
+  return eventParamsArr;
+}
+
+function txEventParamsHelper(
+  eventName: string,
+  eventIndex: i32,
+  eventTxHash: Bytes,
+  eventParamsArr: Array<string>
+): EventParams {
+  let eventParams = new EventParams(
+    eventTxHash.toHex() + "-" + eventIndex.toString()
+  );
+
+  eventParams.index = eventIndex;
+  eventParams.eventName = eventName;
+  eventParams.params = eventParamsArr;
+
+  eventParams.save();
+
+  return eventParams;
+}
+
+function txStateChangeHelper(
+  txHash: Bytes,
+  timeStamp: BigInt,
+  blockNumber: BigInt,
+  eventName: string,
+  eventParamArray: Array<string>,
+  changedPatrons: string[],
+  changedWildcards: string[],
+  contractVersion: i32
+): void {
+  let stateChange = getOrInitialiseStateChange(txHash.toHex());
+  
+  if (stateChange == null) {
+    stateChange = new StateChange(txHash.toHex());
+    stateChange.txEventParamList = [];
+  }
+  
+  let eventIndex: i32 = getEventIndex(txHash);
+  
+  // create EventParams
+  let eventParams = txEventParamsHelper(
+    eventName,
+    eventIndex,
+    txHash,
+    eventParamArray
+    );
+    
+    stateChange.timestamp = timeStamp;
+    stateChange.blockNumber = blockNumber;
+
+    stateChange.txEventParamList = stateChange.txEventParamList.concat([
+      eventParams.id,
+    ]);
+    
+    for (let i = 0, len = changedPatrons.length; i < len; i++) {
+      stateChange.patronChanges =
+      stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
+      ? stateChange.patronChanges.concat([changedPatrons[i]])
+      : stateChange.patronChanges;
+    }
+    
+    for (let i = 0, len = changedWildcards.length; i < len; i++) {
+    stateChange.wildcardChanges =
+    stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
+    ? stateChange.wildcardChanges.concat([changedWildcards[i]])
+    : stateChange.wildcardChanges;
+  }
+  stateChange.contractVersion = contractVersion;
+
+  stateChange.save();
+}
+
+export function saveEventToStateChange(
+  txHash: Bytes,
+  timestamp: BigInt,
+  blockNumber: BigInt,
+  eventName: string,
+  parameterValues: Array<string>,
+  parameterNames: Array<string>,
+  parameterTypes: Array<string>,
+  changedPatrons: string[],
+  changedWildcards: string[],
+  version: i32
+): void {
+  let eventParamsArr: Array<string> = createEventParams(
+    txHash,
+    parameterValues,
+    parameterNames,
+    parameterTypes
+    );
+    
+    txStateChangeHelper(
+      txHash,
+      timestamp,
+      blockNumber,
+      eventName,
+      eventParamsArr,
+      changedPatrons,
+      changedWildcards,
+      version
+      );
+  }
+  
 export function recognizeStateChange(
   txHash: string,
   eventName: string,
@@ -273,31 +410,33 @@ export function recognizeStateChange(
   txBlockNumber: BigInt,
   contractVersion: i32
 ): void {
-  let stateChange = getOrInitialiseStateChange(txHash);
-  stateChange.txEventList = stateChange.txEventList.concat([eventName]);
-  stateChange.txEventParamListDeprecated = stateChange.txEventParamListDeprecated.concat([
-    eventParameters,
-  ]);
+  // let stateChange = getOrInitialiseStateChange(txHash);
+  // stateChange.txEventList = stateChange.txEventList.concat([eventName]);
+  // stateChange.txEventParamListDeprecated = stateChange.txEventParamListDeprecated.concat([
+  //   eventParameters,
+  // ]);
 
-  for (let i = 0, len = changedPatrons.length; i < len; i++) {
-    stateChange.patronChanges =
-      stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
-        ? stateChange.patronChanges.concat([changedPatrons[i]])
-        : stateChange.patronChanges;
-  }
+  // for (let i = 0, len = changedPatrons.length; i < len; i++) {
+  //   stateChange.patronChanges =
+  //     stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
+  //       ? stateChange.patronChanges.concat([changedPatrons[i]])
+  //       : stateChange.patronChanges;
+  // }
 
-  for (let i = 0, len = changedWildcards.length; i < len; i++) {
-    stateChange.wildcardChanges =
-      stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
-        ? stateChange.wildcardChanges.concat([changedWildcards[i]])
-        : stateChange.wildcardChanges;
-  }
+  // for (let i = 0, len = changedWildcards.length; i < len; i++) {
+  //   stateChange.wildcardChanges =
+  //     stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
+  //       ? stateChange.wildcardChanges.concat([changedWildcards[i]])
+  //       : stateChange.wildcardChanges;
+  // }
 
-  stateChange.timestamp = txTimestamp;
-  stateChange.blockNumber = txBlockNumber;
-  stateChange.contractVersion = contractVersion;
-  stateChange.save();
+  // stateChange.timestamp = txTimestamp;
+  // stateChange.blockNumber = txBlockNumber;
+  // stateChange.contractVersion = contractVersion;
+  // stateChange.save();
 }
+// END NEW
+
 
 export function updateForeclosedTokens(
   foreclosedPatron: Address,
