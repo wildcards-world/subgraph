@@ -17,7 +17,7 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: "ipfs:5001"
-      ethereum: "matic:https://rpc-mumbai.maticvigil.com/v1/d68927e8a4cc85eb49e23c93e63f3b018a90efc0"
+      ethereum: matic:$RPC_ENDPOINT
       RUST_LOG: info
 
   ipfs:
