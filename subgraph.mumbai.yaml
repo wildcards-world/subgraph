@@ -6,9 +6,9 @@ dataSources:
     name: Steward
     network: matic
     source:
-      address: "0xdbD6f365bD089F14dCbE54798ae6aC9A33F28f4B"
+      address: "0x87440D28c66987c45a717d2CD73812aa985d8B80"
       abi: Steward
-      startBlock: 5503164
+      startBlock: 5578898
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -79,9 +79,9 @@ dataSources:
     name: Token
     network: matic
     source:
-      address: "0x80cE291b7d507c6521DA69aDfaA004def8ccBdB6"
+      address: "0x63CA5b76092b4233BDD9826B42BD7bBa8C0A8961"
       abi: Token
-      startBlock: 5503164
+      startBlock: 5578898
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
