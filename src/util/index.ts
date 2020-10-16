@@ -554,7 +554,10 @@ export function updateAllOfPatronsTokensLastUpdated(
   for (let i = 0, len = patronsTokens.length; i < len; i++) {
     let wildcardId = patronsTokens[i];
 
-    let wildcard = Wildcard.load(ID_PREFIX + wildcardId);
+    let wildcard = Wildcard.load(wildcardId);
+    if (wildcard == null) {
+      log.critical("the wildcard's ID is null", []);
+    }
 
     wildcard.timeCollected = timeLastCollectedWildcardSafe(
       steward,
