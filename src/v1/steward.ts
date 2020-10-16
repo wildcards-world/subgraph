@@ -60,10 +60,11 @@ export function handleBuy(event: Buy): void {
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
   let txTimestamp = event.block.timestamp;
-
+  log.warning("1", [])
   let tokenIdBigInt = event.params.tokenId;
   let steward = Steward.bind(event.address);
   let tokenIdString = tokenIdBigInt.toString();
+  log.warning("2", [])
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
@@ -71,13 +72,14 @@ export function handleBuy(event: Buy): void {
       tokenIdString,
     ]);
   }
-
+  log.warning("3", [])
   let previousTokenOwner = wildcard.owner;
   let patronOld = Patron.load(ID_PREFIX + previousTokenOwner);
   if (patronOld == null) {
     patronOld = initialiseNoOwnerPatronIfNull();
   }
 
+  log.warning("4", [])
   /// OTHER CODE
   let txHashString = event.transaction.hash.toHexString();
 
@@ -91,7 +93,7 @@ export function handleBuy(event: Buy): void {
     steward,
     tokenIdBigInt
   );
-
+  log.warning("5", [])
   let previousTokenOwnerString = wildcard.owner;
 
   let patron = Patron.load(ID_PREFIX + ownerString);
@@ -109,7 +111,7 @@ export function handleBuy(event: Buy): void {
     patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
     patron.currentBalance = BigInt.fromI32(0);
   }
-
+  log.warning("6", [])
   // Phase 2: calculate new values.
 
   /*

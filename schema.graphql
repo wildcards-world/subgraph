@@ -7,7 +7,6 @@ type EventCounter @entity {
   changePriceEventCount: BigInt
 }
 
-
 type Global @entity {
   id: ID! # will just be '1' since only one global namespace
   version: BigInt! # NOTE: this will say version 0 for version 0-2, after v3 it will always be correct.
@@ -19,7 +18,7 @@ type Global @entity {
   # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
   stewardAddress: Bytes!
-  erc20Address: Bytes!
+  erc721Address: Bytes!
   defaultAuctionStartPrice: BigInt!
   defaultAuctionEndPrice: BigInt!
   defaultAuctionLength: BigInt!

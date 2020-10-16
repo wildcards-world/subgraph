@@ -16,7 +16,7 @@ import {
 
 export function createGlobalState(
   timestamp: BigInt,
-  erc20Address: Address
+  erc721Address: Address
 ): Global {
   let globalState = new Global(GLOBAL_ID);
   globalState.version = BigInt.fromI32(0);
@@ -27,7 +27,7 @@ export function createGlobalState(
   globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
   // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
   globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
-  globalState.erc20Address = erc20Address;
+  globalState.erc721Address = erc721Address;
   globalState.stewardAddress = ZERO_ADDRESS;
   globalState.defaultAuctionStartPrice = BigInt.fromI32(0);
   globalState.defaultAuctionEndPrice = BigInt.fromI32(0);

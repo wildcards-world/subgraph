@@ -41,14 +41,14 @@ export function getTokenContract(): Token {
   if (globalState == null) {
     log.critical("Global state must be defined before using this function", []);
   }
-  return Token.bind(globalState.erc20Address as Address);
+  return Token.bind(globalState.erc721Address as Address);
 }
 
 export function getCurrentOwner(steward: Steward, wildcardId: BigInt): Address {
   // load what version we are in (through global state)
   let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
-
+  
   if (currentVersion.ge(BigInt.fromI32(3))) {
     let tokenContract = getTokenContract();
     let currentOwner = tokenContract.ownerOf(wildcardId);
