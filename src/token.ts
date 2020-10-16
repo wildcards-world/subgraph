@@ -1,6 +1,7 @@
 import { BigInt, log, Address } from "@graphprotocol/graph-ts";
 import {
   Token,
+  Init,
   MinterAdded,
   MinterRemoved,
   Transfer,
@@ -35,7 +36,7 @@ export function createGlobalState(
   globalState.save();
   return globalState;
 }
-export function handleMinterAdded(event: MinterAdded): void {
+export function handleERC721Init(event: Init): void {
   let globalState = Global.load(GLOBAL_ID);
 
   // // Entities only exist after they have been saved to the store;
@@ -44,6 +45,8 @@ export function handleMinterAdded(event: MinterAdded): void {
     globalState = createGlobalState(event.block.timestamp, event.address);
   }
 }
+
+export function handleMinterAdded(event: MinterAdded): void {}
 
 export function handleMinterRemoved(event: MinterRemoved): void {}
 

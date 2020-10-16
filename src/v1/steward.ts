@@ -60,11 +60,9 @@ export function handleBuy(event: Buy): void {
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
   let txTimestamp = event.block.timestamp;
-  log.warning("1", [])
   let tokenIdBigInt = event.params.tokenId;
   let steward = Steward.bind(event.address);
   let tokenIdString = tokenIdBigInt.toString();
-  log.warning("2", [])
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
@@ -72,14 +70,12 @@ export function handleBuy(event: Buy): void {
       tokenIdString,
     ]);
   }
-  log.warning("3", [])
   let previousTokenOwner = wildcard.owner;
   let patronOld = Patron.load(ID_PREFIX + previousTokenOwner);
   if (patronOld == null) {
     patronOld = initialiseNoOwnerPatronIfNull();
   }
 
-  log.warning("4", [])
   /// OTHER CODE
   let txHashString = event.transaction.hash.toHexString();
 
@@ -93,7 +89,6 @@ export function handleBuy(event: Buy): void {
     steward,
     tokenIdBigInt
   );
-  log.warning("5", [])
   let previousTokenOwnerString = wildcard.owner;
 
   let patron = Patron.load(ID_PREFIX + ownerString);
@@ -111,7 +106,6 @@ export function handleBuy(event: Buy): void {
     patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
     patron.currentBalance = BigInt.fromI32(0);
   }
-  log.warning("6", [])
   // Phase 2: calculate new values.
 
   /*
@@ -560,22 +554,29 @@ export function handleRemainingDepositUpdate(
   let patronString = tokenPatron.toHexString();
 
   let updatePatronForeclosureTime = false;
+  log.warning("1", []);
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   // Also, the below code is totally redundant, just there for safety.
   if (patronString != event.address.toHexString()) {
+    log.warning("2", []);
     let patron = Patron.load(ID_PREFIX + patronString);
+    log.warning("3", []);
     if (patron != null) {
+      log.warning("4", []);
       updatePatronForeclosureTime = getForeclosureTimeSafe(
         steward,
         tokenPatron
       ).gt(BigInt.fromI32(0));
+      log.warning("5", []);
       updateAllOfPatronsTokensLastUpdated(
         patron,
         steward,
         "handleCollectPatronage"
       );
     }
+    log.warning("6", []);
   }
+  log.warning("7", []);
 
   updateAvailableDepositAndForeclosureTime(
     steward,
@@ -583,6 +584,7 @@ export function handleRemainingDepositUpdate(
     txTimestamp,
     updatePatronForeclosureTime
   );
+  log.warning("8", []);
 
   let eventParamsString =
     "['" +
@@ -590,6 +592,7 @@ export function handleRemainingDepositUpdate(
     "', '" +
     event.params.remainingDeposit.toString() +
     "']";
+  log.warning("9", []);
 
   recognizeStateChange(
     txHashString,
@@ -601,10 +604,13 @@ export function handleRemainingDepositUpdate(
     event.block.number,
     1
   );
+  log.warning("10", []);
 
   // Here totalTokenCostScaledNumeratorAccurate not updated
   let scaledDelta = BigInt.fromI32(0);
+  log.warning("11", []);
   updateGlobalState(steward, txTimestamp, scaledDelta);
+  log.warning("12", []);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);

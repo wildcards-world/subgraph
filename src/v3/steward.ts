@@ -17,7 +17,6 @@ import {
 import { patronageTokenPerSecond, ID_PREFIX } from "../CONSTANTS";
 import { GLOBAL_ID } from "../CONSTANTS";
 import { createCounterIfDoesntExist } from "../v0/helpers";
-import { createGlobalState } from "../token";
 /*
 // deprecated_totalCollected; // THIS VALUE IS DEPRECATED
     - 
@@ -37,9 +36,7 @@ export function handleUpgradeToV3(event: UpgradeToV3): void {
 
   let globalState = Global.load(GLOBAL_ID);
   if (globalState == null) {
-    globalState = createGlobalState(event.block.timestamp, event.address);
-
-    log.warning("The global state is undefined! - it was created", []);
+    log.critical("The global state is undefined!", []);
   }
 
   let steward = Steward.bind(event.address);

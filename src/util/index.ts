@@ -48,7 +48,7 @@ export function getCurrentOwner(steward: Steward, wildcardId: BigInt): Address {
   // load what version we are in (through global state)
   let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
-  
+
   if (currentVersion.ge(BigInt.fromI32(3))) {
     let tokenContract = getTokenContract();
     let currentOwner = tokenContract.ownerOf(wildcardId);
@@ -63,27 +63,20 @@ export function timeLastCollectedWildcardSafe(
   wildcardId: BigInt
 ): BigInt {
   // load what version we are in (through global state)
-  log.warning("a - 1", []);
   let globalState = Global.load(GLOBAL_ID);
-  log.warning("a - 2", []);
   let currentVersion = globalState.version;
-  log.warning("a - 3 -- version {}", [currentVersion.toString()]);
 
   // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
   // execute correct function based on the version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
-    log.warning("a - 4", []);
     let currentOwner = getCurrentOwner(steward, wildcardId);
-    log.warning("a - 5", []);
     return steward.timeLastCollectedPatron(currentOwner);
   } else {
-    log.warning("a - 6 - wcId = {}", [wildcardId.toString()]);
     let toReturn = steward.try_timeLastCollected(wildcardId);
     if (toReturn.reverted) {
       log.warning("IT REVERTED", []);
       return BigInt.fromI32(0);
     }
-    log.warning("a - 7 - {}", [toReturn.value.toString()]);
     return toReturn.value;
   }
 }
