@@ -2,6 +2,7 @@ import {
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
   NUM_SECONDS_IN_YEAR_BIG_INT,
   GLOBAL_ID,
+  ZERO_BN,
 } from "../CONSTANTS";
 import { Steward } from "../../generated/Steward/Steward";
 import { BigInt, log } from "@graphprotocol/graph-ts";
@@ -18,11 +19,17 @@ export function getTotalCollectedAccurate(
 
   // execute correct function based on on version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
-    return globalState.totalCollectedOrDueAccurate.plus(
-      totalTokenCostScaledNumerator
+    let newCollection: BigInt;
+    let globalPatronageDenominator = steward.patronageDenominator();
+    if (globalPatronageDenominator.equals(ZERO_BN)) {
+      newCollection = ZERO_BN;
+    } else {
+      newCollection = totalTokenCostScaledNumerator
         .times(txTimestamp.minus(globalState.timeLastCollected))
-        .div(steward.patronageDenominator().times(NUM_SECONDS_IN_YEAR_BIG_INT))
-    );
+        .div(globalPatronageDenominator.times(NUM_SECONDS_IN_YEAR_BIG_INT));
+    }
+
+    return globalState.totalCollectedOrDueAccurate.plus(newCollection);
   } else {
     return AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT.plus(
       steward.totalCollected(BigInt.fromI32(0))
@@ -62,10 +69,10 @@ export function getTotalOwedAccurate(steward: Steward): BigInt {
 
   // execure correct function based on on version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
-    return BigInt.fromI32(0);
+    return ZERO_BN;
   } else {
     return steward
-      .patronageOwed(BigInt.fromI32(0))
+      .patronageOwed(ZERO_BN)
       .plus(steward.patronageOwed(BigInt.fromI32(1)))
       .plus(steward.patronageOwed(BigInt.fromI32(2)))
       .plus(steward.patronageOwed(BigInt.fromI32(3)))
@@ -106,8 +113,8 @@ export function getTotalTokenCostScaledNumerator(
     return globalState.totalTokenCostScaledNumeratorAccurate.plus(delta);
   } else {
     return steward
-      .patronageNumerator(BigInt.fromI32(0))
-      .times(steward.price(BigInt.fromI32(0)))
+      .patronageNumerator(ZERO_BN)
+      .times(steward.price(ZERO_BN))
       .plus(
         steward
           .patronageNumerator(BigInt.fromI32(1))

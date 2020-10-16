@@ -68,7 +68,7 @@ export function timeLastCollectedWildcardSafe(
   log.warning("a - 2", []);
   let currentVersion = globalState.version;
   log.warning("a - 3 -- version {}", [currentVersion.toString()]);
-  
+
   // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
   // execute correct function based on the version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
@@ -78,9 +78,9 @@ export function timeLastCollectedWildcardSafe(
     return steward.timeLastCollectedPatron(currentOwner);
   } else {
     log.warning("a - 6 - wcId = {}", [wildcardId.toString()]);
-    let toReturn =  steward.try_timeLastCollected(wildcardId);
-    if(toReturn.reverted) {
-      log.warning("IT REVERTED", [])
+    let toReturn = steward.try_timeLastCollected(wildcardId);
+    if (toReturn.reverted) {
+      log.warning("IT REVERTED", []);
       return BigInt.fromI32(0);
     }
     log.warning("a - 7 - {}", [toReturn.value.toString()]);
@@ -328,41 +328,41 @@ function txStateChangeHelper(
   contractVersion: i32
 ): void {
   let stateChange = getOrInitialiseStateChange(txHash.toHex());
-  
+
   if (stateChange == null) {
     stateChange = new StateChange(txHash.toHex());
     stateChange.txEventParamList = [];
   }
-  
+
   let eventIndex: i32 = getEventIndex(txHash);
-  
+
   // create EventParams
   let eventParams = txEventParamsHelper(
     eventName,
     eventIndex,
     txHash,
     eventParamArray
-    );
-    
-    stateChange.timestamp = timeStamp;
-    stateChange.blockNumber = blockNumber;
+  );
 
-    stateChange.txEventParamList = stateChange.txEventParamList.concat([
-      eventParams.id,
-    ]);
-    
-    for (let i = 0, len = changedPatrons.length; i < len; i++) {
-      stateChange.patronChanges =
+  stateChange.timestamp = timeStamp;
+  stateChange.blockNumber = blockNumber;
+
+  stateChange.txEventParamList = stateChange.txEventParamList.concat([
+    eventParams.id,
+  ]);
+
+  for (let i = 0, len = changedPatrons.length; i < len; i++) {
+    stateChange.patronChanges =
       stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
-      ? stateChange.patronChanges.concat([changedPatrons[i]])
-      : stateChange.patronChanges;
-    }
-    
-    for (let i = 0, len = changedWildcards.length; i < len; i++) {
+        ? stateChange.patronChanges.concat([changedPatrons[i]])
+        : stateChange.patronChanges;
+  }
+
+  for (let i = 0, len = changedWildcards.length; i < len; i++) {
     stateChange.wildcardChanges =
-    stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
-    ? stateChange.wildcardChanges.concat([changedWildcards[i]])
-    : stateChange.wildcardChanges;
+      stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
+        ? stateChange.wildcardChanges.concat([changedWildcards[i]])
+        : stateChange.wildcardChanges;
   }
   stateChange.contractVersion = contractVersion;
 
@@ -386,20 +386,20 @@ export function saveEventToStateChange(
     parameterValues,
     parameterNames,
     parameterTypes
-    );
-    
-    txStateChangeHelper(
-      txHash,
-      timestamp,
-      blockNumber,
-      eventName,
-      eventParamsArr,
-      changedPatrons,
-      changedWildcards,
-      version
-      );
-  }
-  
+  );
+
+  txStateChangeHelper(
+    txHash,
+    timestamp,
+    blockNumber,
+    eventName,
+    eventParamsArr,
+    changedPatrons,
+    changedWildcards,
+    version
+  );
+}
+
 export function recognizeStateChange(
   txHash: string,
   eventName: string,
@@ -415,28 +415,24 @@ export function recognizeStateChange(
   // stateChange.txEventParamListDeprecated = stateChange.txEventParamListDeprecated.concat([
   //   eventParameters,
   // ]);
-
   // for (let i = 0, len = changedPatrons.length; i < len; i++) {
   //   stateChange.patronChanges =
   //     stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
   //       ? stateChange.patronChanges.concat([changedPatrons[i]])
   //       : stateChange.patronChanges;
   // }
-
   // for (let i = 0, len = changedWildcards.length; i < len; i++) {
   //   stateChange.wildcardChanges =
   //     stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
   //       ? stateChange.wildcardChanges.concat([changedWildcards[i]])
   //       : stateChange.wildcardChanges;
   // }
-
   // stateChange.timestamp = txTimestamp;
   // stateChange.blockNumber = txBlockNumber;
   // stateChange.contractVersion = contractVersion;
   // stateChange.save();
 }
 // END NEW
-
 
 export function updateForeclosedTokens(
   foreclosedPatron: Address,
@@ -555,32 +551,25 @@ export function updateAllOfPatronsTokensLastUpdated(
   steward: Steward,
   trackingString: string
 ): void {
-  log.warning("--1",[])
   if (patron == null) {
     log.critical("patron should always be defined", []);
     return;
   }
-  log.warning("--2",[])
-  
+
   let patronsTokens: Array<string> = patron.tokens;
-  log.warning("--3",[])
-  
+
   for (let i = 0, len = patronsTokens.length; i < len; i++) {
-    log.warning("--4",[])
     let wildcardId = patronsTokens[i];
-    
+
     let wildcard = Wildcard.load(ID_PREFIX + wildcardId);
-    
-    log.warning("--5",[])
+
     wildcard.timeCollected = timeLastCollectedWildcardSafe(
       steward,
       wildcard.tokenId
-      );
-      
-      wildcard.save();
-      log.warning("--6",[])
-    }
-    log.warning("--7",[])
+    );
+
+    wildcard.save();
+  }
 }
 
 export function isVitalik(tokenId: BigInt): boolean {

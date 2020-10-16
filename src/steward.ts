@@ -77,7 +77,9 @@ export function handleForeclosure(event: Foreclosure): void {
 export function handleRemainingDepositUpdate(
   event: RemainingDepositUpdate
 ): void {
-  log.warning("remaining deposit update! {}", [event.block.hash.toHexString()]);
+  log.warning("remaining deposit update! {}", [
+    event.transaction.hash.toHexString(),
+  ]);
   V1.handleRemainingDepositUpdate(event);
 }
 

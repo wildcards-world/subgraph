@@ -35,7 +35,7 @@ import {
   GLOBAL_ID,
   EVENT_COUNTER_ID,
   ID_PREFIX,
-  network
+  network,
 } from "../CONSTANTS";
 import {
   getForeclosureTimeSafe,
@@ -47,7 +47,7 @@ import {
   initialiseDefaultPatronIfNull,
   warnAndError,
   recognizeStateChange,
-  saveEventToStateChange
+  saveEventToStateChange,
 } from "../util";
 import {
   getTotalCollectedAccurate,
@@ -88,7 +88,7 @@ export function handleLogBuy(event: LogBuy): void {
   let totalCollected = steward.totalCollected(BigInt.fromI32(tokenId));
   let currentCollected = steward.currentCollected(BigInt.fromI32(tokenId));
   let timeLastCollected = steward.timeLastCollected(BigInt.fromI32(tokenId));
-  
+
   let txHashString = event.transaction.hash.toHexString();
 
   if (tokenId == -1) {
@@ -123,7 +123,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   let previousTokenOwnerString = wildcard.owner;
   let previousTokenOwner =
-    previousTokenOwnerString != NO_OWNER
+    previousTokenOwnerString != ID_PREFIX + NO_OWNER
       ? Address.fromString(previousTokenOwnerString)
       : ZERO_ADDRESS;
 
@@ -141,7 +141,10 @@ export function handleLogBuy(event: LogBuy): void {
 
   // Phase 2: calculate new values.
   // patron.lastUpdated = txTimestamp;
-  if (isVintageVitalik(tokenIdBigInt, event.block.number) && network != "ganache") {
+  if (
+    isVintageVitalik(tokenIdBigInt, event.block.number) &&
+    network != "ganache"
+  ) {
     if (isVintageVitalikUpgradeTx(event.transaction.hash)) {
       // TODO: check functionality from rewrite
       handleVitalikUpgradeLogic(steward, tokenIdBigInt, owner, txTimestamp);
@@ -169,14 +172,14 @@ export function handleLogBuy(event: LogBuy): void {
   );
 
   let newPatronTotalTimeHeld =
-    patron.id != "NO_OWNER"
+    patron.id != ID_PREFIX + "NO_OWNER"
       ? patron.totalTimeHeld.plus(
           timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
         )
       : BigInt.fromI32(0);
 
   let oldPatronTotalTimeHeld =
-    patronOld.id != "NO_OWNER"
+    patronOld.id != ID_PREFIX + "NO_OWNER"
       ? patronOld.totalTimeHeld.plus(
           timeSinceLastUpdatePreviousPatron.times(
             BigInt.fromI32(patronOld.tokens.length)
@@ -186,7 +189,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   // Now even if the patron puts in extra deposit when they buy a new token this will do the calculation as if it forecloses their old tokens.
   let newPatronTotalContributed =
-    patronOld.id != "NO_OWNER"
+    patronOld.id != ID_PREFIX + "NO_OWNER"
       ? patron.totalContributed.plus(
           patron.patronTokenCostScaledNumerator
             .times(timeSinceLastUpdatePatron)
@@ -198,7 +201,7 @@ export function handleLogBuy(event: LogBuy): void {
     owner
   );
   let oldPatronTotalContributed =
-    patronOld.id != "NO_OWNER"
+    patronOld.id != ID_PREFIX + "NO_OWNER"
       ? patronOld.totalContributed.plus(
           patronOld.patronTokenCostScaledNumerator
             .times(timeSinceLastUpdatePatron)
@@ -237,7 +240,7 @@ export function handleLogBuy(event: LogBuy): void {
 
   // TODO: there should be a difference between `timeSold` and forclosure time if token gets foreclosed.
   let wildcardPreviousOwners = wildcard.previousOwners;
-  if (wildcard.owner !== "NO_OWNER") {
+  if (wildcard.owner !== ID_PREFIX + "NO_OWNER") {
     let previousPatron = new PreviousPatron(ownerString);
     previousPatron.patron = patron.id;
     previousPatron.timeAcquired = previousTimeWildcardWasAcquired;
@@ -286,18 +289,10 @@ export function handleLogBuy(event: LogBuy): void {
     tokenIdString,
     event.params.owner.toHexString(),
     event.params.price.toString(),
-    ];
-  let eventParamNames: Array<string> = [
-    "tokenid",
-    "owner",
-    "price",
-    ];
+  ];
+  let eventParamNames: Array<string> = ["tokenid", "owner", "price"];
 
-  let eventParamTypes: Array<string> = [
-    "int256",
-    "address",
-    "int256",
-    ];
+  let eventParamTypes: Array<string> = ["int256", "address", "int256"];
 
   saveEventToStateChange(
     event.transaction.hash,
@@ -324,7 +319,7 @@ export function handleLogBuy(event: LogBuy): void {
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
-  if (patronOld.id != "NO_OWNER") {
+  if (patronOld.id != ID_PREFIX + "NO_OWNER") {
     patronOld.lastUpdated = timePatronOldLastUpdated;
     patronOld.totalTimeHeld = oldPatronTotalTimeHeld;
     patronOld.tokens = oldPatronTokenArray;
@@ -452,19 +447,13 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   let txHashString = event.transaction.hash.toHexString();
 
   let eventParamValues: Array<string> = [
-      tokenIdString,
-      event.params.newPrice.toString()
-    ];
-    
-  let eventParamNames: Array<string> = [
-    "tokenid",
-    "newPrice",
+    tokenIdString,
+    event.params.newPrice.toString(),
   ];
 
-  let eventParamTypes: Array<string> = [
-    "int256",
-    "int256",
-  ];
+  let eventParamNames: Array<string> = ["tokenid", "newPrice"];
+
+  let eventParamTypes: Array<string> = ["int256", "int256"];
 
   saveEventToStateChange(
     event.transaction.hash,
@@ -477,14 +466,13 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     [patron.id],
     [wildcard.id],
     0
-    );
-    
-  }
-  
-  export function handleLogForeclosure(event: LogForeclosure): void {
-    let foreclosedPatron = event.params.prevOwner;
-    let blockNumber = event.block.number.toI32();
-    let txTimestamp = event.block.timestamp;
+  );
+}
+
+export function handleLogForeclosure(event: LogForeclosure): void {
+  let foreclosedPatron = event.params.prevOwner;
+  let blockNumber = event.block.number.toI32();
+  let txTimestamp = event.block.timestamp;
   // If it is simon foreclosing, and it was at the time that we were fixing the bad migration.
   //      https://etherscan.io/tx/0xc5e2a5de2a49543b1ddf542dbfaf0f537653b91bc8cb0f913d0bc3193ed0cfd4
   //      https://etherscan.io/tx/0x819abe91008e8e22034b57efcff070c26690cbf55b7640bea6f93ffc26184d90
@@ -504,18 +492,12 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   let txHashString = event.transaction.hash.toHexString();
 
-  let eventParamValues: Array<string> = [
-    event.params.prevOwner.toString()
-  ];
-  
-  let eventParamNames: Array<string> = [
-    "prevOwner"
-  ];
+  let eventParamValues: Array<string> = [event.params.prevOwner.toString()];
 
-  let eventParamTypes: Array<string> = [
-    "address",
-  ];
-  
+  let eventParamNames: Array<string> = ["prevOwner"];
+
+  let eventParamTypes: Array<string> = ["address"];
+
   saveEventToStateChange(
     event.transaction.hash,
     txTimestamp,
@@ -528,7 +510,6 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     changedTokens,
     0
   );
-
 }
 
 export function handleLogCollection(event: LogCollection): void {
@@ -610,15 +591,10 @@ export function handleLogCollection(event: LogCollection): void {
 
   globalState.save();
 
-
   let txHashString = event.transaction.hash.toHexString();
 
   let eventParamsString =
-    "[\"" +
-    tokenIdString +
-    "\", \"" +
-    event.params.collected.toString() +
-    "\"]";
+    '["' + tokenIdString + '", "' + event.params.collected.toString() + '"]';
 
   recognizeStateChange(
     txHashString,
@@ -646,10 +622,9 @@ export function handleLogRemainingDepositUpdate(
 export function handleAddToken(event: AddToken): void {
   createCounterIfDoesntExist();
 
-  
   let tokenId = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
-  
+
   // Don't re-add the 'vintage' Vitalik...
   if (isVintageVitalik(tokenId, event.block.number)) {
     // If the vitalik doesn't exist then continue adding it (eg. relevant for a test environment)
@@ -658,7 +633,7 @@ export function handleAddToken(event: AddToken): void {
       return;
     }
   } //Temporarily before token is migrated
-  
+
   let patronageNumerator = event.params.patronageNumerator;
 
   let wildcard = new Wildcard(ID_PREFIX + tokenId.toString());

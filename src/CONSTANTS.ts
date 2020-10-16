@@ -6,6 +6,8 @@ export let ZERO_ADDRESS = Address.fromString(
   "0x0000000000000000000000000000000000000000"
 );
 
+export let ZERO_BN = BigInt.fromI32(0);
+
 export const NUM_SECONDS_IN_YEAR = 31536000;
 export let NUM_SECONDS_IN_YEAR_BIG_INT = BigInt.fromI32(NUM_SECONDS_IN_YEAR);
 export let BILLION = BigInt.fromI32(1000000000);
