@@ -232,15 +232,13 @@ export function handleAddTokenV3(event: AddTokenV3): void {
 
   // wildcard.price = price.id.toString();
   // wildcard.owner = patron.id.toString();
-  wildcard.price = price.id;
   wildcard.owner = patron.id;
+  wildcard.price = price.id;
   log.warning("The owner: {}, {}", [wildcard.owner, patron.id]);
   wildcard.patronageNumerator = patronageNumerator;
   wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = txTimestamp;
   wildcard.previousOwners = [];
-
-  // return wildcard;
 
   // let newWildcard = handleAddTokenUtil(
   //   tokenId,
@@ -251,6 +249,7 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   //   txHashStr
   // );
 
+  wildcard.owner = "maticNO_OWNER";
   wildcard.save();
   // newWildcard.save();
 
@@ -286,4 +285,13 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   //   log.warning("DEFINED! {}", [wildcard.id]);
   // }
   // log.warning("owner of {}: {}", [testWc.id, testWc.price]);
+  // Commenting out the below causes an issue
+  log.warning("IN ADDING TOKEN {}", [patron.id]);
+  let testPatron = Patron.load(patron.id);
+  if (testPatron == null) {
+    log.warning("NUL! {}", [testPatron.id]);
+  } else {
+    log.warning("DEFINED! {}", [testPatron.id]);
+  }
+  log.warning("owner of {}: {}", [testPatron.id, testPatron.address.toHex()]);
 }
