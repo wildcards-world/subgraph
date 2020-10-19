@@ -46,7 +46,15 @@ export function handleERC721Init(event: Init): void {
   }
 }
 
-export function handleMinterAdded(event: MinterAdded): void {}
+export function handleMinterAdded(event: MinterAdded): void {
+  let globalState = Global.load(GLOBAL_ID);
+
+  // // Entities only exist after they have been saved to the store;
+  // // `null` checks allow to create entities on demand
+  if (globalState == null) {
+    globalState = createGlobalState(event.block.timestamp, event.address);
+  }
+}
 
 export function handleMinterRemoved(event: MinterRemoved): void {}
 

@@ -500,6 +500,7 @@ export function handleAddTokenUtil(
 
   wildcard.price = price.id;
   wildcard.owner = patron.id;
+  log.warning("The owner: {}", [wildcard.owner]);
   wildcard.patronageNumerator = patronageNumerator;
   wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = txTimestamp;

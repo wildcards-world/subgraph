@@ -56,6 +56,17 @@ export function handleAddToken(event: AddToken): void {
 }
 
 export function handleBuy(event: Buy): void {
+  log.warning("Token Bought! {}", [event.params.tokenId.toString()]);
+  let testWc = new Wildcard(ID_PREFIX + event.params.tokenId.toString());
+  if (testWc == null) {
+    log.warning("NULLLL! {}", [ID_PREFIX + event.params.tokenId.toString()]);
+  } else {
+    log.warning("DEFINED! {}", [ID_PREFIX + event.params.tokenId.toString()]);
+  }
+  log.warning("Owner id! {}", [ID_PREFIX + event.params.tokenId.toString()]);
+  log.warning("Owner! {}", [testWc.price]);
+  log.warning("Owner! {}", [testWc.owner]);
+
   // PART 1: reading and getting values.
   let owner = event.params.owner;
   let ownerString = owner.toHexString();
