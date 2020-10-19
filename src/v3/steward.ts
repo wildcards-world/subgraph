@@ -5,14 +5,22 @@ import {
   AddTokenV3,
   CollectLoyalty,
 } from "../../generated/Steward/Steward";
+import { Token } from "../../generated/Token/Token";
 import { log, BigInt } from "@graphprotocol/graph-ts";
-import { Wildcard, Global, Patron } from "../../generated/schema";
+import {
+  Wildcard,
+  Global,
+  Patron,
+  Price,
+  TokenUri,
+} from "../../generated/schema";
 import {
   handleAddTokenUtil,
   recognizeStateChange,
   getForeclosureTimeSafe,
   minBigInt,
   timeLastCollectedWildcardSafe,
+  initialiseNoOwnerPatronIfNull,
 } from "../util";
 import { patronageTokenPerSecond, ID_PREFIX } from "../CONSTANTS";
 import { GLOBAL_ID } from "../CONSTANTS";
@@ -195,14 +203,56 @@ export function handleAddTokenV3(event: AddTokenV3): void {
 
   let txHashStr = event.transaction.hash.toHexString();
 
-  handleAddTokenUtil(
-    tokenId,
-    txTimestamp,
-    patronageNumerator,
-    wildcard,
-    steward,
-    txHashStr
-  );
+  let tokenAddress = steward.assetToken();
+  let erc721 = Token.bind(tokenAddress);
+
+  let tokenInfo = erc721.tokenURI(tokenId);
+
+  // Entity fields can be set using simple assignments
+  let tokenUri = new TokenUri(tokenId.toString());
+  log.warning("The token URI is: {}", [tokenUri.id]);
+
+  tokenUri.uriString = tokenInfo;
+  tokenUri.save();
+
+  wildcard.tokenUri = tokenUri.id;
+  wildcard.tokenId = tokenId;
+  wildcard.totalCollected = BigInt.fromI32(0);
+  wildcard.timeCollected = txTimestamp;
+
+  let price = new Price(txHashStr);
+  price.price = BigInt.fromI32(0);
+  price.timeSet = txTimestamp;
+  price.save();
+
+  let patron = Patron.load(ID_PREFIX + "NO_OWNER");
+  if (patron == null) {
+    patron = initialiseNoOwnerPatronIfNull();
+  }
+
+  // wildcard.price = price.id.toString();
+  // wildcard.owner = patron.id.toString();
+  wildcard.price = price.id;
+  wildcard.owner = patron.id;
+  log.warning("The owner: {}, {}", [wildcard.owner, patron.id]);
+  wildcard.patronageNumerator = patronageNumerator;
+  wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
+  wildcard.timeAcquired = txTimestamp;
+  wildcard.previousOwners = [];
+
+  // return wildcard;
+
+  // let newWildcard = handleAddTokenUtil(
+  //   tokenId,
+  //   txTimestamp,
+  //   patronageNumerator,
+  //   wildcard,
+  //   steward,
+  //   txHashStr
+  // );
+
+  wildcard.save();
+  // newWildcard.save();
 
   let eventParamsString =
     "['" +
@@ -223,4 +273,17 @@ export function handleAddTokenV3(event: AddTokenV3): void {
     event.block.number,
     2
   );
+
+  log.warning("owner of {}: {}", [wildcard.id, wildcard.owner]);
+  // log.warning("owner of {}: {}", [newWildcard.id, newWildcard.owner]);
+
+  // // Commenting out the below causes an issue
+  // log.warning("IN ADDING TOKEN {}", [wildcard.id]);
+  // let testWc = new Wildcard(wildcard.id);
+  // if (testWc == null) {
+  //   log.warning("NUL! {}", [wildcard.id]);
+  // } else {
+  //   log.warning("DEFINED! {}", [wildcard.id]);
+  // }
+  // log.warning("owner of {}: {}", [testWc.id, testWc.price]);
 }

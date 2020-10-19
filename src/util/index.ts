@@ -472,7 +472,7 @@ export function handleAddTokenUtil(
   wildcard: Wildcard,
   steward: Steward,
   txHashStr: string
-): void {
+): Wildcard {
   let tokenAddress = steward.assetToken();
   let erc721 = Token.bind(tokenAddress);
 
@@ -498,6 +498,8 @@ export function handleAddTokenUtil(
     patron = initialiseNoOwnerPatronIfNull();
   }
 
+  // wildcard.price = price.id.toString();
+  // wildcard.owner = patron.id.toString();
   wildcard.price = price.id;
   wildcard.owner = patron.id;
   log.warning("The owner: {}", [wildcard.owner]);
@@ -506,7 +508,7 @@ export function handleAddTokenUtil(
   wildcard.timeAcquired = txTimestamp;
   wildcard.previousOwners = [];
 
-  wildcard.save();
+  return wildcard;
 }
 
 export function getTokenBalance(

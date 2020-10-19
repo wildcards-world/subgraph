@@ -31,40 +31,21 @@ dataSources:
         - UpgradeToV3
       abis:
         - name: Steward
-          file: ./abis/Steward.json
+          file: ./abis/matic/WildcardSteward_v3_matic.json
         - name: Token
-          file: ./abis/Token.json
+          file: ./abis/matic/ERC721Patronage_v1.json
       eventHandlers:
-        # v0 events
-        - event: LogBuy(indexed address,indexed uint256)
-          handler: handleLogBuy
-        - event: LogPriceChange(indexed uint256)
-          handler: handleLogPriceChange
-        - event: LogForeclosure(indexed address)
-          handler: handleLogForeclosure
-        - event: LogCollection(indexed uint256)
-          handler: handleLogCollection
-        - event: LogRemainingDepositUpdate(indexed address,indexed uint256)
-          handler: handleLogRemainingDepositUpdate
-        # v0 and v1 events
-        - event: AddToken(indexed uint256,uint256)
-          handler: handleAddToken
         # v1 and v2 events
         - event: Buy(indexed uint256,indexed address,uint256)
           handler: handleBuy
         - event: PriceChange(indexed uint256,uint256)
           handler: handlePriceChange
-        - event: Foreclosure(indexed address)
-          handler: handleForeclosure
+        # - event: Foreclosure(indexed address)
+        #   handler: handleForeclosure
         - event: RemainingDepositUpdate(indexed address,uint256)
           handler: handleRemainingDepositUpdate
         - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
           handler: handleCollectPatronage
-        # v2 events
-        - event: AddToken(indexed uint256,uint256,uint256)
-          handler: handleAddTokenV2
-        - event: CollectLoyalty(indexed uint256,indexed address,uint256)
-          handler: handleCollectLoyalty
         # v3 events
         - event: AddTokenV3(indexed uint256,uint256,uint256)
           handler: handleAddTokenV3
@@ -95,7 +76,7 @@ dataSources:
         - ApprovalForAll
       abis:
         - name: Token
-          file: ./abis/Token.json
+          file: ./abis/matic/ERC721Patronage_v1.json
       eventHandlers:
         - event: Init()
           handler: handleERC721Init
