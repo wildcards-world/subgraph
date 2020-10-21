@@ -56,19 +56,9 @@ export function handleAddToken(event: AddToken): void {
 }
 
 export function handleBuy(event: Buy): void {
-  log.warning("Token Bought! {}", [event.params.tokenId.toString()]);
-  let testWc = Wildcard.load(ID_PREFIX + event.params.tokenId.toString());
-  if (testWc == null) {
-    log.warning("NULLLL! {}", [ID_PREFIX + event.params.tokenId.toString()]);
-  } else {
-    log.warning("DEFINED! {}", [ID_PREFIX + event.params.tokenId.toString()]);
-  }
-  log.warning("Owner id! {}", [ID_PREFIX + event.params.tokenId.toString()]);
-  log.warning("price! {}", [testWc.price]);
-
   // PART 1: reading and getting values.
   let owner = event.params.owner;
-  let ownerString = owner.toHexString();
+  let ownerString = ID_PREFIX + owner.toHexString();
   let txTimestamp = event.block.timestamp;
   let tokenIdBigInt = event.params.tokenId;
   let steward = Steward.bind(event.address);
@@ -99,10 +89,8 @@ export function handleBuy(event: Buy): void {
     steward,
     tokenIdBigInt
   );
-  let previousTokenOwnerString = wildcard.owner;
 
   let patron = Patron.load(ID_PREFIX + ownerString);
-  // let patronOld = Patron.load(ID_PREFIX + previousTokenOwnerString);
   if (patron == null) {
     patron = new Patron(ID_PREFIX + ownerString);
     patron.address = owner;

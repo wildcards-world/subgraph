@@ -210,7 +210,6 @@ export function handleAddTokenV3(event: AddTokenV3): void {
 
   // Entity fields can be set using simple assignments
   let tokenUri = new TokenUri(tokenId.toString());
-  log.warning("The token URI is: {}", [tokenUri.id]);
 
   tokenUri.uriString = tokenInfo;
   tokenUri.save();
@@ -234,7 +233,6 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   // wildcard.owner = patron.id.toString();
   wildcard.owner = patron.id;
   wildcard.price = price.id;
-  log.warning("The owner: {}, {}", [wildcard.owner, patron.id]);
   wildcard.patronageNumerator = patronageNumerator;
   wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = txTimestamp;
@@ -272,26 +270,4 @@ export function handleAddTokenV3(event: AddTokenV3): void {
     event.block.number,
     2
   );
-
-  log.warning("owner of {}: {}", [wildcard.id, wildcard.owner]);
-  // log.warning("owner of {}: {}", [newWildcard.id, newWildcard.owner]);
-
-  // // Commenting out the below causes an issue
-  // log.warning("IN ADDING TOKEN {}", [wildcard.id]);
-  // let testWc = new Wildcard(wildcard.id);
-  // if (testWc == null) {
-  //   log.warning("NUL! {}", [wildcard.id]);
-  // } else {
-  //   log.warning("DEFINED! {}", [wildcard.id]);
-  // }
-  // log.warning("owner of {}: {}", [testWc.id, testWc.price]);
-  // Commenting out the below causes an issue
-  log.warning("IN ADDING TOKEN {}", [patron.id]);
-  let testPatron = Patron.load(patron.id);
-  if (testPatron == null) {
-    log.warning("NUL! {}", [testPatron.id]);
-  } else {
-    log.warning("DEFINED! {}", [testPatron.id]);
-  }
-  log.warning("owner of {}: {}", [testPatron.id, testPatron.address.toHex()]);
 }
