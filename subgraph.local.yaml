@@ -1,16 +1,13 @@
 specVersion: 0.0.2
-description: A subgraph for wildcards.world smart contracts.
-repository: https://github.com/wildcards/subgraph
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
     name: Steward
-    network: mainnet
+    network: ganache
     source:
-      address: "0x6D47CF86F6A490c6410fC082Fd1Ad29CF61492d0"
+      address: "0xc665ED33F49b8a1Aa80bDC5B99512cb971009D2f"
       abi: Steward
-      startBlock: 8752677
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -28,8 +25,7 @@ dataSources:
         - RemainingDepositUpdate
         - CollectPatronage
         - CollectLoyalty
-        - AddTokenV3
-        - UpgradeToV3
+        # - ArtistCommission
       abis:
         - name: Steward
           file: ./abis/Steward.json
@@ -50,7 +46,7 @@ dataSources:
         # v0 and v1 events
         - event: AddToken(indexed uint256,uint256)
           handler: handleAddToken
-        # v1 events
+        # v1 and v2 events
         - event: Buy(indexed uint256,indexed address,uint256)
           handler: handleBuy
         - event: PriceChange(indexed uint256,uint256)
@@ -75,11 +71,10 @@ dataSources:
 
   - kind: ethereum/contract
     name: Token
-    network: mainnet
+    network: ganache
     source:
-      address: "0x6aD0f855c97eb80665F2D0C7d8204895e052C373"
+      address: "0x9Ff7c346E704F084d707A51AAfa6F8D5084Db7f5"
       abi: Token
-      startBlock: 8752679
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -107,72 +102,11 @@ dataSources:
       file: ./src/token.ts
 
   - kind: ethereum/contract
-    name: VitalikStewardLegacy
-    network: mainnet
-    source:
-      address: "0x803445597c2a42114A527b0b6191936bC61b492f"
-      abi: VitalikStewardLegacy
-      startBlock: 8041107
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - LogBuy
-        - LogPriceChange
-        - LogForeclosure
-        - LogCollection
-      abis:
-        - name: VitalikStewardLegacy
-          file: ./abis/VitalikStewardLegacy.json
-      eventHandlers:
-        - event: LogBuy(indexed address,indexed uint256)
-          handler: handleLogBuy
-        - event: LogPriceChange(indexed uint256)
-          handler: handleLogPriceChange
-        - event: LogForeclosure(indexed address)
-          handler: handleLogForeclosure
-        - event: LogCollection(indexed uint256)
-          handler: handleLogCollection
-      file: ./src/vitalikStewardLegacy.ts
-
-  - kind: ethereum/contract
-    name: VitalikTokenLegacy
-    network: mainnet
-    source:
-      address: "0x231570F1ea43DE41adb3Ee04188CE18c8d10dEED"
-      abi: VitalikTokenLegacy
-      startBlock: 8041105
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      entities:
-        - Transfer
-        - Approval
-        - ApprovalForAll
-      abis:
-        - name: VitalikTokenLegacy
-          file: ./abis/VitalikTokenLegacy.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,indexed uint256)
-          handler: handleTransfer
-        - event: Approval(indexed address,indexed address,indexed uint256)
-          handler: handleApproval
-        - event: ApprovalForAll(indexed address,indexed address,bool)
-          handler: handleApprovalForAll
-      # callHandlers:
-      #   - function: setup()
-      #     handler: handleSetupVitalk
-      file: ./src/vitalikTokenLegacy.ts
-
-  - kind: ethereum/contract
     name: LoyaltyToken
-    network: mainnet
+    network: ganache
     source:
-      address: "0x773c75c2277eD3e402BDEfd28Ec3b51A3AfbD8a4"
+      address: "0xd7D8c42Ab5B83aA3D4114e5297989DC27BDfb715"
       abi: LoyaltyToken
-      startBlock: 9766767
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -193,11 +127,10 @@ dataSources:
 
   - kind: ethereum/contract
     name: Dao
-    network: mainnet
+    network: ganache
     source:
-      address: "0x03e051b7e42480Cc9D54F1caB525D2Fea2cF4d83" #this is wrong doesn't exist yet
+      address: "0x316C5f8867B21923db8A0Bd6890A6BFE0Ab6F9d2"
       abi: Dao
-      startBlock: 10012315
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4

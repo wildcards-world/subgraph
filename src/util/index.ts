@@ -1,9 +1,11 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { LoyaltyToken } from "../../generated/LoyaltyToken/LoyaltyToken";
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log, Bytes } from "@graphprotocol/graph-ts";
 import {
   Patron,
   StateChange,
+  EventParam,
+  EventParams,
   EventCounter,
   Global,
   Wildcard,
@@ -15,6 +17,9 @@ import {
   GLOBAL_PATRONAGE_DENOMINATOR,
   NUM_SECONDS_IN_YEAR_BIG_INT,
   AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
+  EVENT_COUNTER_ID,
+  GLOBAL_ID,
+  ID_PREFIX,
 } from "../CONSTANTS";
 import {
   getTotalOwedAccurate,
@@ -31,6 +36,56 @@ export function minBigInt(first: BigInt, second: BigInt): BigInt {
   }
 }
 
+export function getTokenContract(): Token {
+  let globalState = Global.load(GLOBAL_ID);
+  if (globalState == null) {
+    log.critical("Global state must be defined before using this function", []);
+  }
+  return Token.bind(globalState.erc721Address as Address);
+}
+
+export function getCurrentOwner(steward: Steward, wildcardId: BigInt): Address {
+  // load what version we are in (through global state)
+  let globalState = Global.load(GLOBAL_ID);
+  let currentVersion = globalState.version;
+
+  if (currentVersion.ge(BigInt.fromI32(3))) {
+    let tokenContract = getTokenContract();
+    let currentOwner = tokenContract.ownerOf(wildcardId);
+    return currentOwner;
+  } else {
+    return steward.currentPatron(wildcardId);
+  }
+}
+
+export function timeLastCollectedWildcardSafe(
+  steward: Steward,
+  wildcardId: BigInt
+): BigInt {
+  // load what version we are in (through global state)
+  let globalState = Global.load(GLOBAL_ID);
+  let currentVersion = globalState.version;
+
+  // NOTE: in v3 onwards, timeLastCollectedPatron = timeLastCollected
+  // execute correct function based on the version.
+  if (currentVersion.ge(BigInt.fromI32(3))) {
+    let currentOwner = getCurrentOwner(steward, wildcardId);
+    return steward.timeLastCollectedPatron(currentOwner);
+  } else {
+    let toReturn = steward.try_timeLastCollected(wildcardId);
+    if (toReturn.reverted) {
+      log.warning("IT REVERTED", []);
+      return BigInt.fromI32(0);
+    }
+    return toReturn.value;
+  }
+}
+
+export function warnAndError(msg: string, args: Array<string>): void {
+  log.warning(msg, args);
+  log.critical(msg, args);
+}
+
 // This currently only works with strings, because assembly script is shit... (the tests do pass when this is a template parameter though :) )
 export function removeFromArrayAtIndex(
   array: Array<string>,
@@ -43,11 +98,20 @@ export function removeFromArrayAtIndex(
   }
 }
 
-export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
-  let globalState = Global.load("1");
-  globalState.totalCollectedAccurate = getTotalCollectedAccurate(steward);
-  globalState.totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
-    steward
+export function updateGlobalState(
+  steward: Steward,
+  txTimestamp: BigInt,
+  TotalTokenCostScaledNumeratorDelta: BigInt
+): void {
+  let globalState = Global.load(GLOBAL_ID);
+  let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
+    steward,
+    TotalTokenCostScaledNumeratorDelta
+  );
+  globalState.totalCollectedAccurate = getTotalCollectedAccurate(
+    steward,
+    totalTokenCostScaledNumeratorAccurate,
+    txTimestamp
   );
   let totalOwed = getTotalOwedAccurate(steward);
   globalState.totalCollectedOrDueAccurate = globalState.totalCollectedAccurate.plus(
@@ -55,15 +119,8 @@ export function updateGlobalState(steward: Steward, txTimestamp: BigInt): void {
   );
   // BUG!
   // This code below is inaccurate because the `timeLastCollected` isn't correct. Should have `timeLastCalculatedCollection` as separate variable
-  // globalState.totalCollectedOrDue = globalState.totalCollectedOrDue.plus(
-  //   totalTokenCostScaledNumerator
-  //     .times(txTimestamp.minus(globalState.timeLastCollected))
-  //     .div(
-  //       steward
-  //         .patronageDenominator()
-  //         .times(BigInt.fromI32(NUM_SECONDS_IN_YEAR))
-  //     )
-  // );
+
+  globalState.totalTokenCostScaledNumeratorAccurate = totalTokenCostScaledNumeratorAccurate;
   globalState.timeLastCollected = txTimestamp;
   globalState.save();
 }
@@ -88,13 +145,31 @@ export function getForeclosureTimeSafe(
   }
 }
 
+export function initialiseNoOwnerPatronIfNull(): Patron {
+  let patron = new Patron(ID_PREFIX + "NO_OWNER");
+  patron.address = ZERO_ADDRESS;
+  patron.lastUpdated = BigInt.fromI32(0);
+  patron.availableDeposit = BigInt.fromI32(0);
+  patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+  patron.foreclosureTime = BigInt.fromI32(0);
+  patron.totalContributed = BigInt.fromI32(0);
+  patron.totalTimeHeld = BigInt.fromI32(0);
+  patron.tokens = [];
+  patron.previouslyOwnedTokens = [];
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
+  patron.save();
+  return patron;
+}
+
 export function initialiseDefaultPatronIfNull(
   steward: Steward,
   patronAddress: Address,
   txTimestamp: BigInt
 ): Patron {
   let patronId = patronAddress.toHexString();
-  let patron = new Patron(patronId);
+  let patron = new Patron(ID_PREFIX + patronId);
   patron.address = patronAddress;
   patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw(patronAddress);
@@ -106,6 +181,9 @@ export function initialiseDefaultPatronIfNull(
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
   patron.previouslyOwnedTokens = [];
+  patron.totalLoyaltyTokens = BigInt.fromI32(0);
+  patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
+  patron.currentBalance = BigInt.fromI32(0);
   patron.save();
   return patron;
 }
@@ -113,7 +191,8 @@ export function initialiseDefaultPatronIfNull(
 export function updateAvailableDepositAndForeclosureTime(
   steward: Steward,
   tokenPatron: Address,
-  txTimestamp: BigInt
+  txTimestamp: BigInt,
+  updatePatronForeclosureTime: boolean
 ): void {
   // if the token patron is the zero address, return! (for example it will be the zero address if the token is foreclosed and )
   if (tokenPatron.equals(ZERO_ADDRESS)) {
@@ -127,7 +206,7 @@ export function updateAvailableDepositAndForeclosureTime(
 
   let tokenPatronStr = tokenPatron.toHexString();
 
-  let patron = Patron.load(tokenPatronStr);
+  let patron = Patron.load(ID_PREFIX + tokenPatronStr);
 
   if (patron == null) {
     patron = initialiseDefaultPatronIfNull(steward, tokenPatron, txTimestamp);
@@ -149,7 +228,9 @@ export function updateAvailableDepositAndForeclosureTime(
     patron.address as Address
   );
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
-  patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  if (updatePatronForeclosureTime) {
+    patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
+  }
   patron.lastUpdated = txTimestamp;
   patron.save();
 }
@@ -160,11 +241,11 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
 
   if (stateChange == null) {
     stateChange = new StateChange(txId);
-    stateChange.txEventList = [];
+    stateChange.txEventParamList = [];
     stateChange.patronChanges = [];
     stateChange.wildcardChanges = [];
 
-    let eventCounter = EventCounter.load("1");
+    let eventCounter = EventCounter.load(EVENT_COUNTER_ID);
     eventCounter.stateChanges = eventCounter.stateChanges.concat([
       stateChange.id,
     ]);
@@ -176,15 +257,92 @@ export function getOrInitialiseStateChange(txId: string): StateChange | null {
   }
 }
 
-export function recognizeStateChange(
-  txHash: string,
-  changeType: string,
+function getEventIndex(txHash: Bytes): i32 {
+  let stateChange = StateChange.load(txHash.toHex());
+  if (stateChange == null) {
+    return 0;
+  }
+  return stateChange.txEventParamList.length;
+}
+
+function createEventParams(
+  txHash: Bytes,
+  argValues: Array<string>,
+  argNames: Array<string>,
+  argTypes: Array<string>
+): Array<string> {
+  let eventIndex: i32 = getEventIndex(txHash);
+
+  let eventParamsArr: Array<string> = [];
+
+  for (let index = 0; index < argValues.length; index++) {
+    let eventParamFund = new EventParam(
+      txHash.toHex() + "-" + eventIndex.toString() + "-" + index.toString()
+    );
+    eventParamFund.index = index;
+    eventParamFund.param = argValues[index];
+    eventParamFund.paramName = argNames[index];
+    eventParamFund.paramType = argTypes[index];
+    eventParamFund.save();
+
+    eventParamsArr.push(eventParamFund.id);
+  }
+
+  return eventParamsArr;
+}
+
+function txEventParamsHelper(
+  eventName: string,
+  eventIndex: i32,
+  eventTxHash: Bytes,
+  eventParamsArr: Array<string>
+): EventParams {
+  let eventParams = new EventParams(
+    eventTxHash.toHex() + "-" + eventIndex.toString()
+  );
+
+  eventParams.index = eventIndex;
+  eventParams.eventName = eventName;
+  eventParams.params = eventParamsArr;
+
+  eventParams.save();
+
+  return eventParams;
+}
+
+function txStateChangeHelper(
+  txHash: Bytes,
+  timeStamp: BigInt,
+  blockNumber: BigInt,
+  eventName: string,
+  eventParamArray: Array<string>,
   changedPatrons: string[],
   changedWildcards: string[],
-  txTimestamp: BigInt
+  contractVersion: i32
 ): void {
-  let stateChange = getOrInitialiseStateChange(txHash);
-  stateChange.txEventList = stateChange.txEventList.concat([changeType]);
+  let stateChange = getOrInitialiseStateChange(txHash.toHex());
+
+  if (stateChange == null) {
+    stateChange = new StateChange(txHash.toHex());
+    stateChange.txEventParamList = [];
+  }
+
+  let eventIndex: i32 = getEventIndex(txHash);
+
+  // create EventParams
+  let eventParams = txEventParamsHelper(
+    eventName,
+    eventIndex,
+    txHash,
+    eventParamArray
+  );
+
+  stateChange.timestamp = timeStamp;
+  stateChange.blockNumber = blockNumber;
+
+  stateChange.txEventParamList = stateChange.txEventParamList.concat([
+    eventParams.id,
+  ]);
 
   for (let i = 0, len = changedPatrons.length; i < len; i++) {
     stateChange.patronChanges =
@@ -199,22 +357,87 @@ export function recognizeStateChange(
         ? stateChange.wildcardChanges.concat([changedWildcards[i]])
         : stateChange.wildcardChanges;
   }
+  stateChange.contractVersion = contractVersion;
 
-  stateChange.timestamp = txTimestamp;
   stateChange.save();
 }
+
+export function saveEventToStateChange(
+  txHash: Bytes,
+  timestamp: BigInt,
+  blockNumber: BigInt,
+  eventName: string,
+  parameterValues: Array<string>,
+  parameterNames: Array<string>,
+  parameterTypes: Array<string>,
+  changedPatrons: string[],
+  changedWildcards: string[],
+  version: i32
+): void {
+  let eventParamsArr: Array<string> = createEventParams(
+    txHash,
+    parameterValues,
+    parameterNames,
+    parameterTypes
+  );
+
+  txStateChangeHelper(
+    txHash,
+    timestamp,
+    blockNumber,
+    eventName,
+    eventParamsArr,
+    changedPatrons,
+    changedWildcards,
+    version
+  );
+}
+
+export function recognizeStateChange(
+  txHash: string,
+  eventName: string,
+  eventParameters: string,
+  changedPatrons: string[],
+  changedWildcards: string[],
+  txTimestamp: BigInt,
+  txBlockNumber: BigInt,
+  contractVersion: i32
+): void {
+  // let stateChange = getOrInitialiseStateChange(txHash);
+  // stateChange.txEventList = stateChange.txEventList.concat([eventName]);
+  // stateChange.txEventParamListDeprecated = stateChange.txEventParamListDeprecated.concat([
+  //   eventParameters,
+  // ]);
+  // for (let i = 0, len = changedPatrons.length; i < len; i++) {
+  //   stateChange.patronChanges =
+  //     stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
+  //       ? stateChange.patronChanges.concat([changedPatrons[i]])
+  //       : stateChange.patronChanges;
+  // }
+  // for (let i = 0, len = changedWildcards.length; i < len; i++) {
+  //   stateChange.wildcardChanges =
+  //     stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
+  //       ? stateChange.wildcardChanges.concat([changedWildcards[i]])
+  //       : stateChange.wildcardChanges;
+  // }
+  // stateChange.timestamp = txTimestamp;
+  // stateChange.blockNumber = txBlockNumber;
+  // stateChange.contractVersion = contractVersion;
+  // stateChange.save();
+}
+// END NEW
 
 export function updateForeclosedTokens(
   foreclosedPatron: Address,
   steward: Steward
-): void {
+): string[] {
   /**
    * PHASE 1 - load data
    */
 
   // TODO: this function isn't complete. Revisit.
   let foreclosedPatronString = foreclosedPatron.toHexString();
-  let patronOld = Patron.load(foreclosedPatronString);
+  let patronOld = Patron.load(ID_PREFIX + foreclosedPatronString);
 
   /**
    * PHASE 2 - update data
@@ -238,6 +461,8 @@ export function updateForeclosedTokens(
    * PHASE 3 - save data
    */
   patronOld.save();
+
+  return prevTokens;
 }
 
 export function handleAddTokenUtil(
@@ -247,7 +472,7 @@ export function handleAddTokenUtil(
   wildcard: Wildcard,
   steward: Steward,
   txHashStr: string
-): void {
+): Wildcard {
   let tokenAddress = steward.assetToken();
   let erc721 = Token.bind(tokenAddress);
 
@@ -268,19 +493,22 @@ export function handleAddTokenUtil(
   price.timeSet = txTimestamp;
   price.save();
 
-  let patron = Patron.load("NO_OWNER");
+  let patron = Patron.load(ID_PREFIX + "NO_OWNER");
   if (patron == null) {
-    log.critical("This should definitely exist", []);
+    patron = initialiseNoOwnerPatronIfNull();
   }
 
+  // wildcard.price = price.id.toString();
+  // wildcard.owner = patron.id.toString();
   wildcard.price = price.id;
   wildcard.owner = patron.id;
+  log.warning("The owner: {}", [wildcard.owner]);
   wildcard.patronageNumerator = patronageNumerator;
   wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = txTimestamp;
   wildcard.previousOwners = [];
 
-  wildcard.save();
+  return wildcard;
 }
 
 export function getTokenBalance(
@@ -330,8 +558,14 @@ export function updateAllOfPatronsTokensLastUpdated(
     let wildcardId = patronsTokens[i];
 
     let wildcard = Wildcard.load(wildcardId);
+    if (wildcard == null) {
+      log.critical("the wildcard's ID is null", []);
+    }
 
-    wildcard.timeCollected = steward.timeLastCollected(wildcard.tokenId);
+    wildcard.timeCollected = timeLastCollectedWildcardSafe(
+      steward,
+      wildcard.tokenId
+    );
 
     wildcard.save();
   }
@@ -341,23 +575,50 @@ export function isVitalik(tokenId: BigInt): boolean {
   return tokenId.equals(BigInt.fromI32(42));
 }
 
+export function safeGetTotalCollected(
+  steward: Steward,
+  tokenId: BigInt,
+  timeSinceLastCollection: BigInt
+): BigInt {
+  let globalState = Global.load(GLOBAL_ID);
+  let currentVersion = globalState.version;
+
+  if (currentVersion.lt(BigInt.fromI32(3))) {
+    return steward.totalCollected(tokenId);
+  } else {
+    let wildcard = Wildcard.load(ID_PREFIX + tokenId.toString());
+    // TODO: unfortunately this is being written to 'just' work and mathematical rigor is likely being lost.
+    let newlyCollected = timeSinceLastCollection
+      .times(wildcard.patronageNumeratorPriceScaled)
+      .div(GLOBAL_PATRONAGE_DENOMINATOR);
+    return wildcard.totalCollected.plus(newlyCollected);
+  }
+}
+
 /*
-This function needs to be called in the following places:
-buy
-collection 
+  This function needs to be called in the following places:
+  buy
+  collection 
 */
 export function getTotalCollectedForWildcard(
   steward: Steward,
-  tokenId: BigInt
+  tokenId: BigInt,
+  timeSinceLastCollection: BigInt
 ): BigInt {
   let totalCollected: BigInt;
   if (isVitalik(tokenId)) {
     // Include the patronage from the legacy vitalik contract.
-    totalCollected = steward
-      .totalCollected(tokenId)
-      .plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
+    totalCollected = safeGetTotalCollected(
+      steward,
+      tokenId,
+      timeSinceLastCollection
+    ).plus(AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT);
   } else {
-    totalCollected = steward.totalCollected(tokenId);
+    totalCollected = safeGetTotalCollected(
+      steward,
+      tokenId,
+      timeSinceLastCollection
+    );
   }
 
   return totalCollected;

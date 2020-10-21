@@ -1,13 +1,7 @@
 import { BigInt, Address, log } from "@graphprotocol/graph-ts";
 import { LogVote } from "../generated/Dao/Dao";
 import { LogFundsDistributed, Dao } from "../generated/Dao/Dao";
-import {
-  VoteManager,
-  Iteration,
-  VoteStatus,
-  PatronNew,
-  Vote,
-} from "../generated/schema";
+import { VoteManager, Iteration, VoteStatus, Vote } from "../generated/schema";
 import { VOTES_MANAGER_ENTITY_ID } from "./CONSTANTS";
 
 export function handleLogVote(event: LogVote): void {
