@@ -15,12 +15,11 @@ import {
   TokenUri,
 } from "../../generated/schema";
 import {
-  handleAddTokenUtil,
-  recognizeStateChange,
   getForeclosureTimeSafe,
   minBigInt,
   timeLastCollectedWildcardSafe,
   initialiseNoOwnerPatronIfNull,
+  saveEventToStateChange,
 } from "../util";
 import { patronageTokenPerSecond, ID_PREFIX } from "../CONSTANTS";
 import { GLOBAL_ID } from "../CONSTANTS";
@@ -251,23 +250,29 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   wildcard.save();
   // newWildcard.save();
 
-  let eventParamsString =
-    "['" +
-    tokenId.toString() +
-    "', '" +
-    patronageNumerator.toString() +
-    "', '" +
-    launchTime.toString() +
-    "']";
+  let eventParamValues: Array<string> = [
+    tokenId.toString(),
+    patronageNumerator.toString(),
+    launchTime.toString(),
+  ];
+  let eventParamNames: Array<string> = [
+    "tokenId",
+    "patronageNumerator",
+    "tokenGenerationRate",
+  ];
 
-  recognizeStateChange(
-    txHashString,
-    "handleAddToken",
-    eventParamsString,
-    [],
-    [],
+  let eventParamTypes: Array<string> = ["uint256", "uint256", "uint256"];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
-    2
+    "handleAddToken",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [],
+    [wildcard.id],
+    3
   );
 }

@@ -46,7 +46,6 @@ import {
   getTotalCollectedForWildcard,
   initialiseDefaultPatronIfNull,
   warnAndError,
-  recognizeStateChange,
   saveEventToStateChange,
 } from "../util";
 import {
@@ -292,7 +291,7 @@ export function handleLogBuy(event: LogBuy): void {
   ];
   let eventParamNames: Array<string> = ["tokenid", "owner", "price"];
 
-  let eventParamTypes: Array<string> = ["int256", "address", "int256"];
+  let eventParamTypes: Array<string> = ["uint256", "address", "uint256"];
 
   saveEventToStateChange(
     event.transaction.hash,
@@ -453,7 +452,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
 
   let eventParamNames: Array<string> = ["tokenid", "newPrice"];
 
-  let eventParamTypes: Array<string> = ["int256", "int256"];
+  let eventParamTypes: Array<string> = ["uint256", "uint256"];
 
   saveEventToStateChange(
     event.transaction.hash,
@@ -591,19 +590,24 @@ export function handleLogCollection(event: LogCollection): void {
 
   globalState.save();
 
-  let txHashString = event.transaction.hash.toHexString();
+  let eventParamValues: Array<string> = [
+    tokenIdString,
+    event.params.collected.toString(),
+  ];
+  let eventParamNames: Array<string> = ["tokenid", "collected"];
 
-  let eventParamsString =
-    '["' + tokenIdString + '", "' + event.params.collected.toString() + '"]';
+  let eventParamTypes: Array<string> = ["uint256", "uint256"];
 
-  recognizeStateChange(
-    txHashString,
+  saveEventToStateChange(
+    event.transaction.hash,
+    txTimestamp,
+    event.block.number,
     "CollectPatronage",
-    eventParamsString,
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
     [wildcard.owner],
     [],
-    event.block.timestamp,
-    event.block.number,
     0
   );
 }

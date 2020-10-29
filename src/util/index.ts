@@ -393,40 +393,6 @@ export function saveEventToStateChange(
   );
 }
 
-export function recognizeStateChange(
-  txHash: string,
-  eventName: string,
-  eventParameters: string,
-  changedPatrons: string[],
-  changedWildcards: string[],
-  txTimestamp: BigInt,
-  txBlockNumber: BigInt,
-  contractVersion: i32
-): void {
-  // let stateChange = getOrInitialiseStateChange(txHash);
-  // stateChange.txEventList = stateChange.txEventList.concat([eventName]);
-  // stateChange.txEventParamListDeprecated = stateChange.txEventParamListDeprecated.concat([
-  //   eventParameters,
-  // ]);
-  // for (let i = 0, len = changedPatrons.length; i < len; i++) {
-  //   stateChange.patronChanges =
-  //     stateChange.patronChanges.indexOf(changedPatrons[i]) === -1
-  //       ? stateChange.patronChanges.concat([changedPatrons[i]])
-  //       : stateChange.patronChanges;
-  // }
-  // for (let i = 0, len = changedWildcards.length; i < len; i++) {
-  //   stateChange.wildcardChanges =
-  //     stateChange.wildcardChanges.indexOf(changedWildcards[i]) === -1
-  //       ? stateChange.wildcardChanges.concat([changedWildcards[i]])
-  //       : stateChange.wildcardChanges;
-  // }
-  // stateChange.timestamp = txTimestamp;
-  // stateChange.blockNumber = txBlockNumber;
-  // stateChange.contractVersion = contractVersion;
-  // stateChange.save();
-}
-// END NEW
-
 export function updateForeclosedTokens(
   foreclosedPatron: Address,
   steward: Steward

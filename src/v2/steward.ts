@@ -1,6 +1,6 @@
 import { AddToken, Steward } from "../../generated/Steward/Steward";
 import { Wildcard } from "../../generated/schema";
-import { handleAddTokenUtil, recognizeStateChange } from "../util";
+import { handleAddTokenUtil, saveEventToStateChange } from "../util";
 import { ID_PREFIX } from "../CONSTANTS";
 
 export function handleAddToken(event: AddToken): void {
@@ -26,23 +26,29 @@ export function handleAddToken(event: AddToken): void {
     txHashStr
   );
 
-  let eventParamsString =
-    "['" +
-    event.params.tokenId.toString() +
-    "', '" +
-    event.params.patronageNumerator.toString() +
-    "', '" +
-    event.params.tokenGenerationRate.toString() +
-    "']";
+  let eventParamValues: Array<string> = [
+    event.params.tokenId.toString(),
+    event.params.patronageNumerator.toString(),
+    event.params.tokenGenerationRate.toString(),
+  ];
+  let eventParamNames: Array<string> = [
+    "tokenId",
+    "patronageNumerator",
+    "tokenGenerationRate",
+  ];
 
-  recognizeStateChange(
-    txHashString,
-    "handleAddToken",
-    eventParamsString,
-    [],
-    [],
+  let eventParamTypes: Array<string> = ["uint256", "uint256", "uint256"];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "handleAddToken",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [],
+    [wildcard.id],
     2
   );
 }

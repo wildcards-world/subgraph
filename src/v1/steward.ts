@@ -31,8 +31,6 @@ import * as V0 from "../v0/steward";
 import {
   updateAvailableDepositAndForeclosureTime,
   getForeclosureTimeSafe,
-  getOrInitialiseStateChange,
-  recognizeStateChange,
   minBigInt,
   updateGlobalState,
   updateForeclosedTokens,
@@ -42,6 +40,7 @@ import {
   timeLastCollectedWildcardSafe,
   getCurrentOwner,
   initialiseNoOwnerPatronIfNull,
+  saveEventToStateChange,
 } from "../util";
 import {
   GLOBAL_PATRONAGE_DENOMINATOR,
@@ -90,9 +89,9 @@ export function handleBuy(event: Buy): void {
     tokenIdBigInt
   );
 
-  let patron = Patron.load(ID_PREFIX + ownerString);
+  let patron = Patron.load(ownerString);
   if (patron == null) {
-    patron = new Patron(ID_PREFIX + ownerString);
+    patron = new Patron(ownerString);
     patron.address = owner;
     patron.totalTimeHeld = BigInt.fromI32(0);
     patron.totalContributed = BigInt.fromI32(0);
@@ -107,14 +106,14 @@ export function handleBuy(event: Buy): void {
   // Phase 2: calculate new values.
 
   /*
-  VALUES WE NEED FROM THIS PHASE:
-
-  NOTE: values for the patron are prepended with `patron` and values for the previousPatron are prepended with `previousPatron` 
-
-  KEY:
-  * = value is updated.
+    VALUES WE NEED FROM THIS PHASE:
+    
+    NOTE: values for the patron are prepended with `patron` and values for the previousPatron are prepended with `previousPatron` 
+    
+    KEY:
+    * = value is updated.
   x = value remains unchanged by the event.
-
+  
   Patron (new):
   *- lastUpdated: BigInt!
   *- previouslyOwnedTokens: [Wildcard!]!
@@ -124,7 +123,7 @@ export function handleBuy(event: Buy): void {
   *- foreclosureTime: BigInt!
   *- totalContributed: BigInt!
   *- totalTimeHeld: BigInt!
-
+  
   Patron (previous):
   *- lastUpdated: BigInt!
   x- previouslyOwnedTokens: [Wildcard!]!
@@ -323,23 +322,25 @@ export function handleBuy(event: Buy): void {
   buyEvent.timestamp = txTimestamp;
   buyEvent.save();
 
-  let eventParamsString =
-    "['" +
-    tokenIdString +
-    "', '" +
-    event.params.owner.toHexString() +
-    "', '" +
-    event.params.price.toString() +
-    "']";
+  let eventParamValues: Array<string> = [
+    event.params.tokenId.toString(),
+    event.params.owner.toString(),
+    event.params.price.toString(),
+  ];
+  let eventParamNames: Array<string> = ["tokenId", "price", "owner"];
 
-  recognizeStateChange(
-    txHashString,
-    "Buy",
-    eventParamsString,
-    [patronOld.id, patron.id],
-    [wildcard.id],
+  let eventParamTypes: Array<string> = ["uint256", "address", "uint256"];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "Buy",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patronOld.id, patron.id],
+    [wildcard.id],
     1
   );
 
@@ -465,17 +466,24 @@ export function handlePriceChange(event: PriceChange): void {
   priceChange.timestamp = txTimestamp;
   priceChange.save();
 
-  let eventParamsString =
-    "['" + tokenIdString + "', '" + event.params.newPrice.toString() + "']";
+  let eventParamValues: Array<string> = [
+    tokenIdString,
+    event.params.newPrice.toString(),
+  ];
+  let eventParamNames: Array<string> = ["tokenId", "newPrice"];
 
-  recognizeStateChange(
-    txHashString,
-    "PriceChange",
-    eventParamsString,
-    [patron.id],
-    [wildcard.id],
+  let eventParamTypes: Array<string> = ["uint256", "uint256"];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "PriceChange",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patron.id],
+    [wildcard.id],
     1
   );
 
@@ -520,21 +528,24 @@ export function handleForeclosure(event: Foreclosure): void {
 
   // let foreclosureTime = getForeclosureTimeSafe(steward, foreclosedPatron);
 
-  let eventParamsString =
-    "['" +
-    event.params.prevOwner.toHexString() +
-    "', '" +
-    foreclosureTime.toString() +
-    "']";
+  let eventParamValues: Array<string> = [
+    event.params.prevOwner.toHex(),
+    foreclosureTime.toString(),
+  ];
+  let eventParamNames: Array<string> = ["prevOwner", "foreclosureTime"];
 
-  recognizeStateChange(
-    txHashString,
-    "Foreclosure",
-    eventParamsString,
-    [patronString],
-    foreclosedTokens,
+  let eventParamTypes: Array<string> = ["address", "uint256"];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "Foreclosure",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patronString],
+    foreclosedTokens,
     1
   );
 
@@ -576,21 +587,24 @@ export function handleRemainingDepositUpdate(
     updatePatronForeclosureTime
   );
 
-  let eventParamsString =
-    "['" +
-    event.params.tokenPatron.toHexString() +
-    "', '" +
-    event.params.remainingDeposit.toString() +
-    "']";
+  let eventParamValues: Array<string> = [
+    event.params.tokenPatron.toHexString(),
+    event.params.remainingDeposit.toString(),
+  ];
+  let eventParamNames: Array<string> = ["tokenPatron", "newPrice"];
 
-  recognizeStateChange(
-    txHashString,
-    "RemainingDepositUpdate",
-    eventParamsString,
-    [patronString],
-    [],
+  let eventParamTypes: Array<string> = ["address", "uint256"];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "RemainingDepositUpdate",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patronString],
+    [],
     1
   );
 
@@ -642,25 +656,36 @@ export function handleCollectPatronage(event: CollectPatronage): void {
     false
   );
 
-  let eventParamsString =
-    "['" +
-    event.params.tokenId.toHexString() +
-    "', '" +
-    event.params.patron.toHexString() +
-    "', '" +
-    event.params.remainingDeposit.toString() +
-    "', '" +
-    event.params.amountReceived.toString() +
-    "']";
+  let eventParamValues: Array<string> = [
+    event.params.tokenId.toHexString(),
+    event.params.patron.toHexString(),
+    event.params.remainingDeposit.toString(),
+    event.params.amountReceived.toString(),
+  ];
+  let eventParamNames: Array<string> = [
+    "tokenId",
+    "patron",
+    "remainingDeposit",
+    "amountRecieved",
+  ];
 
-  recognizeStateChange(
-    txHashString,
-    "CollectPatronage",
-    eventParamsString,
-    [patronString],
-    [collectedToken.toString()],
+  let eventParamTypes: Array<string> = [
+    "uint256",
+    "address",
+    "uint256",
+    "uint256",
+  ];
+
+  saveEventToStateChange(
+    event.transaction.hash,
     txTimestamp,
     event.block.number,
+    "CollectPatronage",
+    eventParamValues,
+    eventParamNames,
+    eventParamTypes,
+    [patronString],
+    [collectedToken.toString()],
     1
   );
 
