@@ -324,10 +324,10 @@ export function handleBuy(event: Buy): void {
 
   let eventParamValues: Array<string> = [
     event.params.tokenId.toString(),
-    event.params.owner.toString(),
+    event.params.owner.toHex(),
     event.params.price.toString(),
   ];
-  let eventParamNames: Array<string> = ["tokenId", "price", "owner"];
+  let eventParamNames: Array<string> = ["tokenId", "owner", "price"];
 
   let eventParamTypes: Array<string> = ["uint256", "address", "uint256"];
 
