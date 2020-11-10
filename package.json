@@ -15,6 +15,7 @@
     "remove-local": "graph remove --node http://localhost:8020/ wild-cards/subgraph",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wild-cards/subgraph ./subgraph.local.yaml",
     "deploy-mumbai-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-mumbai ./subgraph.mumbai.yaml",
+    "deploy-matic-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-matic ./subgraph.matic.yaml",
     "test": "asp"
   },
   "dependencies": {

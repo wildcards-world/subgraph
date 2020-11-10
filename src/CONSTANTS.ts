@@ -68,7 +68,13 @@ function getEventCounterId(network: string): string {
 export let EVENT_COUNTER_ID = getGlobalId(network);
 
 function getIdPrefix(network: string): string {
-  if (network == "matic" || network == "mumbai") {
+  if (
+    network == "goerli" /* Only include goerli while testing */ ||
+    network == "matic" ||
+    network == "mumbai"
+  ) {
+    // if (
+    //   network == "matic" || network == "mumbai") {
     return "matic";
   } else {
     return "";
