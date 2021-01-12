@@ -3,11 +3,11 @@ services:
   graph-node:
     image: graphprotocol/graph-node:v0.21.1
     ports:
-      - "8000:8000"
-      - "8001:8001"
-      - "8020:8020"
-      - "8030:8030"
-      - "8040:8040"
+      - "8100:8000"
+      - "8101:8001"
+      - "8120:8020"
+      - "8130:8030"
+      - "8140:8040"
     depends_on:
       - ipfs
       - postgres
@@ -17,24 +17,24 @@ services:
       postgres_pass: let-me-in
       postgres_db: graph-node
       ipfs: "ipfs:5001"
-      ethereum: matic:$RPC_ENDPOINT
+      ethereum: matic:$RPC_ENDPOINT_MUMBAI
       RUST_LOG: info
 
   ipfs:
     image: ipfs/go-ipfs:v0.4.23
     ports:
-      - "5001:5001"
+      - "5101:5001"
     volumes:
-      - ./data/ipfs:/data/ipfs
+      - ./data-mumbai/ipfs:/data/ipfs
 
   postgres:
     image: postgres
     ports:
-      - "15432:5432"
+      - "25432:5432"
     command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
     environment:
       POSTGRES_USER: graph-node
       POSTGRES_PASSWORD: let-me-in
       POSTGRES_DB: graph-node
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+      - ./data-mumbai/postgres:/var/lib/postgresql/data

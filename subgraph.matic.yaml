@@ -4,11 +4,11 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: Steward
-    network: goerli
+    network: matic
     source:
-      address: "0xF26F8B2c178a0DeBB176c6b18e3F6d243fEEf828"
+      address: "0x69895ba53B4CB7afaea2Ab519409F3d3C613a562"
       abi: Steward
-      startBlock: 3602092
+      startBlock: 6333145
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -58,11 +58,11 @@ dataSources:
       file: ./src/steward.ts
   - kind: ethereum/contract
     name: Token
-    network: goerli
+    network: matic
     source:
-      address: "0x886fb500144943D0593467fE19DcaC2309F0b7B6"
+      address: "0xF5A15B0F56dd93E40Dcb7B89744beE64E7058ACd"
       abi: Token
-      startBlock: 3602092
+      startBlock: 6333145
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
