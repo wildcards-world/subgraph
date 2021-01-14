@@ -25,6 +25,15 @@ import * as NEW from "./rewrite/steward";
 import { Global } from "../generated/schema";
 import { GLOBAL_ID } from "./CONSTANTS";
 
+import { ethereum } from "@graphprotocol/graph-ts";
+
+export function handleBlock(block: ethereum.Block): void {
+  let id = block.hash.toHex();
+  log.info("NEW BLOCK NUMBER {}", [id]);
+  log.warning("NEW BLOCK NUMBER {}", [id]);
+  log.debug("NEW BLOCK NUMBER {}", [id]);
+}
+
 // NOTE: Events labled with the latest version of the contracts (eg V1) will be the only events that will be called.
 //       The rest of the events need to be there to make sure that the graph can do a full sync of the history.
 //       Thus this is just an interface file with no logic in it.
