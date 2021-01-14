@@ -35,25 +35,25 @@ dataSources:
         - name: Token
           file: ./abis/matic/ERC721Patronage_v1.json
       eventHandlers:
-        # v1 and v2 events
-        - event: Buy(indexed uint256,indexed address,uint256)
-          handler: handleBuy
-        - event: PriceChange(indexed uint256,uint256)
-          handler: handlePriceChange
-        # - event: Foreclosure(indexed address)
-        #   handler: handleForeclosure
-        - event: RemainingDepositUpdate(indexed address,uint256)
-          handler: handleRemainingDepositUpdate
-        - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
-          handler: handleCollectPatronage
+        # # v1 and v2 events
+        # - event: Buy(indexed uint256,indexed address,uint256)
+        #   handler: handleBuy
+        # - event: PriceChange(indexed uint256,uint256)
+        #   handler: handlePriceChange
+        # # - event: Foreclosure(indexed address)
+        # #   handler: handleForeclosure
+        # - event: RemainingDepositUpdate(indexed address,uint256)
+        #   handler: handleRemainingDepositUpdate
+        # - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
+        #   handler: handleCollectPatronage
         # v3 events
         - event: AddTokenV3(indexed uint256,uint256,uint256)
           handler: handleAddTokenV3
         # - event: CollectLoyalty(indexed address, uint256)
         #   handler: handleCollectLoyaltyV3
         # - event: ArtistCommission(uint256 indexed,address,uint256)
-        - event: UpgradeToV3()
-          handler: handleUpgradeToV3
+        # - event: UpgradeToV3()
+        #   handler: handleUpgradeToV3
         #   handler: handleArtistCommission
       file: ./src/steward.ts
   - kind: ethereum/contract
