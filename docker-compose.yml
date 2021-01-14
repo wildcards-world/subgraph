@@ -19,6 +19,7 @@ services:
       ipfs: "ipfs:5001"
       ethereum: matic:$RPC_ENDPOINT
       RUST_LOG: info
+      GRAPH_LOG: debug
 
   ipfs:
     image: ipfs/go-ipfs:v0.4.23
