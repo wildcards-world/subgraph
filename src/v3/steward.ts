@@ -178,7 +178,7 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   log.warning("ADDING A TOKEN!!!!!!!", []);
   log.warning("ADDING A TOKEN!!!!!!!", []);
   log.warning("ADDING A TOKEN!!!!!!!", []);
-  log.warning("Yayy", []);
+  log.warning("Yayy", [event.params.tokenId.toString()]);
   createCounterIfDoesntExist();
 
   let tokenId = event.params.tokenId;
