@@ -468,7 +468,6 @@ export function handleAddTokenUtil(
   // wildcard.owner = patron.id.toString();
   wildcard.price = price.id;
   wildcard.owner = patron.id;
-  log.warning("The owner: {}", [wildcard.owner]);
   wildcard.patronageNumerator = patronageNumerator;
   wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = txTimestamp;
@@ -530,10 +529,17 @@ export function updateAllOfPatronsTokensLastUpdated(
       log.critical("the wildcard's ID is null", []);
     }
 
-    wildcard.timeCollected = timeLastCollectedWildcardSafe(
+    let newTimeCollected = timeLastCollectedWildcardSafe(
       steward,
       wildcard.tokenId
     );
+    let newtotalCollected = getTotalCollectedForWildcard(
+      steward,
+      wildcard.tokenId,
+      newTimeCollected.minus(wildcard.timeCollected)
+    );
+    wildcard.timeCollected = newTimeCollected;
+    wildcard.totalCollected = newtotalCollected;
 
     wildcard.save();
   }
@@ -555,11 +561,15 @@ export function safeGetTotalCollected(
     return steward.totalCollected(tokenId);
   } else {
     let wildcard = Wildcard.load(ID_PREFIX + tokenId.toString());
+
     // TODO: unfortunately this is being written to 'just' work and mathematical rigor is likely being lost.
     let newlyCollected = timeSinceLastCollection
       .times(wildcard.patronageNumeratorPriceScaled)
-      .div(GLOBAL_PATRONAGE_DENOMINATOR);
-    return wildcard.totalCollected.plus(newlyCollected);
+      .div(GLOBAL_PATRONAGE_DENOMINATOR)
+      .div(NUM_SECONDS_IN_YEAR_BIG_INT);
+
+    let currentTotalCollected = wildcard.totalCollected;
+    return currentTotalCollected.plus(newlyCollected);
   }
 }
 
