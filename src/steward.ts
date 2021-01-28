@@ -29,7 +29,7 @@ import { GLOBAL_ID } from "./CONSTANTS";
 //       The rest of the events need to be there to make sure that the graph can do a full sync of the history.
 //       Thus this is just an interface file with no logic in it.
 export function handleLogBuy(event: LogBuy): void {
-  log.warning("handle log by! {}", [event.block.hash.toHexString()]);
+  log.warning("handle log buy! {}", [event.block.hash.toHexString()]);
   V0.handleLogBuy(event);
 }
 
@@ -59,7 +59,7 @@ export function handleLogRemainingDepositUpdate(
 
 export function handleAddToken(event: AddToken): void {
   log.warning("handle add token (old)! {}", [event.block.hash.toHexString()]);
-  V1.handleAddToken(event);
+  V0.handleAddToken(event);
 }
 
 export function handleBuy(event: Buy): void {

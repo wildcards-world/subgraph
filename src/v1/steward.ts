@@ -49,11 +49,6 @@ import {
   ID_PREFIX,
 } from "../CONSTANTS";
 
-export function handleAddToken(event: AddToken): void {
-  // No changes from v0:
-  V0.handleAddToken(event);
-}
-
 export function handleBuy(event: Buy): void {
   // PART 1: reading and getting values.
   let owner = event.params.owner;

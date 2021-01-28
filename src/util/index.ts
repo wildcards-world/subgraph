@@ -474,6 +474,8 @@ export function handleAddTokenUtil(
   wildcard.timeAcquired = txTimestamp;
   wildcard.previousOwners = [];
 
+  wildcard.save();
+
   return wildcard;
 }
 

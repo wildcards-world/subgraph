@@ -102,8 +102,8 @@ export function handleLogBuy(event: LogBuy): void {
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
     warnAndError(
-      "The wildcard doesn't exist. Check the 'addToken' logic. tx: {}",
-      [event.transaction.hash.toHexString()]
+      "The wildcard doesn't exist. Check the 'addToken' logic. token: {} tx: {}",
+      [tokenIdString, event.transaction.hash.toHexString()]
     );
   }
 
@@ -637,6 +637,15 @@ export function handleAddToken(event: AddToken): void {
       return;
     }
   } //Temporarily before token is migrated
+
+  log.warning("HANDLE ADD TOKEN - ABORTING: {} - {}", [
+    tokenId.toString(),
+    event.transaction.hash.toHex(),
+  ]);
+  log.warning("HANDLE ADD TOKEN - ABORTING: {} - {}", [
+    tokenId.toString(),
+    event.transaction.hash.toHex(),
+  ]);
 
   let patronageNumerator = event.params.patronageNumerator;
 
