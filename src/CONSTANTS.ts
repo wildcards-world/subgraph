@@ -1,5 +1,7 @@
 import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
 
+const maticTestingDeployment = true;
+
 export const network = dataSource.network(); // e.g. "mainnet", "ropsten", "poa-core"
 
 export let ZERO_ADDRESS = Address.fromString(
@@ -50,7 +52,11 @@ export let VOTES_MANAGER_ENTITY_ID = "VOTE_MANAGER";
 export let NO_OWNER = "NO_OWNER";
 
 function getGlobalId(network: string): string {
-  if (network == "matic" || network == "mumbai") {
+  if (
+    (network == "goerli" && maticTestingDeployment) ||
+    network == "matic" ||
+    network == "mumbai"
+  ) {
     return "Matic-Global";
   } else {
     return "1";
@@ -59,7 +65,11 @@ function getGlobalId(network: string): string {
 export let GLOBAL_ID = getGlobalId(network);
 
 function getEventCounterId(network: string): string {
-  if (network == "matic" || network == "mumbai") {
+  if (
+    (network == "goerli" && maticTestingDeployment) ||
+    network == "matic" ||
+    network == "mumbai"
+  ) {
     return "Matic-Events";
   } else {
     return "1";
@@ -69,7 +79,7 @@ export let EVENT_COUNTER_ID = getGlobalId(network);
 
 function getIdPrefix(network: string): string {
   if (
-    network == "goerli" /* Only include goerli while testing */ ||
+    (network == "goerli" && maticTestingDeployment) ||
     network == "matic" ||
     network == "mumbai"
   ) {

@@ -5,6 +5,7 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy-mainnet": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards",
+    "deploy-mainnet-alt": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-mainnet",
     "build-goerli": "graph build ./subgraph.goerli.yaml",
     "deploy-goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-goerli ./subgraph.goerli.yaml",
     "deploy-rinkeby": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-rinkeby ./subgraph.rinkeby.yaml",

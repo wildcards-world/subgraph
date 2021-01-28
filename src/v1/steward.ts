@@ -62,6 +62,7 @@ export function handleBuy(event: Buy): void {
   let tokenIdBigInt = event.params.tokenId;
   let steward = Steward.bind(event.address);
   let tokenIdString = tokenIdBigInt.toString();
+  let newWildcardPrice = event.params.price;
 
   let wildcard = Wildcard.load(ID_PREFIX + tokenIdString);
   if (wildcard == null) {
@@ -224,6 +225,11 @@ export function handleBuy(event: Buy): void {
   // let itemIndex = patronOld.tokens.indexOf(wildcard.id);
   let wasPreviousOwner = patronOld.id != ID_PREFIX + "NO_OWNER";
 
+  let oldPrice = Price.load(wildcard.price);
+  let scaledDelta = wildcard.patronageNumerator.times(
+    newWildcardPrice.minus(oldPrice.price)
+  );
+
   let timeSinceLastUpdateOldPatron: BigInt;
   let previousPatronPatronTokenCostScaledNumerator: BigInt;
   let previousPatronAvailableDeposit: BigInt;
@@ -293,7 +299,7 @@ export function handleBuy(event: Buy): void {
   // TODO ADD ME BACK IN SO totalTokenCostScaledNumerator is correct
 
   let price = new Price(txHashString);
-  price.price = event.params.price;
+  price.price = newWildcardPrice;
   price.timeSet = txTimestamp;
   price.save();
 
@@ -390,6 +396,8 @@ export function handleBuy(event: Buy): void {
     patronOld.totalTimeHeld = previousPatronTotalTimeHeld;
     patronOld.save();
   }
+
+  updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 
 export function handlePriceChange(event: PriceChange): void {
@@ -423,9 +431,9 @@ export function handlePriceChange(event: PriceChange): void {
   price.timeSet = txTimestamp;
   price.save();
 
-  let OldPrice = Price.load(wildcard.price);
+  let oldPrice = Price.load(wildcard.price);
   let scaledDelta = wildcard.patronageNumerator.times(
-    price.price.minus(OldPrice.price)
+    price.price.minus(oldPrice.price)
   );
 
   wildcard.price = price.id;

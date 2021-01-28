@@ -101,12 +101,12 @@ export function removeFromArrayAtIndex(
 export function updateGlobalState(
   steward: Steward,
   txTimestamp: BigInt,
-  TotalTokenCostScaledNumeratorDelta: BigInt
+  totalTokenCostScaledNumeratorDelta: BigInt
 ): void {
   let globalState = Global.load(GLOBAL_ID);
   let totalTokenCostScaledNumeratorAccurate = getTotalTokenCostScaledNumerator(
     steward,
-    TotalTokenCostScaledNumeratorDelta
+    totalTokenCostScaledNumeratorDelta
   );
   globalState.totalCollectedAccurate = getTotalCollectedAccurate(
     steward,
