@@ -11,6 +11,8 @@
     "deploy-rinkeby": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-rinkeby ./subgraph.rinkeby.yaml",
     "deploy-mumbai": "graph deploy --node https://mumbai-graph.matic.today --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-mumbai ./subgraph.mumbai.yaml",
     "create-mumbai": "graph create --node https://mumbai-graph.matic.today wildcards-world/wildcards-mumbai",
+    "deploy-mumbai-test": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-polygon-testnet ./subgraph.mumbai.yaml",
+    "deploy-polygon": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-polygon ./subgraph.polygon.yaml",
     "create-mumbai-local": "graph create --node http://localhost:8020/ wildcards-world/wildcards-mumbai",
     "create-local": "graph create --node http://localhost:8020/ wild-cards/subgraph",
     "remove-local": "graph remove --node http://localhost:8020/ wild-cards/subgraph",
