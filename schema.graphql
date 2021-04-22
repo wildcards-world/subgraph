@@ -27,6 +27,7 @@ type Global @entity {
 type Wildcard @entity {
   id: ID! # Just the tokenId
   tokenId: BigInt!
+  currPrice: BigInt! #because it is useful to filter directly on the price!
   price: Price!
   owner: Patron! # address
   patronageNumerator: BigInt!

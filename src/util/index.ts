@@ -20,6 +20,7 @@ import {
   EVENT_COUNTER_ID,
   GLOBAL_ID,
   ID_PREFIX,
+  ZERO_BN,
 } from "../CONSTANTS";
 import {
   getTotalOwedAccurate,
@@ -455,7 +456,8 @@ export function handleAddTokenUtil(
   wildcard.timeCollected = txTimestamp;
 
   let price = new Price(txHashStr);
-  price.price = BigInt.fromI32(0);
+  let initialPrice = ZERO_BN;
+  price.price = initialPrice;
   price.timeSet = txTimestamp;
   price.save();
 
@@ -464,8 +466,7 @@ export function handleAddTokenUtil(
     patron = initialiseNoOwnerPatronIfNull();
   }
 
-  // wildcard.price = price.id.toString();
-  // wildcard.owner = patron.id.toString();
+  wildcard.currPrice = price.price;
   wildcard.price = price.id;
   wildcard.owner = patron.id;
   wildcard.patronageNumerator = patronageNumerator;

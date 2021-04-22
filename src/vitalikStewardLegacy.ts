@@ -220,6 +220,7 @@ export function handleLogBuy(event: LogBuy): void {
     patronOld.save();
   }
   wildcard.price = wildcardPrice;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumeratorPriceScaled = wildcardPatronageNumeratorPriceScaled;
   wildcard.timeAcquired = wildcardTimeAcquired;
   wildcard.priceHistory = wildcardPriceHistory;
@@ -265,6 +266,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   price.save();
 
   wildcard.price = price.id;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
     price.price
   );
