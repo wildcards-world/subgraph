@@ -617,10 +617,7 @@ export function handleRemainingDepositUpdate(
 }
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
-  log.warning("steward address: {} / {}", [
-    event.address.toString(),
-    event.address.toHexString(),
-  ]);
+
   let tokenPatron = event.params.patron;
   let collectedToken = event.params.tokenId;
   let txTimestamp = event.block.timestamp;
@@ -641,11 +638,13 @@ export function handleCollectPatronage(event: CollectPatronage): void {
 
   let wildcard = Wildcard.load(ID_PREFIX + collectedToken.toString());
   if (wildcard != null) {
-    wildcard.totalCollected = getTotalCollectedForWildcard(
+    let oldTimeCollected = wildcard.timeCollected;
+    let newTotalCollected = getTotalCollectedForWildcard(
       steward,
       collectedToken,
-      event.block.timestamp.minus(wildcard.timeCollected)
+      event.block.timestamp.minus(oldTimeCollected)
     );
+    wildcard.totalCollected = newTotalCollected;
     wildcard.timeCollected = txTimestamp;
     wildcard.save();
   } else {

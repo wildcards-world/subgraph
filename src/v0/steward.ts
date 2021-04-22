@@ -82,7 +82,6 @@ export function handleLogBuy(event: LogBuy): void {
     txTimestamp,
     event.transaction.hash
   );
-  log.warning("TOKEN ID: {}", [tokenId.toString()]);
 
   let totalCollected = steward.totalCollected(BigInt.fromI32(tokenId));
   let currentCollected = steward.currentCollected(BigInt.fromI32(tokenId));
@@ -359,7 +358,6 @@ export function handleLogBuy(event: LogBuy): void {
 }
 
 export function handleLogPriceChange(event: LogPriceChange): void {
-  log.warning("PRICE CHANGE!!", []);
   // NOTE:: This is a bit hacky since LogBuy event doesn't include token ID.
   //        Get both patrons (since we don't know which one it is - didn't catch this at design time)
   let steward = Steward.bind(event.address);
@@ -637,15 +635,6 @@ export function handleAddToken(event: AddToken): void {
       return;
     }
   } //Temporarily before token is migrated
-
-  log.warning("HANDLE ADD TOKEN - ABORTING: {} - {}", [
-    tokenId.toString(),
-    event.transaction.hash.toHex(),
-  ]);
-  log.warning("HANDLE ADD TOKEN - ABORTING: {} - {}", [
-    tokenId.toString(),
-    event.transaction.hash.toHex(),
-  ]);
 
   let patronageNumerator = event.params.patronageNumerator;
 
