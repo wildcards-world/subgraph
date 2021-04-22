@@ -17,6 +17,10 @@ type Global @entity {
   totalCollectedOrDueAccurate: BigInt!
   # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
+  # NOTE: we are currently not counting how much has been added to the total raised more than should have due to foreclosures.
+  # TODO: fill in these values!
+  totalCollectedOverstatedDueToForeclosures: BigInt!
+  totalTokenCostScaledNumeratorForeclosedTokens: BigInt! # Used to calculate the above value
   stewardAddress: Bytes!
   erc721Address: Bytes!
   defaultAuctionStartPrice: BigInt!
@@ -80,6 +84,7 @@ type Patron @entity {
   totalLoyaltyTokens: BigInt!
   totalLoyaltyTokensIncludingUnRedeemed: BigInt!
   currentBalance: BigInt!
+  isMarkedAsForeclosed: Boolean!
 }
 
 type BuyEvent @entity {

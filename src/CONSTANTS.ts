@@ -2,7 +2,7 @@ import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
 
 const maticTestingDeployment = true;
 
-export const network = dataSource.network(); // e.g. "mainnet", "ropsten", "poa-core"
+export let network = dataSource.network(); // e.g. "mainnet", "ropsten", "poa-core"
 
 export let ZERO_ADDRESS = Address.fromString(
   "0x0000000000000000000000000000000000000000"

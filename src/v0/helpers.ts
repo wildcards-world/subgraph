@@ -1,44 +1,8 @@
 import { BigInt, Address, Bytes } from "@graphprotocol/graph-ts";
-import {
-  Steward,
-  LogBuy,
-  LogPriceChange,
-  LogForeclosure,
-  LogCollection,
-  LogRemainingDepositUpdate,
-  AddToken,
-} from "../../generated/Steward/Steward";
-import {
-  Wildcard,
-  Patron,
-  PreviousPatron,
-  Price,
-  TokenUri,
-  BuyEvent,
-  EventCounter,
-  ChangePriceEvent,
-  Global,
-} from "../../generated/schema";
+import { Steward } from "../../generated/Steward/Steward";
+import { Wildcard, TokenUri, EventCounter } from "../../generated/schema";
 import { Token } from "../../generated/Token/Token";
-import { log } from "@graphprotocol/graph-ts";
-import {
-  ZERO_ADDRESS,
-  NUM_SECONDS_IN_YEAR,
-  AMOUNT_RAISED_BY_VITALIK_VINTAGE_CONTRACT,
-  NUM_SECONDS_IN_YEAR_BIG_INT,
-  BILLION,
-  VITALIK_PATRONAGE_NUMERATOR,
-  VITALIK_PATRONAGE_DENOMINATOR,
-  GLOBAL_PATRONAGE_DENOMINATOR,
-  EVENT_COUNTER_ID,
-  ID_PREFIX,
-} from "../CONSTANTS";
-import { getForeclosureTimeSafe, minBigInt } from "../util";
-import {
-  getTotalCollectedAccurate,
-  getTotalOwedAccurate,
-  getTotalTokenCostScaledNumerator,
-} from "../util/hacky";
+import { EVENT_COUNTER_ID, ID_PREFIX } from "../CONSTANTS";
 
 /*
 NOTE:

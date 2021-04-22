@@ -77,6 +77,7 @@ export function handleLogBuy(event: LogBuy): void {
     patron.totalLoyaltyTokens = BigInt.fromI32(0);
     patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
     patron.currentBalance = BigInt.fromI32(0);
+    patron.isMarkedAsForeclosed = true;
   }
 
   let steward = VitalikStewardLegacy.bind(event.address);
