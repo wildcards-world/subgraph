@@ -331,6 +331,7 @@ export function handleLogBuy(event: LogBuy): void {
   wildcard.previousOwners = wildcardPreviousOwners;
   wildcard.owner = ownerString;
   wildcard.price = wildcardPrice;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumeratorPriceScaled = wildcardPatronageNumeratorPriceScaled;
   wildcard.owner = wildcardOwner;
   wildcard.timeAcquired = wildcardTimeAcquired;
@@ -401,6 +402,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   price.save();
 
   wildcard.price = price.id;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
     price.price
   );

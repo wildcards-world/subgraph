@@ -9,6 +9,7 @@ import {
   ZERO_ADDRESS,
   VITALIK_PATRONAGE_NUMERATOR,
   ID_PREFIX,
+  ZERO_BN,
 } from "./CONSTANTS";
 import { initialiseNoOwnerPatronIfNull } from "./util";
 
@@ -39,7 +40,8 @@ export function handleTransfer(event: Transfer): void {
     wildcard.tokenUri = tokenUri.id;
 
     let price = new Price(event.transaction.hash.toHexString());
-    price.price = BigInt.fromI32(0);
+    let initialPrice = ZERO_BN;
+    price.price = initialPrice;
     price.timeSet = event.block.timestamp;
     price.save();
 
@@ -49,6 +51,7 @@ export function handleTransfer(event: Transfer): void {
     }
 
     wildcard.price = price.id;
+    wildcard.currPrice = initialPrice;
     wildcard.owner = patron.id;
     wildcard.patronageNumerator = patronageNumerator;
     wildcard.timeAcquired = event.block.timestamp;

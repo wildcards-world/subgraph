@@ -299,6 +299,7 @@ export function handleBuy(event: Buy): void {
   price.save();
 
   wildcard.price = price.id;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
     price.price
   );
@@ -432,6 +433,7 @@ export function handlePriceChange(event: PriceChange): void {
   );
 
   wildcard.price = price.id;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumeratorPriceScaled = wildcard.patronageNumerator.times(
     price.price
   );

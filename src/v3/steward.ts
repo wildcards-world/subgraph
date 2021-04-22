@@ -175,6 +175,7 @@ export function handleAddTokenV3(event: AddTokenV3): void {
   createCounterIfDoesntExist();
 
   let tokenId = event.params.tokenId;
+  log.warning("ADDED TOKEN {}", [tokenId.toString()]);
   let txTimestamp = event.block.timestamp;
   let txHashString = event.transaction.hash.toHexString();
   let launchTime = event.params.unixTimestampOfTokenAuctionStart;
@@ -228,10 +229,9 @@ export function handleAddTokenV3(event: AddTokenV3): void {
     patron = initialiseNoOwnerPatronIfNull();
   }
 
-  // wildcard.price = price.id.toString();
-  // wildcard.owner = patron.id.toString();
   wildcard.owner = patron.id;
   wildcard.price = price.id;
+  wildcard.currPrice = price.price;
   wildcard.patronageNumerator = patronageNumerator;
   wildcard.patronageNumeratorPriceScaled = BigInt.fromI32(0);
   wildcard.timeAcquired = txTimestamp;
