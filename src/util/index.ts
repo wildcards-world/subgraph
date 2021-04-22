@@ -232,10 +232,8 @@ export function updateAvailableDepositAndForeclosureTime(
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
-  log.warning("important", []);
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
   let isForeclosed = patron.availableDeposit.equals(ZERO_BN);
-  log.warning("before the new code!", []);
   if (isForeclosed) {
     if (patron.isMarkedAsForeclosed) {
       log.warning("the user {} was already marked as foreclosed", [
