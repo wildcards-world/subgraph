@@ -27,6 +27,8 @@ export function createGlobalState(
   // globalState.totalCollectedOrDue = globalState.totalCollected;
   globalState.totalCollectedOrDueAccurate = globalState.totalCollected;
   // globalState.totalTokenCostScaledNumerator = BigInt.fromI32(0);
+  globalState.totalCollectedOverstatedDueToForeclosures = BigInt.fromI32(0);
+  globalState.totalTokenCostScaledNumeratorForeclosedTokens = BigInt.fromI32(0);
   globalState.totalTokenCostScaledNumeratorAccurate = BigInt.fromI32(0);
   globalState.erc721Address = erc721Address;
   globalState.stewardAddress = ZERO_ADDRESS;

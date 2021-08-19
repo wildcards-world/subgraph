@@ -98,6 +98,7 @@ export function handleBuy(event: Buy): void {
     patron.totalLoyaltyTokens = BigInt.fromI32(0);
     patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
     patron.currentBalance = BigInt.fromI32(0);
+    patron.isMarkedAsForeclosed = true;
   }
   // Phase 2: calculate new values.
 
@@ -509,8 +510,8 @@ export function handleForeclosure(event: Foreclosure): void {
   let foreclosedTokens: Array<string> = [];
 
   // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
-  let scaledDelta = BigInt.fromI32(0);
   let foreclosureTime = BigInt.fromI32(0);
+
   // NOTE: The patron can be the steward contract in the case when the token forecloses; this can cause issues! Hence be careful and check it isn't the patron.
   if (patronString != event.address.toHexString()) {
     let patron = Patron.load(ID_PREFIX + patronString);
@@ -518,13 +519,10 @@ export function handleForeclosure(event: Foreclosure): void {
       foreclosureTime = patron.foreclosureTime;
       foreclosedTokens = patron.tokens;
       updateAllOfPatronsTokensLastUpdated(patron, steward, "handleForeclosure");
-      scaledDelta = patron.patronTokenCostScaledNumerator.times(
-        BigInt.fromI32(-1)
-      );
     }
   }
 
-  updateAvailableDepositAndForeclosureTime(
+  let scaledDelta = updateAvailableDepositAndForeclosureTime(
     steward,
     foreclosedPatron,
     txTimestamp,
@@ -585,7 +583,7 @@ export function handleRemainingDepositUpdate(
     }
   }
 
-  updateAvailableDepositAndForeclosureTime(
+  let scaledDelta = updateAvailableDepositAndForeclosureTime(
     steward,
     tokenPatron,
     txTimestamp,
@@ -613,8 +611,6 @@ export function handleRemainingDepositUpdate(
     1
   );
 
-  // Here totalTokenCostScaledNumeratorAccurate not updated
-  let scaledDelta = BigInt.fromI32(0);
   updateGlobalState(steward, txTimestamp, scaledDelta);
 }
 export function handleCollectPatronage(event: CollectPatronage): void {

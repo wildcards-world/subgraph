@@ -1,6 +1,6 @@
 import { Steward } from "../../generated/Steward/Steward";
 import { LoyaltyToken } from "../../generated/LoyaltyToken/LoyaltyToken";
-import { Address, BigInt, log, Bytes } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log, Bytes, json } from "@graphprotocol/graph-ts";
 import {
   Patron,
   StateChange,
@@ -160,6 +160,7 @@ export function initialiseNoOwnerPatronIfNull(): Patron {
   patron.totalLoyaltyTokens = BigInt.fromI32(0);
   patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
   patron.currentBalance = BigInt.fromI32(0);
+  patron.isMarkedAsForeclosed = true;
   patron.save();
   return patron;
 }
@@ -185,6 +186,7 @@ export function initialiseDefaultPatronIfNull(
   patron.totalLoyaltyTokens = BigInt.fromI32(0);
   patron.totalLoyaltyTokensIncludingUnRedeemed = BigInt.fromI32(0);
   patron.currentBalance = BigInt.fromI32(0);
+  patron.isMarkedAsForeclosed = true;
   patron.save();
   return patron;
 }
@@ -194,15 +196,17 @@ export function updateAvailableDepositAndForeclosureTime(
   tokenPatron: Address,
   txTimestamp: BigInt,
   updatePatronForeclosureTime: boolean
-): void {
+): BigInt {
+  let scaledDelta = BigInt.fromI32(0); ///// NOTE - this value is only used if the token forecloses.
+
   // if the token patron is the zero address, return! (for example it will be the zero address if the token is foreclosed and )
   if (tokenPatron.equals(ZERO_ADDRESS)) {
-    return;
+    return scaledDelta;
   }
 
   // if the steward 'owns' the token, it means that the token was foreclosed. No need to update anything.
   if (steward._address.equals(tokenPatron)) {
-    return;
+    return scaledDelta;
   }
 
   let tokenPatronStr = tokenPatron.toHexString();
@@ -211,7 +215,7 @@ export function updateAvailableDepositAndForeclosureTime(
 
   if (patron == null) {
     patron = initialiseDefaultPatronIfNull(steward, tokenPatron, txTimestamp);
-    return;
+    return scaledDelta;
   }
 
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
@@ -229,11 +233,38 @@ export function updateAvailableDepositAndForeclosureTime(
     patron.address as Address
   );
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
+  let isForeclosed = patron.availableDeposit.equals(ZERO_BN);
+  if (isForeclosed) {
+    if (patron.isMarkedAsForeclosed) {
+      log.warning("the user {} was already marked as foreclosed", [
+        patron.address.toHex(),
+      ]);
+    } else {
+      log.warning("Setting user {} as foreclosed", [patron.address.toHex()]);
+      if (patron != null) {
+        scaledDelta = patron.patronTokenCostScaledNumerator.times(
+          BigInt.fromI32(-1)
+        );
+      }
+      patron.isMarkedAsForeclosed = true;
+    }
+  } else {
+    if (!patron.isMarkedAsForeclosed) {
+      log.warning("the user {} was already NOT marked as foreclosed", [
+        patron.address.toHex(),
+      ]);
+    } else {
+      log.warning("Setting user {} as active!", [patron.address.toHex()]);
+      patron.isMarkedAsForeclosed = false;
+    }
+  }
   if (updatePatronForeclosureTime) {
     patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
   }
   patron.lastUpdated = txTimestamp;
   patron.save();
+
+  return scaledDelta;
 }
 
 // NOTE: it is impossible for this code to return null, the compiler is just retarded!
