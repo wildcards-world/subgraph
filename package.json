@@ -14,11 +14,14 @@
     "deploy-mumbai-test": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-polygon-testnet ./subgraph.mumbai.yaml",
     "deploy-polygon": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ wildcards-world/wildcards-polygon ./subgraph.polygon.yaml",
     "create-mumbai-local": "graph create --node http://localhost:8020/ wildcards-world/wildcards-mumbai",
+    "create-test-local": "graph create wildcards-world/wildcards-mumbai --node http://127.0.0.1:8020",
     "create-local": "graph create --node http://localhost:8020/ wild-cards/subgraph",
+    "graph": "graph",
     "remove-local": "graph remove --node http://localhost:8020/ wild-cards/subgraph",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wild-cards/subgraph ./subgraph.local.yaml",
+    "deploy-test-local": "graph deploy -l v0.0.1 --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-mumbai ./subgraph.polygon.local.yaml",
     "deploy-mumbai-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-mumbai ./subgraph.mumbai.yaml",
-    "deploy-matic-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-matic ./subgraph.matic.yaml",
+    "deploy-matic-local": "graph deploy --node http://localhost:8120/ --ipfs http://localhost:5101 wildcards-world/wildcards-matic ./subgraph.matic.yaml",
     "test": "asp"
   },
   "dependencies": {
