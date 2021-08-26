@@ -14,8 +14,6 @@ graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wildcard
 # mumbai
 graph create --node http://127.0.0.1:8120 wildcards-world/wildcards-matic
 graph deploy --node http://localhost:8120/ --ipfs http://localhost:5101 wildcards-world/wildcards-matic ./subgraph.mumbai.yaml
-
-
 docker-compose down -v
 sudo rm -rf data
 docker-compose up -d
