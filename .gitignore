@@ -8,3 +8,8 @@ data/*
 data-mumbai/*
 
 .env
+
+.merlin
+lib
+.graphql_ppx_cache
+.bsb.lock

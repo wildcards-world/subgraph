@@ -267,7 +267,7 @@ export function handleAddTokenV3(event: AddTokenV3): void {
     event.transaction.hash,
     txTimestamp,
     event.block.number,
-    "handleAddToken",
+    "AddTokenV3",
     eventParamValues,
     eventParamNames,
     eventParamTypes,

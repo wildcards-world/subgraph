@@ -22,14 +22,27 @@
     "deploy-test-local": "graph deploy -l v0.0.1 --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-mumbai ./subgraph.polygon.local.yaml",
     "deploy-mumbai-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 wildcards-world/wildcards-mumbai ./subgraph.mumbai.yaml",
     "deploy-matic-local": "graph deploy --node http://localhost:8120/ --ipfs http://localhost:5101 wildcards-world/wildcards-matic ./subgraph.matic.yaml",
-    "test": "asp"
+    "res:start": "rescript build -w",
+    "res:clean": "rescript clean",
+    "test-codegen": "node ./integrationTests/util/Codegen.bs.js > ./integrationTests/stateChanges/Converters.res",
+    "update-test-schema": "get-graphql-schema http://127.0.0.1:8000/subgraphs/name/wildcards-world/wildcards-mumbai -j > graphql_schema.json"
   },
   "dependencies": {
-    "@as-pect/assembly": "^2.8.1",
-    "@as-pect/cli": "^2.8.1",
-    "@as-pect/core": "^2.8.1",
+    "@apollo/client": "^3.4.10",
     "@graphprotocol/graph-cli": "^0.18.0",
     "@graphprotocol/graph-ts": "^0.18.1",
-    "assemblyscript": "0.9.2"
+    "@reasonml-community/graphql-ppx": "^1.2.2",
+    "@rescript/react": "^0.10.3",
+    "assemblyscript": "0.9.2",
+    "decco": "^1.5.0",
+    "get-graphql-schema": "^2.1.2",
+    "isomorphic-fetch": "^3.0.0",
+    "react": "^17.0.2",
+    "reason-test-framework": "^0.3.2",
+    "rescript": "^9.1.4",
+    "rescript-apollo-client": "^2.1.2"
+  },
+  "devDependencies": {
+    "dotenv": "^10.0.0"
   }
 }
