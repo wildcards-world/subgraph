@@ -20,9 +20,18 @@ var allStateChanges = {
 };
 
 Curry._2(TestFramework.describe, "All Tests", (function (param) {
-        return Curry._1(param.beforeAll, (function (param) {
-                      var allStateChangesRaw = Queries.getAllStateChanges(undefined);
-                      allStateChanges.contents = StateChange.splitIntoEventGroups(StateChange.getAllStateChangeEvents(allStateChangesRaw));
+        Curry._1(param.beforeAll, (function (param) {
+                var allStateChangesRaw = Queries.getAllStateChanges(undefined);
+                allStateChanges.contents = StateChange.splitIntoEventGroups(StateChange.getAllStateChangeEvents(allStateChangesRaw));
+                
+              }));
+        return Curry._2(param.testAsync, "I test nothing yet", (function (param) {
+                      var callback = param.callback;
+                      console.log("test just run");
+                      allStateChanges.contents.then(function (allChanges) {
+                            console.log(allChanges);
+                            return Curry._1(callback, undefined);
+                          });
                       
                     }));
       }));

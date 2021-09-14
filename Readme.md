@@ -11,6 +11,12 @@ This is a subgraph to allow useful queries of data about wildcards from: https:/
 - if there is an option to read a value from the contract (rather than reading a value already stored in the graph), always use it!
 - in the top section of the graph don't load any entities, they (other instances of the same entity) may get modified in other places and saved causing race conditions.
 
+## Testing
+
+To run integration tests on the graph you'll need to contracts in this repo. Clone them using this command `git clone https://github.com/wildcards-world/contracts.git` and then install the node modules via `yarn`.
+
+Then run `./start-graph.sh`.
+
 ## TODO:
 
 - [ ] get rid of all occurrences of `splice` in code. It was a mistake to introduce it since it performs a mutation. (introduced during a hackathon, forgive me).

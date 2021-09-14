@@ -13,6 +13,14 @@ describe("All Tests", ({beforeAll, testAsync}) => {
       allStateChangesRaw->StateChange.getAllStateChangeEvents->StateChange.splitIntoEventGroups
   })
 
+  testAsync("I test nothing yet", ({callback}) => {
+    Js.log("test just run")
+    let _ = allStateChanges.contents->JsPromise.map(allChanges => {
+      Js.log(allChanges)
+      callback()
+    })
+  })
+
   // describe("V1 event", ({testAsync}) => {
   //   testAsync("should occur exactly ONCE", ({expectEqual, callback}) => {
   //     let _ = allStateChanges.contents->JsPromise.map(({allV1Events}) => {

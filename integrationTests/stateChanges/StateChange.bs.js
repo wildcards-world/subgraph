@@ -40,4 +40,4 @@ function splitIntoEventGroups(allStateChanges) {
 exports.getStateChange = getStateChange;
 exports.getAllStateChangeEvents = getAllStateChangeEvents;
 exports.splitIntoEventGroups = splitIntoEventGroups;
-/* Converters Not a pure module */
+/* No side effect */
