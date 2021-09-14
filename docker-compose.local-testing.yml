@@ -3,8 +3,8 @@ services:
   ganache:
     image: trufflesuite/ganache-cli
     container_name: ganache
-    volumes:
-      - ganache-data:/ganache-data
+    # volumes:
+    #   - ganache-data:/ganache-data
     ports:
       - "8545:8545"
     entrypoint:
@@ -65,6 +65,6 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
 volumes:
-  ganache-data:
+  # ganache-data:
   ipfs-data:
   postgres-data:
