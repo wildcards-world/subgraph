@@ -6,7 +6,7 @@ dataSources:
     name: Steward
     network: ganache
     source:
-      address: "0x6EE8a7e2aA8175eece4b4e1B54b4d12cc5fF7294"
+      address: "0x514ad48aC013aB586c8C12b180Ed82f961210d3e"
       abi: Steward
       startBlock: 0
     mapping:
@@ -60,7 +60,7 @@ dataSources:
     name: Token
     network: ganache
     source:
-      address: "0xF2ee98CB39f109a0F089F4eD32E70E57F1f36d1e"
+      address: "0x3230b81A59DB8472934b4dBdf0F34D9aE62d5b18"
       abi: Token
       startBlock: 0
     mapping:

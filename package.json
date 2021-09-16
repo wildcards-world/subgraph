@@ -24,7 +24,7 @@
     "deploy-matic-local": "graph deploy --node http://localhost:8120/ --ipfs http://localhost:5101 wildcards-world/wildcards-matic ./subgraph.matic.yaml",
     "res:start": "rescript build -w",
     "res:clean": "rescript clean",
-    "test-codegen": "node ./integrationTests/util/Codegen.bs.js > ./integrationTests/stateChanges/Converters.res",
+    "test-codegen": "node ./integrationTests/util/Codegen.bs.js",
     "update-test-schema": "get-graphql-schema http://127.0.0.1:8000/subgraphs/name/wildcards-world/wildcards-mumbai -j > graphql_schema.json",
     "integration-test": "jest test ./integrationTests"
   },
@@ -42,7 +42,8 @@
     "react": "^17.0.2",
     "reason-test-framework": "^0.3.2",
     "rescript": "^9.1.4",
-    "rescript-apollo-client": "^2.1.2"
+    "rescript-apollo-client": "^2.1.2",
+    "truffle-hdwallet-provider": "^1.0.17"
   },
   "devDependencies": {
     "dotenv": "^10.0.0"
