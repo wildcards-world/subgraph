@@ -405,9 +405,9 @@
     "constant": false,
     "inputs": [
       { "name": "tokenId", "type": "uint256" },
-      { "name": "_newReceivingbeneficiary", "type": "address" }
+      { "name": "_newReceivingBeneficiary", "type": "address" }
     ],
-    "name": "changeReceivingbeneficiary",
+    "name": "changeReceivingBeneficiary",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -581,7 +581,7 @@
   {
     "constant": false,
     "inputs": [],
-    "name": "withdrawbeneficiaryFunds",
+    "name": "withdrawBeneficiaryFunds",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -590,7 +590,7 @@
   {
     "constant": false,
     "inputs": [{ "name": "beneficiary", "type": "address" }],
-    "name": "withdrawbeneficiaryFundsTo",
+    "name": "withdrawBeneficiaryFundsTo",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1094,7 +1094,7 @@
   {
     "constant": true,
     "inputs": [],
-    "name": "globalbeneficiaryPeriodicWithdrawalLimit",
+    "name": "globalBeneficiaryPeriodicWithdrawalLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1423,7 +1423,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_globalbeneficiaryPeriodicWithdrawalLimit",
+        "name": "_globalBeneficiaryPeriodicWithdrawalLimit",
         "type": "uint256"
       }
     ],
@@ -1498,7 +1498,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_globalbeneficiaryPeriodicWithdrawalLimit",
+        "name": "_globalBeneficiaryPeriodicWithdrawalLimit",
         "type": "uint256"
       }
     ],
@@ -1518,11 +1518,11 @@
       },
       {
         "internalType": "address payable",
-        "name": "_newReceivingbeneficiary",
+        "name": "_newReceivingBeneficiary",
         "type": "address"
       }
     ],
-    "name": "changeReceivingbeneficiary",
+    "name": "changeReceivingBeneficiary",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1552,7 +1552,7 @@
         "type": "uint256"
       }
     ],
-    "name": "changebeneficiaryWithdrawalThrottle",
+    "name": "changeBeneficiaryWithdrawalThrottle",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1578,7 +1578,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_globalbeneficiaryPeriodicWithdrawalLimit",
+        "name": "_globalBeneficiaryPeriodicWithdrawalLimit",
         "type": "uint256"
       }
     ],
@@ -1897,7 +1897,7 @@
         "type": "address"
       }
     ],
-    "name": "_updatebeneficiaryBalance",
+    "name": "_updateBeneficiaryBalance",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1912,7 +1912,7 @@
         "type": "address"
       }
     ],
-    "name": "withdrawbeneficiaryFundsTo",
+    "name": "withdrawBeneficiaryFundsTo",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -1952,7 +1952,7 @@
         "type": "bytes32"
       }
     ],
-    "name": "withdrawbeneficiaryFundsToValidated",
+    "name": "withdrawBeneficiaryFundsToValidated",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
@@ -2096,7 +2096,7 @@
   {
     "constant": false,
     "inputs": [],
-    "name": "withdrawbeneficiaryFunds",
+    "name": "withdrawBeneficiaryFunds",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
