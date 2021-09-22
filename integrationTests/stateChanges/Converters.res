@@ -30,5 +30,4 @@ let addEventToCorrectGrouping = (
       allUnclassifiedEvents: currentEventGroups.allUnclassifiedEvents->Array.concat([event]),
     }
   }
-}
-
+} 
