@@ -40,8 +40,8 @@ dataSources:
           handler: handleBuy
         - event: PriceChange(indexed uint256,uint256)
           handler: handlePriceChange
-        # - event: Foreclosure(indexed address)
-        #   handler: handleForeclosure
+        - event: Foreclosure(indexed address,uint256)
+          handler: handleForeclosure
         - event: RemainingDepositUpdate(indexed address,uint256)
           handler: handleRemainingDepositUpdate
         - event: CollectPatronage(indexed uint256,indexed address,uint256,uint256)
