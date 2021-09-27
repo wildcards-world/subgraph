@@ -36,6 +36,7 @@ import {
   EVENT_COUNTER_ID,
   ID_PREFIX,
   network,
+  ZERO_BN,
 } from "../CONSTANTS";
 import {
   getForeclosureTimeSafe,
@@ -82,10 +83,6 @@ export function handleLogBuy(event: LogBuy): void {
     txTimestamp,
     event.transaction.hash
   );
-
-  let totalCollected = steward.totalCollected(BigInt.fromI32(tokenId));
-  let currentCollected = steward.currentCollected(BigInt.fromI32(tokenId));
-  let timeLastCollected = steward.timeLastCollected(BigInt.fromI32(tokenId));
 
   let txHashString = event.transaction.hash.toHexString();
 
@@ -313,6 +310,13 @@ export function handleLogBuy(event: LogBuy): void {
   patron.availableDeposit = newPatronDepositAbleToWithdraw;
   patron.previouslyOwnedTokens = newPatronPreviouslyOwnedTokenArray;
   patron.patronTokenCostScaledNumerator = newPatronTokenCostScaledNumerator;
+
+  if (patron.availableDeposit.gt(ZERO_BN)) {
+    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+  } else {
+   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  } 
+
   patron.foreclosureTime = patronForeclosureTime;
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
@@ -421,6 +425,13 @@ export function handleLogPriceChange(event: LogPriceChange): void {
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
+
+  if (patron.availableDeposit.gt(ZERO_BN)) {
+    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+  } else {
+   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  } 
+
   patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw(
     patron.address as Address

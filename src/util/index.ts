@@ -152,6 +152,7 @@ export function initialiseNoOwnerPatronIfNull(): Patron {
   patron.lastUpdated = BigInt.fromI32(0);
   patron.availableDeposit = BigInt.fromI32(0);
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
+  patron.effectivePatronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.foreclosureTime = BigInt.fromI32(0);
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
@@ -178,6 +179,7 @@ export function initialiseDefaultPatronIfNull(
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patronAddress
   );
+  patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator; 
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
@@ -233,6 +235,13 @@ export function updateAvailableDepositAndForeclosureTime(
     patron.address as Address
   );
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
+
+  if (patron.availableDeposit.gt(ZERO_BN)) {
+    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+  } else {
+   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  } 
+
   let isForeclosed = patron.availableDeposit.equals(ZERO_BN);
   if (isForeclosed) {
     if (patron.isMarkedAsForeclosed) {
@@ -258,6 +267,7 @@ export function updateAvailableDepositAndForeclosureTime(
       patron.isMarkedAsForeclosed = false;
     }
   }
+
   if (updatePatronForeclosureTime) {
     patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
   }

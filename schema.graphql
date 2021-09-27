@@ -11,7 +11,7 @@ type Global @entity {
   id: ID! # will just be '1' since only one global namespace
   version: BigInt! # NOTE: this will say version 0 for version 0-2, after v3 it will always be correct.
   totalCollected: BigInt!
-  totalCollectedAccurate: BigInt!
+  totalCollectedAccurate: BigInt! ### ALL THESE SET IN UPDATE GLOBAL STATE ####
   timeLastCollected: BigInt!
   # totalCollectedOrDue: BigInt!
   totalCollectedOrDueAccurate: BigInt!
@@ -77,6 +77,7 @@ type Patron @entity {
   tokens: [Wildcard!]!
   availableDeposit: BigInt!
   patronTokenCostScaledNumerator: BigInt!
+  effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0
   foreclosureTime: BigInt!
   # deposit: BigInt!
   totalContributed: BigInt!

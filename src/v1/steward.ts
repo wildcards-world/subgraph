@@ -47,6 +47,7 @@ import {
   NUM_SECONDS_IN_YEAR_BIG_INT,
   EVENT_COUNTER_ID,
   ID_PREFIX,
+  ZERO_BN,
 } from "../CONSTANTS";
 
 export function handleBuy(event: Buy): void {
@@ -378,6 +379,13 @@ export function handleBuy(event: Buy): void {
   patron.tokens = patronTokens;
   patron.availableDeposit = patronAvailableDeposit;
   patron.patronTokenCostScaledNumerator = newPatronTotalPatronOwnedCost;
+  
+  if (patron.availableDeposit.gt(ZERO_BN)) {
+    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+  } else {
+   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  } 
+
   patron.foreclosureTime = patronForeclosureTime;
   patron.totalContributed = patronTotalContributed;
   patron.totalTimeHeld = patronTotalTimeHeld;
@@ -453,9 +461,16 @@ export function handlePriceChange(event: PriceChange): void {
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
-  patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-    patron.address as Address
-  );
+    patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
+      patron.address as Address
+    );
+
+  if (patron.availableDeposit.gt(ZERO_BN)) {
+    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+  } else {
+    patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  } 
+  
   patron.lastUpdated = txTimestamp;
   patron.availableDeposit = steward.depositAbleToWithdraw(
     patron.address as Address
@@ -508,6 +523,10 @@ export function handleForeclosure(event: Foreclosure): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
   let foreclosedTokens: Array<string> = [];
+
+  // log.info('[[[[[[[[[[FROM INSIDE handleForeclosure]]]]]]]]]]]]]]]: {}, {}, {}', [
+  //   txHashString.toString(),
+  // ])
 
   // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
   let foreclosureTime = BigInt.fromI32(0);
