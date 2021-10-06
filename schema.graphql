@@ -17,10 +17,8 @@ type Global @entity {
   totalCollectedOrDueAccurate: BigInt!
   # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
-  # NOTE: we are currently not counting how much has been added to the total raised more than should have due to foreclosures.
-  # TODO: fill in these values!
-  totalCollectedOverstatedDueToForeclosures: BigInt!
-  totalTokenCostScaledNumeratorForeclosedTokens: BigInt! # Used to calculate the above value
+  totalCollectedPortionOverstatedDueToForeclosures: BigInt! # just the overstated portion
+  # totalTokenCostScaledNumeratorForeclosedTokens: BigInt! # Used to calculate the above value
   stewardAddress: Bytes!
   erc721Address: Bytes!
   defaultAuctionStartPrice: BigInt!
@@ -77,11 +75,11 @@ type Patron @entity {
   tokens: [Wildcard!]!
   availableDeposit: BigInt!
   patronTokenCostScaledNumerator: BigInt!
-  effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0
-  foreclosureTime: BigInt!
+  effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0 
+  foreclosureTime: BigInt! # time in future when patron will foreclose (run out of deposit)
   # deposit: BigInt!
   totalContributed: BigInt!
-  totalTimeHeld: BigInt!
+  totalTimeHeld: BigInt! # cumulative parallel time for each token (timePassed*patron.tokens.length) 
   totalLoyaltyTokens: BigInt!
   totalLoyaltyTokensIncludingUnRedeemed: BigInt!
   currentBalance: BigInt!

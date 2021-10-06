@@ -212,7 +212,6 @@ export function updateAvailableDepositAndForeclosureTime(
   }
 
   let tokenPatronStr = tokenPatron.toHexString();
-
   let patron = Patron.load(ID_PREFIX + tokenPatronStr);
 
   if (patron == null) {
@@ -228,6 +227,21 @@ export function updateAvailableDepositAndForeclosureTime(
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
+
+  // if the patron has passively foreclosed in past, increment totalCollectedPortionOverstatedDueToForeclosures by their contribution since then  
+  let globalState = Global.load(GLOBAL_ID);
+  let timeSinceForeclosure = txTimestamp.minus(patron.foreclosureTime); 
+
+  if (patron.foreclosureTime < txTimestamp) {
+    globalState.totalCollectedPortionOverstatedDueToForeclosures = 
+      globalState.totalCollectedPortionOverstatedDueToForeclosures.plus(
+        patron.patronTokenCostScaledNumerator
+        .times(timeSinceForeclosure)
+        .div(GLOBAL_PATRONAGE_DENOMINATOR)
+        .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+      )
+  } 
+
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
@@ -273,6 +287,7 @@ export function updateAvailableDepositAndForeclosureTime(
   }
   patron.lastUpdated = txTimestamp;
   patron.save();
+  globalState.save(); 
 
   return scaledDelta;
 }

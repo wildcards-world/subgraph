@@ -48,6 +48,7 @@ import {
   EVENT_COUNTER_ID,
   ID_PREFIX,
   ZERO_BN,
+  GLOBAL_ID,
 } from "../CONSTANTS";
 
 export function handleBuy(event: Buy): void {
@@ -132,6 +133,20 @@ export function handleBuy(event: Buy): void {
   *- totalContributed: BigInt!
   *- totalTimeHeld: BigInt!
   */
+
+  // if the previous patron has foreclosed in past, increment totalCollectedPortionOverstatedDueToForeclosures by their contribution since then  
+  let globalState = Global.load(GLOBAL_ID);
+  let timeSinceForeclosure = txTimestamp.minus(patronOld.foreclosureTime); 
+
+  if (patronOld.foreclosureTime < txTimestamp) {
+    globalState.totalCollectedPortionOverstatedDueToForeclosures = 
+      globalState.totalCollectedPortionOverstatedDueToForeclosures.plus(
+        patronOld.patronTokenCostScaledNumerator
+        .times(timeSinceForeclosure)
+        .div(GLOBAL_PATRONAGE_DENOMINATOR)
+        .div(NUM_SECONDS_IN_YEAR_BIG_INT)
+      )
+  } 
 
   // Now even if the patron puts in extra deposit when they buy a new token this will foreclose their old tokens.
   let heldUntilNewPatron = txTimestamp; //minBigInt(patron.foreclosureTime, txTimestamp); // TODO: use min with foreclosureTime
@@ -523,10 +538,6 @@ export function handleForeclosure(event: Foreclosure): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
   let foreclosedTokens: Array<string> = [];
-
-  // log.info('[[[[[[[[[[FROM INSIDE handleForeclosure]]]]]]]]]]]]]]]: {}, {}, {}', [
-  //   txHashString.toString(),
-  // ])
 
   // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
   let foreclosureTime = BigInt.fromI32(0);

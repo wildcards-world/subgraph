@@ -71,7 +71,7 @@ export function handlePriceChange(event: PriceChange): void {
   V1.handlePriceChange(event);
 }
 export function handleForeclosure(event: Foreclosure): void {
- log.warning("[[[[[[[[[[[[SENDING FLOW TO handle foreclosure! {}", [event.block.hash.toHexString()]);
+  // log.warning("handle foreclosure! {}", [event.block.hash.toHexString()]);
   V1.handleForeclosure(event);
 }
 export function handleRemainingDepositUpdate(
