@@ -134,20 +134,6 @@ export function handleBuy(event: Buy): void {
   *- totalTimeHeld: BigInt!
   */
 
-  // if the previous patron has foreclosed in past, increment totalCollectedPortionOverstatedDueToForeclosures by their contribution since then  
-  let globalState = Global.load(GLOBAL_ID);
-  let timeSinceForeclosure = txTimestamp.minus(patronOld.foreclosureTime); 
-
-  if (patronOld.foreclosureTime < txTimestamp) {
-    globalState.totalCollectedPortionOverstatedDueToForeclosures = 
-      globalState.totalCollectedPortionOverstatedDueToForeclosures.plus(
-        patronOld.patronTokenCostScaledNumerator
-        .times(timeSinceForeclosure)
-        .div(GLOBAL_PATRONAGE_DENOMINATOR)
-        .div(NUM_SECONDS_IN_YEAR_BIG_INT)
-      )
-  } 
-
   // Now even if the patron puts in extra deposit when they buy a new token this will foreclose their old tokens.
   let heldUntilNewPatron = txTimestamp; //minBigInt(patron.foreclosureTime, txTimestamp); // TODO: use min with foreclosureTime
   let heldUntilPreviousPatron = txTimestamp; //minBigInt(patron.foreclosureTime, txTimestamp); // TODO: use min with foreclosureTime
@@ -259,6 +245,7 @@ export function handleBuy(event: Buy): void {
     //     .div(GLOBAL_PATRONAGE_DENOMINATOR)
     //     .div(NUM_SECONDS_IN_YEAR_BIG_INT)
     // );
+
     previousPatronPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
       patronOld.address as Address
     );
@@ -266,6 +253,7 @@ export function handleBuy(event: Buy): void {
     previousPatronAvailableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
     );
+
     if (patronOld.foreclosureTime.gt(txTimestamp)) {
       previousPatronForeclosureTime = getForeclosureTimeSafe(
         steward,
@@ -275,6 +263,7 @@ export function handleBuy(event: Buy): void {
       previousPatronForeclosureTime = patronOld.foreclosureTime;
     }
   }
+
   // Remove token to the previous patron's tokens
   let previousPatronTokens = removeFromArrayAtIndex(
     patronOld.tokens,
@@ -394,12 +383,13 @@ export function handleBuy(event: Buy): void {
   patron.tokens = patronTokens;
   patron.availableDeposit = patronAvailableDeposit;
   patron.patronTokenCostScaledNumerator = newPatronTotalPatronOwnedCost;
-  
+
   if (patron.availableDeposit.gt(ZERO_BN)) {
-    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+    patron.effectivePatronTokenCostScaledNumerator =
+      patron.patronTokenCostScaledNumerator;
   } else {
-   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
-  } 
+    patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  }
 
   patron.foreclosureTime = patronForeclosureTime;
   patron.totalContributed = patronTotalContributed;
@@ -476,24 +466,14 @@ export function handlePriceChange(event: PriceChange): void {
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
-    patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-      patron.address as Address
-    );
 
-  if (patron.availableDeposit.gt(ZERO_BN)) {
-    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
-  } else {
-    patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
-  } 
-  
-  patron.lastUpdated = txTimestamp;
-  patron.availableDeposit = steward.depositAbleToWithdraw(
-    patron.address as Address
-  );
-  patron.foreclosureTime = getForeclosureTimeSafe(
+  updateAvailableDepositAndForeclosureTime(
     steward,
-    patron.address as Address
+    owner,
+    txTimestamp,
+    true
   );
+
   patron.save();
 
   let priceChange = new ChangePriceEvent(txHashString);
@@ -531,6 +511,7 @@ export function handlePriceChange(event: PriceChange): void {
 
   updateGlobalState(steward, txTimestamp, scaledDelta);
 }
+
 export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
   let foreclosedPatron = event.params.prevOwner;
@@ -643,6 +624,7 @@ export function handleRemainingDepositUpdate(
 
   updateGlobalState(steward, txTimestamp, scaledDelta);
 }
+
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
 

@@ -154,6 +154,7 @@ export function initialiseNoOwnerPatronIfNull(): Patron {
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.effectivePatronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.foreclosureTime = BigInt.fromI32(0);
+  patron.secondsUntilForeclosure = BigInt.fromI32(0); 
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
@@ -181,6 +182,7 @@ export function initialiseDefaultPatronIfNull(
   );
   patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator; 
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
+  patron.secondsUntilForeclosure = patron.foreclosureTime.minus(txTimestamp); 
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
@@ -206,7 +208,7 @@ export function updateAvailableDepositAndForeclosureTime(
     return scaledDelta;
   }
 
-  // if the steward 'owns' the token, it means that the token was foreclosed. No need to update anything.
+  // if the steward 'owns' the token, it means that the token was actively foreclosed. No need to update anything.
   if (steward._address.equals(tokenPatron)) {
     return scaledDelta;
   }
@@ -221,33 +223,22 @@ export function updateAvailableDepositAndForeclosureTime(
 
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
   let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
+  
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
       .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
-  );
-
-  // if the patron has passively foreclosed in past, increment totalCollectedPortionOverstatedDueToForeclosures by their contribution since then  
-  let globalState = Global.load(GLOBAL_ID);
-  let timeSinceForeclosure = txTimestamp.minus(patron.foreclosureTime); 
-
-  if (patron.foreclosureTime < txTimestamp) {
-    globalState.totalCollectedPortionOverstatedDueToForeclosures = 
-      globalState.totalCollectedPortionOverstatedDueToForeclosures.plus(
-        patron.patronTokenCostScaledNumerator
-        .times(timeSinceForeclosure)
-        .div(GLOBAL_PATRONAGE_DENOMINATOR)
-        .div(NUM_SECONDS_IN_YEAR_BIG_INT)
-      )
-  } 
+  ); 
 
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
+ 
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
+
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
 
   if (patron.availableDeposit.gt(ZERO_BN)) {
@@ -257,7 +248,8 @@ export function updateAvailableDepositAndForeclosureTime(
   } 
 
   let isForeclosed = patron.availableDeposit.equals(ZERO_BN);
-  if (isForeclosed) {
+  
+  if (isForeclosed) { 
     if (patron.isMarkedAsForeclosed) {
       log.warning("the user {} was already marked as foreclosed", [
         patron.address.toHex(),
@@ -285,9 +277,13 @@ export function updateAvailableDepositAndForeclosureTime(
   if (updatePatronForeclosureTime) {
     patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
   }
+
+  patron.secondsUntilForeclosure = patron.secondsUntilForeclosure.plus(
+    patron.foreclosureTime.minus(txTimestamp)
+  );
+
   patron.lastUpdated = txTimestamp;
   patron.save();
-  globalState.save(); 
 
   return scaledDelta;
 }

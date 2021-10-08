@@ -318,6 +318,7 @@ export function handleLogBuy(event: LogBuy): void {
   } 
 
   patron.foreclosureTime = patronForeclosureTime;
+
   patron.totalContributed = newPatronTotalContributed;
   patron.save();
 
@@ -440,6 +441,7 @@ export function handleLogPriceChange(event: LogPriceChange): void {
     steward,
     patron.address as Address
   );
+
   patron.save();
 
   let priceChange = new ChangePriceEvent(event.transaction.hash.toHexString());
