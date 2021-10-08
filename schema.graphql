@@ -77,7 +77,6 @@ type Patron @entity {
   patronTokenCostScaledNumerator: BigInt!
   effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0 
   foreclosureTime: BigInt! # time in future when patron will foreclose (run out of deposit)
-  secondsUntilForeclosure: BigInt! # UI will count this value down and then stop adding to time held & patronage collected
   # deposit: BigInt!
   totalContributed: BigInt!
   totalTimeHeld: BigInt! # cumulative parallel time for each token (timePassed*patron.tokens.length) 

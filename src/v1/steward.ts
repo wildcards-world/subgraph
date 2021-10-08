@@ -73,14 +73,10 @@ export function handleBuy(event: Buy): void {
     patronOld = initialiseNoOwnerPatronIfNull();
   }
 
-  /// OTHER CODE
   let txHashString = event.transaction.hash.toHexString();
-
   let previousTimeWildcardWasAcquired = wildcard.timeAcquired;
 
-  // Entity fields can be set using simple assignments
   wildcard.tokenId = tokenIdBigInt;
-
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
   wildcard.timeCollected = timeLastCollectedWildcardSafe(
     steward,
@@ -149,6 +145,7 @@ export function handleBuy(event: Buy): void {
           timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
         )
       : BigInt.fromI32(0);
+
   let previousPatronTotalTimeHeld =
     patronOld.id != ID_PREFIX + "NO_OWNER"
       ? patronOld.totalTimeHeld.plus(
@@ -213,8 +210,10 @@ export function handleBuy(event: Buy): void {
     patron.previouslyOwnedTokens.indexOf(wildcard.id) === -1
       ? patron.previouslyOwnedTokens.concat([wildcard.id])
       : patron.previouslyOwnedTokens;
+
   let patronAvailableDeposit = steward.depositAbleToWithdraw(owner);
   let patronForeclosureTime = getForeclosureTimeSafe(steward, owner);
+
   // Add token to the patrons currently held tokens
   let patronTokens =
     patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.

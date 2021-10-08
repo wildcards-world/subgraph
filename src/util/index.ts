@@ -154,7 +154,6 @@ export function initialiseNoOwnerPatronIfNull(): Patron {
   patron.patronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.effectivePatronTokenCostScaledNumerator = BigInt.fromI32(0);
   patron.foreclosureTime = BigInt.fromI32(0);
-  patron.secondsUntilForeclosure = BigInt.fromI32(0); 
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
@@ -182,7 +181,6 @@ export function initialiseDefaultPatronIfNull(
   );
   patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator; 
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
-  patron.secondsUntilForeclosure = patron.foreclosureTime.minus(txTimestamp); 
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
   patron.tokens = [];
@@ -248,7 +246,7 @@ export function updateAvailableDepositAndForeclosureTime(
   } 
 
   let isForeclosed = patron.availableDeposit.equals(ZERO_BN);
-  
+
   if (isForeclosed) { 
     if (patron.isMarkedAsForeclosed) {
       log.warning("the user {} was already marked as foreclosed", [
@@ -277,10 +275,6 @@ export function updateAvailableDepositAndForeclosureTime(
   if (updatePatronForeclosureTime) {
     patron.foreclosureTime = getForeclosureTimeSafe(steward, tokenPatron);
   }
-
-  patron.secondsUntilForeclosure = patron.secondsUntilForeclosure.plus(
-    patron.foreclosureTime.minus(txTimestamp)
-  );
 
   patron.lastUpdated = txTimestamp;
   patron.save();
