@@ -11,16 +11,14 @@ type Global @entity {
   id: ID! # will just be '1' since only one global namespace
   version: BigInt! # NOTE: this will say version 0 for version 0-2, after v3 it will always be correct.
   totalCollected: BigInt!
-  totalCollectedAccurate: BigInt! ### ALL THESE SET IN UPDATE GLOBAL STATE ####
+  totalCollectedAccurate: BigInt! 
   timeLastCollected: BigInt!
   # totalCollectedOrDue: BigInt!
   totalCollectedOrDueAccurate: BigInt!
   # totalTokenCostScaledNumerator: BigInt! # Used to calculate the above value
   totalTokenCostScaledNumeratorAccurate: BigInt! # Used to calculate the above value
-  # NOTE: we are currently not counting how much has been added to the total raised more than should have due to foreclosures.
-  # TODO: fill in these values!
-  totalCollectedOverstatedDueToForeclosures: BigInt!
-  totalTokenCostScaledNumeratorForeclosedTokens: BigInt! # Used to calculate the above value
+  # totalCollectedPortionOverstatedDueToForeclosures: BigInt! # only the portion that is overstated
+  # totalTokenCostScaledNumeratorForeclosedTokens: BigInt! # Used to calculate the above value
   stewardAddress: Bytes!
   erc721Address: Bytes!
   defaultAuctionStartPrice: BigInt!
@@ -75,13 +73,13 @@ type Patron @entity {
   lastUpdated: BigInt!
   previouslyOwnedTokens: [Wildcard!]!
   tokens: [Wildcard!]!
-  availableDeposit: BigInt!
+  availableDeposit: BigInt! # only updated via depositAbleToWithdraw function
   patronTokenCostScaledNumerator: BigInt!
-  effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0
-  foreclosureTime: BigInt!
+  effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0 
+  foreclosureTime: BigInt! # time in future when patron will foreclose (run out of deposit)
   # deposit: BigInt!
   totalContributed: BigInt!
-  totalTimeHeld: BigInt!
+  totalTimeHeld: BigInt! # cumulative parallel time for each token (timePassed*patron.tokens.length) 
   totalLoyaltyTokens: BigInt!
   totalLoyaltyTokensIncludingUnRedeemed: BigInt!
   currentBalance: BigInt!

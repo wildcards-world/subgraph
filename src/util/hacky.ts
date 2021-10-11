@@ -67,7 +67,7 @@ export function getTotalOwedAccurate(steward: Steward): BigInt {
   let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
-  // execure correct function based on on version.
+  // execute correct function based on version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
     return ZERO_BN;
   } else {
@@ -108,7 +108,7 @@ export function getTotalTokenCostScaledNumerator(
   let globalState = Global.load(GLOBAL_ID);
   let currentVersion = globalState.version;
 
-  // execure correct function based on on version.
+  // execute correct function based on version.
   if (currentVersion.ge(BigInt.fromI32(3))) {
     return globalState.totalTokenCostScaledNumeratorAccurate.plus(delta);
   } else {

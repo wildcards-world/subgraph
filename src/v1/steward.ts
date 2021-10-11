@@ -48,6 +48,7 @@ import {
   EVENT_COUNTER_ID,
   ID_PREFIX,
   ZERO_BN,
+  GLOBAL_ID,
 } from "../CONSTANTS";
 
 export function handleBuy(event: Buy): void {
@@ -72,14 +73,10 @@ export function handleBuy(event: Buy): void {
     patronOld = initialiseNoOwnerPatronIfNull();
   }
 
-  /// OTHER CODE
   let txHashString = event.transaction.hash.toHexString();
-
   let previousTimeWildcardWasAcquired = wildcard.timeAcquired;
 
-  // Entity fields can be set using simple assignments
   wildcard.tokenId = tokenIdBigInt;
-
   wildcard.priceHistory = wildcard.priceHistory.concat([wildcard.price]);
   wildcard.timeCollected = timeLastCollectedWildcardSafe(
     steward,
@@ -148,6 +145,7 @@ export function handleBuy(event: Buy): void {
           timeSinceLastUpdatePatron.times(BigInt.fromI32(patron.tokens.length))
         )
       : BigInt.fromI32(0);
+
   let previousPatronTotalTimeHeld =
     patronOld.id != ID_PREFIX + "NO_OWNER"
       ? patronOld.totalTimeHeld.plus(
@@ -212,8 +210,10 @@ export function handleBuy(event: Buy): void {
     patron.previouslyOwnedTokens.indexOf(wildcard.id) === -1
       ? patron.previouslyOwnedTokens.concat([wildcard.id])
       : patron.previouslyOwnedTokens;
+
   let patronAvailableDeposit = steward.depositAbleToWithdraw(owner);
   let patronForeclosureTime = getForeclosureTimeSafe(steward, owner);
+
   // Add token to the patrons currently held tokens
   let patronTokens =
     patron.tokens.indexOf(wildcard.id) === -1 // In theory this should ALWAYS be false.
@@ -244,6 +244,7 @@ export function handleBuy(event: Buy): void {
     //     .div(GLOBAL_PATRONAGE_DENOMINATOR)
     //     .div(NUM_SECONDS_IN_YEAR_BIG_INT)
     // );
+
     previousPatronPatronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
       patronOld.address as Address
     );
@@ -251,6 +252,7 @@ export function handleBuy(event: Buy): void {
     previousPatronAvailableDeposit = steward.depositAbleToWithdraw(
       patronOld.address as Address
     );
+
     if (patronOld.foreclosureTime.gt(txTimestamp)) {
       previousPatronForeclosureTime = getForeclosureTimeSafe(
         steward,
@@ -260,6 +262,7 @@ export function handleBuy(event: Buy): void {
       previousPatronForeclosureTime = patronOld.foreclosureTime;
     }
   }
+
   // Remove token to the previous patron's tokens
   let previousPatronTokens = removeFromArrayAtIndex(
     patronOld.tokens,
@@ -379,12 +382,13 @@ export function handleBuy(event: Buy): void {
   patron.tokens = patronTokens;
   patron.availableDeposit = patronAvailableDeposit;
   patron.patronTokenCostScaledNumerator = newPatronTotalPatronOwnedCost;
-  
+
   if (patron.availableDeposit.gt(ZERO_BN)) {
-    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+    patron.effectivePatronTokenCostScaledNumerator =
+      patron.patronTokenCostScaledNumerator;
   } else {
-   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
-  } 
+    patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  }
 
   patron.foreclosureTime = patronForeclosureTime;
   patron.totalContributed = patronTotalContributed;
@@ -461,24 +465,14 @@ export function handlePriceChange(event: PriceChange): void {
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
   );
-    patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
-      patron.address as Address
-    );
 
-  if (patron.availableDeposit.gt(ZERO_BN)) {
-    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
-  } else {
-    patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
-  } 
-  
-  patron.lastUpdated = txTimestamp;
-  patron.availableDeposit = steward.depositAbleToWithdraw(
-    patron.address as Address
-  );
-  patron.foreclosureTime = getForeclosureTimeSafe(
+  updateAvailableDepositAndForeclosureTime(
     steward,
-    patron.address as Address
+    owner,
+    txTimestamp,
+    true
   );
+
   patron.save();
 
   let priceChange = new ChangePriceEvent(txHashString);
@@ -516,6 +510,7 @@ export function handlePriceChange(event: PriceChange): void {
 
   updateGlobalState(steward, txTimestamp, scaledDelta);
 }
+
 export function handleForeclosure(event: Foreclosure): void {
   let steward = Steward.bind(event.address);
   let foreclosedPatron = event.params.prevOwner;
@@ -523,10 +518,6 @@ export function handleForeclosure(event: Foreclosure): void {
   let txHashString = event.transaction.hash.toHexString();
   let patronString = foreclosedPatron.toHexString();
   let foreclosedTokens: Array<string> = [];
-
-  // log.info('[[[[[[[[[[FROM INSIDE handleForeclosure]]]]]]]]]]]]]]]: {}, {}, {}', [
-  //   txHashString.toString(),
-  // ])
 
   // NB CHECK CONDITION BELOW, only want delta to be recognized once when patron forecloses
   let foreclosureTime = BigInt.fromI32(0);
@@ -632,6 +623,7 @@ export function handleRemainingDepositUpdate(
 
   updateGlobalState(steward, txTimestamp, scaledDelta);
 }
+
 export function handleCollectPatronage(event: CollectPatronage): void {
   let steward = Steward.bind(event.address);
 
