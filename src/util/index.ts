@@ -179,7 +179,8 @@ export function initialiseDefaultPatronIfNull(
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patronAddress
   );
-  patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator; 
+  patron.effectivePatronTokenCostScaledNumerator =
+    patron.patronTokenCostScaledNumerator;
   patron.foreclosureTime = getForeclosureTimeSafe(steward, patronAddress);
   patron.totalContributed = BigInt.fromI32(0);
   patron.totalTimeHeld = BigInt.fromI32(0);
@@ -199,6 +200,9 @@ export function updateAvailableDepositAndForeclosureTime(
   txTimestamp: BigInt,
   updatePatronForeclosureTime: boolean
 ): BigInt {
+
+  // NOTE: this function makes 4 contract calls to steward. Contract calls slow graph sync time - only use in handlers if makes sense. 
+
   let scaledDelta = BigInt.fromI32(0); ///// NOTE - this value is only used if the token forecloses.
 
   // if the token patron is the zero address, return! (for example it will be the zero address if the token is foreclosed and )
@@ -221,18 +225,15 @@ export function updateAvailableDepositAndForeclosureTime(
 
   let heldUntil = minBigInt(patron.foreclosureTime, txTimestamp);
   let timeSinceLastUpdate = heldUntil.minus(patron.lastUpdated);
-  
   patron.totalContributed = patron.totalContributed.plus(
     patron.patronTokenCostScaledNumerator
       .times(timeSinceLastUpdate)
       .div(GLOBAL_PATRONAGE_DENOMINATOR)
       .div(NUM_SECONDS_IN_YEAR_BIG_INT)
-  ); 
-
+  );
   patron.totalTimeHeld = patron.totalTimeHeld.plus(
     timeSinceLastUpdate.times(BigInt.fromI32(patron.tokens.length))
   );
- 
   patron.patronTokenCostScaledNumerator = steward.totalPatronOwnedTokenCost(
     patron.address as Address
   );
@@ -240,14 +241,15 @@ export function updateAvailableDepositAndForeclosureTime(
   patron.availableDeposit = steward.depositAbleToWithdraw(tokenPatron);
 
   if (patron.availableDeposit.gt(ZERO_BN)) {
-    patron.effectivePatronTokenCostScaledNumerator = patron.patronTokenCostScaledNumerator;	
+    patron.effectivePatronTokenCostScaledNumerator =
+      patron.patronTokenCostScaledNumerator;
   } else {
-   patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
-  } 
+    patron.effectivePatronTokenCostScaledNumerator = ZERO_BN;
+  }
 
   let isForeclosed = patron.availableDeposit.equals(ZERO_BN);
 
-  if (isForeclosed) { 
+  if (isForeclosed) {
     if (patron.isMarkedAsForeclosed) {
       log.warning("the user {} was already marked as foreclosed", [
         patron.address.toHex(),

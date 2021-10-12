@@ -318,8 +318,8 @@ export function handleLogBuy(event: LogBuy): void {
   } 
 
   patron.foreclosureTime = patronForeclosureTime;
-
   patron.totalContributed = newPatronTotalContributed;
+  
   patron.save();
 
   if (patronOld.id != ID_PREFIX + "NO_OWNER") {

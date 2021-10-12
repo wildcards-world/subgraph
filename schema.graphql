@@ -39,7 +39,7 @@ type Wildcard @entity {
   priceHistory: [Price!]
   tokenUri: TokenUri!
   totalCollected: BigInt!
-  timeCollected: BigInt!
+  timeCollected: BigInt! # this is the timestamp of the last collection on the wildcard not the total time collected for wildcard 
   auctionStartPrice: BigInt
   launchTime: BigInt!
 }
@@ -76,7 +76,7 @@ type Patron @entity {
   availableDeposit: BigInt! # only updated via depositAbleToWithdraw function
   patronTokenCostScaledNumerator: BigInt!
   effectivePatronTokenCostScaledNumerator: BigInt! # for when deposit = 0 
-  foreclosureTime: BigInt! # time in future when patron will foreclose (run out of deposit)
+  foreclosureTime: BigInt! # timestamp in future when patron will foreclose (run out of deposit), zero if patron doensn't own tokens. 
   # deposit: BigInt!
   totalContributed: BigInt!
   totalTimeHeld: BigInt! # cumulative parallel time for each token (timePassed*patron.tokens.length) 
