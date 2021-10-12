@@ -4,6 +4,7 @@ import { Patron, Wildcard } from "../../generated/schema";
 import { initialiseDefaultPatronIfNull } from "../util";
 import { createWildcardIfDoesntExist } from "../v0/helpers";
 import { ID_PREFIX } from "../CONSTANTS";
+
 export function genericUpdateTimeHeld(
   owner: Address,
   txTimestamp: BigInt,
